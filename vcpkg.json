@@ -1,0 +1,24 @@
+{
+  "name": "library",
+  "version-string": "0.1",
+  "dependencies": [
+    {
+      "name": "qtbase",
+      "version>=": "6.8.0"
+    },
+    {
+      "name": "qtdeclarative",
+      "version>=": "6.8.0"
+    }
+  ],
+  "overrides": [
+    {
+      "name": "qtbase",
+      "version": "6.8.0"
+    },
+    {
+      "name": "qtdeclarative",
+      "version": "6.8.0"
+    }
+  ]
+}

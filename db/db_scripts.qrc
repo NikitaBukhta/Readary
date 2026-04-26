@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/db">
+        <file>init.sql</file>
+        <file>test_data.sql</file>
+    </qresource>
+</RCC>
