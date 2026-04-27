@@ -5,18 +5,13 @@
 #include "services/BookTable.hpp"
 
 #include <QAbstractListModel>
-#include <QJSEngine>
 #include <QList>
-#include <QQmlEngine>
-#include <QtQml/qqmlregistration.h>
 #include <memory>
 
 namespace bl::models {
 
 class BookListModel : public QAbstractListModel {
   Q_OBJECT
-  QML_ELEMENT
-  QML_SINGLETON
 
   Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
@@ -41,12 +36,10 @@ public:
   };
   Q_ENUM(Roles)
 
-  explicit BookListModel(std::shared_ptr<services::BookTable> bookTable,
-                         QObject *parent);
+  explicit BookListModel(std::shared_ptr<services::BookTable> bookTable, QObject *parent);
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-  QVariant data(const QModelIndex &index,
-                int role = Qt::DisplayRole) const override;
+  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
   QHash<int, QByteArray> roleNames() const override;
 
   Q_INVOKABLE bool deleteBook(int id);
@@ -55,16 +48,11 @@ public:
   void refresh();
   QString errorMessage() const;
 
-  static BookListModel *create(QQmlEngine *engine, QJSEngine *scriptEngine);
-  static void setInstance(BookListModel *instance);
-
 signals:
   void errorMessageChanged();
 
 private:
   void setErrorMessage(const QString &message);
-
-  static BookListModel *s_instance;
 
   QList<services::BookDTO> _books;
   std::shared_ptr<services::BookTable> _bookTable;

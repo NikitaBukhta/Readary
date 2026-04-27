@@ -15,13 +15,14 @@ class NavigationController : public QObject {
   QML_ELEMENT
   QML_SINGLETON
 
-  Q_PROPERTY(
-      QUrl currentPagePath READ currentPagePath NOTIFY currentPageChanged FINAL)
-  Q_PROPERTY(PageEnum currentPage READ currentPage WRITE setCurrentPage NOTIFY
-                 currentPageChanged FINAL)
+  Q_PROPERTY(QUrl currentPagePath READ currentPagePath NOTIFY currentPageChanged FINAL)
+  Q_PROPERTY(PageEnum currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged FINAL)
 
 public:
-  enum class PageEnum { MAIN_PAGE = 1 };
+  enum class PageEnum {
+    MAIN_PAGE = 1,
+    CATEGORY_LIST_PAGE = 2,
+  };
   Q_ENUM(PageEnum)
 
   explicit NavigationController(QObject *parent);
@@ -32,8 +33,7 @@ public:
 
   Q_INVOKABLE void goBack();
 
-  static NavigationController *create(QQmlEngine *engine,
-                                      QJSEngine *scriptEngine);
+  static NavigationController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
   static void setInstance(NavigationController *instance);
 
 signals:

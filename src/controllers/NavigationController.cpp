@@ -14,13 +14,10 @@ NavigationController::NavigationController(QObject *parent) : QObject(parent) {
   qCInfo(lcNavigation) << "NavigationController initialized";
 }
 
-void NavigationController::setInstance(NavigationController *instance) {
-  s_instance = instance;
-}
+void NavigationController::setInstance(NavigationController *instance) { s_instance = instance; }
 
 NavigationController *NavigationController::create(QQmlEngine *, QJSEngine *) {
-  Q_ASSERT_X(s_instance, "NavigationController::create",
-             "setInstance() must be called before the QML engine loads");
+  Q_ASSERT_X(s_instance, "NavigationController::create", "setInstance() must be called before the QML engine loads");
   QQmlEngine::setObjectOwnership(s_instance, QQmlEngine::CppOwnership);
   return s_instance;
 }
@@ -29,6 +26,8 @@ NavigationController::PageInfo NavigationController::pageInfo(PageEnum page) {
   switch (page) {
   case PageEnum::MAIN_PAGE:
     return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_qs}, 1};
+  case PageEnum::CATEGORY_LIST_PAGE:
+    return {QUrl{u"qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml"_qs}, 2};
   }
   Q_UNREACHABLE();
 }
@@ -51,14 +50,12 @@ void NavigationController::setCurrentPage(PageEnum page) {
 
   const auto target = pageInfo(page);
 
-  while (!_pageStack.empty() &&
-         target.level <= pageInfo(_pageStack.top()).level) {
+  while (!_pageStack.empty() && target.level <= pageInfo(_pageStack.top()).level) {
     _pageStack.pop();
   }
 
   _pageStack.push(page);
-  qCInfo(lcNavigation) << "Page changed:" << target.url
-                       << "(stack size:" << _pageStack.size() << ")";
+  qCInfo(lcNavigation) << "Page changed:" << target.url << "(stack size:" << _pageStack.size() << ")";
   emit currentPageChanged();
 }
 
@@ -67,8 +64,8 @@ void NavigationController::goBack() {
     return;
 
   _pageStack.pop();
-  qCInfo(lcNavigation) << "Navigated back to:" << pageInfo(_pageStack.top()).url
-                       << "(stack size:" << _pageStack.size() << ")";
+  qCInfo(lcNavigation) << "Navigated back to:" << pageInfo(_pageStack.top()).url << "(stack size:" << _pageStack.size()
+                       << ")";
   emit currentPageChanged();
 }
 

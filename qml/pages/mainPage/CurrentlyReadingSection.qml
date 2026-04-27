@@ -8,6 +8,7 @@ ColumnLayout {
 
     property var model
     property int sidePadding: Geometry.spacing.xxl
+    property string title: qsTr("Currently reading")
 
     signal bookOpened(int bookIndex)
 
@@ -17,7 +18,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.leftMargin: root.sidePadding
         Layout.rightMargin: root.sidePadding
-        title: qsTr("Currently reading")
+        title: root.title
         trailingText: list.count > 0 ? list.count.toString() : ""
     }
 
@@ -42,11 +43,11 @@ ColumnLayout {
         delegate: ReadingBookCard {
             required property var model
             required property int index
-            title: model.title
-            author: model.author
-            coverSource: model.coverSource
-            pagesRead: model.pagesRead
-            pagesTotal: model.pagesTotal
+            title: model.name ?? ""
+            author: model.author ?? ""
+            coverSource: model.coverSource ?? ""
+            pagesRead: model.pagesRead ?? 0
+            pagesTotal: model.pagesTotal ?? 0
             onClicked: root.bookOpened(index)
         }
     }

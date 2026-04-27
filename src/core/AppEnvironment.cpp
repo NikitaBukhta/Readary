@@ -18,8 +18,7 @@ static QFile *s_logFile = nullptr;
 static QMutex s_logMutex;
 
 QString AppEnvironment::ensureDataDir() {
-  QString path =
-      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+  QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   QDir dir(path);
   dir.cdUp();
   path = dir.absoluteFilePath("BeeLibrary");
@@ -36,8 +35,7 @@ QString AppEnvironment::dataPath() {
 QString AppEnvironment::databasePath() { return dataPath() + "/beelibrary.db"; }
 
 QString AppEnvironment::logFilePath() {
-  const QString timestamp =
-      QDateTime::currentDateTime().toString("dd.MM.yyyy-hh.mm.ss");
+  const QString timestamp = QDateTime::currentDateTime().toString("dd.MM.yyyy-hh.mm.ss");
   return dataPath() + "/log_" + timestamp + ".log";
 }
 
@@ -47,8 +45,7 @@ void AppEnvironment::installFileLogger() {
   const QString path = logFilePath();
 
   s_logFile = new QFile(path);
-  if (!s_logFile->open(QIODevice::WriteOnly | QIODevice::Append |
-                       QIODevice::Text)) {
+  if (!s_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
     delete s_logFile;
     s_logFile = nullptr;
     qCWarning(lcAppEnv) << "Cannot open log file:" << path;
@@ -74,8 +71,7 @@ void AppEnvironment::cleanupOldLogs(int keepDays) {
   QDir dir(dataPath());
   const QDateTime cutoff = QDateTime::currentDateTime().addDays(-keepDays);
 
-  const auto entries =
-      dir.entryInfoList({"log_*.log"}, QDir::Files, QDir::Time);
+  const auto entries = dir.entryInfoList({"log_*.log"}, QDir::Files, QDir::Time);
   for (const QFileInfo &info : entries) {
     if (info.lastModified() < cutoff) {
       if (QFile::remove(info.absoluteFilePath()))
@@ -84,9 +80,7 @@ void AppEnvironment::cleanupOldLogs(int keepDays) {
   }
 }
 
-void AppEnvironment::messageHandler(QtMsgType type,
-                                    const QMessageLogContext &context,
-                                    const QString &msg) {
+void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
   if (!s_logFile)
     return;
 
@@ -109,12 +103,10 @@ void AppEnvironment::messageHandler(QtMsgType type,
     break;
   }
 
-  const QString timestamp =
-      QDateTime::currentDateTime().toString(Qt::ISODateWithMs);
+  const QString timestamp = QDateTime::currentDateTime().toString(Qt::ISODateWithMs);
   const QString category = context.category ? context.category : "default";
 
-  const QString line =
-      QStringLiteral("%1 [%2] %3: %4\n").arg(timestamp, level, category, msg);
+  const QString line = QStringLiteral("%1 [%2] %3: %4\n").arg(timestamp, level, category, msg);
 
   QMutexLocker locker(&s_logMutex);
   QTextStream stream(s_logFile);

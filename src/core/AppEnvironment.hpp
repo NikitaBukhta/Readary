@@ -15,8 +15,7 @@ public:
   static void shutdownFileLogger();
 
 private:
-  static void messageHandler(QtMsgType type, const QMessageLogContext &context,
-                             const QString &msg);
+  static void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
   static QString ensureDataDir();
   static void cleanupOldLogs(int keepDays = 7);

@@ -8,7 +8,7 @@ ColumnLayout {
 
     property var model
 
-    signal categoryOpened(string categoryId)
+    signal categoryOpened(var categoryId)
 
     spacing: Geometry.spacing.md
 

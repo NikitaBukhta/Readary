@@ -1,3 +1,4 @@
+import re
 import subprocess
 from pathlib import Path
 
@@ -8,6 +9,11 @@ from buildtools.venv_manager import VenvManager
 
 # Base style for clang-format config generation
 CLANG_FORMAT_BASE_STYLE = "LLVM"
+
+# Project-specific overrides applied on top of the base style.
+CLANG_FORMAT_OVERRIDES: dict[str, str] = {
+    "ColumnLimit": "120",
+}
 
 
 class ClangFormatProvider(ToolProvider):
@@ -52,6 +58,21 @@ class ClangFormatProvider(ToolProvider):
              "--dump-config"],
             capture_output=True, text=True, check=True,
         )
-        config_path.write_text(result.stdout, encoding="utf-8")
+        content = self._apply_overrides(result.stdout, CLANG_FORMAT_OVERRIDES)
+        config_path.write_text(content, encoding="utf-8")
         print(f"  Created {config_path}")
         return config_path
+
+    @staticmethod
+    def _apply_overrides(content: str, overrides: dict[str, str]) -> str:
+        for key, value in overrides.items():
+            pattern = rf"^({re.escape(key)}:\s*).*$"
+            new_content, count = re.subn(
+                pattern, rf"\g<1>{value}", content, count=1, flags=re.MULTILINE,
+            )
+            if count == 0:
+                raise ValueError(
+                    f"clang-format override key not found in dumped config: {key}"
+                )
+            content = new_content
+        return content

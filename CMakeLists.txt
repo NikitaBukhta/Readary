@@ -41,8 +41,9 @@ qt_add_qml_module(BeeLibraryCore
     URI Library
     OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Library
     QML_FILES ${QML_FILES}
-    RESOURCES db/db_scripts.qrc
 )
+
+target_sources(BeeLibraryCore PRIVATE db/db_scripts.qrc)
 
 # ---------------------------------------------------------------------------
 # Executable

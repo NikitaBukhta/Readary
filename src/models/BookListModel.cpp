@@ -6,25 +6,10 @@ Q_LOGGING_CATEGORY(lcBookModel, "bl.models.books")
 
 namespace bl::models {
 
-BookListModel *BookListModel::s_instance = nullptr;
-
-BookListModel::BookListModel(std::shared_ptr<services::BookTable> bookTable,
-                             QObject *parent)
+BookListModel::BookListModel(std::shared_ptr<services::BookTable> bookTable, QObject *parent)
     : QAbstractListModel(parent), _bookTable{std::move(bookTable)} {
   refresh();
-  qCInfo(lcBookModel) << "BookListModel initialized with" << _books.size()
-                      << "books";
-}
-
-void BookListModel::setInstance(BookListModel *instance) {
-  s_instance = instance;
-}
-
-BookListModel *BookListModel::create(QQmlEngine *, QJSEngine *) {
-  Q_ASSERT_X(s_instance, "BookListModel::create",
-             "setInstance() must be called before the QML engine loads");
-  QQmlEngine::setObjectOwnership(s_instance, QQmlEngine::CppOwnership);
-  return s_instance;
+  qCInfo(lcBookModel) << "BookListModel initialized with" << _books.size() << "books";
 }
 
 int BookListModel::rowCount(const QModelIndex &parent) const {

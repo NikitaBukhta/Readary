@@ -35,24 +35,31 @@ INSERT OR IGNORE INTO authors (id, name) VALUES
 (19, 'Abraham Silberschatz et al.'),
 (20, 'James Kurose, Keith Ross');
 
-INSERT OR IGNORE INTO books
+-- status: 0 = NONE, 1 = WantToRead, 2 = InProgress, 3 = Finished
+-- Distribution to seed each category in the UI:
+--   Finished     (status=3): ids 1-5
+--   WantToRead   (status=1): ids 6-9
+--   InProgress   (status=2): ids 10-11
+--   WantToBuy    (inWishList=1): ids 12-15
+--   Uncategorized: ids 16-20
+INSERT OR REPLACE INTO books
   (id, name, author, year, publisher, description, isHardcover, type, globalRating, localRating, userRating, status, inWishList)
 VALUES
-(1,  'The Pragmatic Programmer',                              1,  1999, 1, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(2,  'Clean Code',                                            2,  2008, 2, NULL, 1, 1, NULL, NULL, NULL, 0, 0),
-(3,  'Design Patterns',                                       3,  1994, 1, NULL, 1, 2, NULL, NULL, NULL, 0, 0),
-(4,  'Structure and Interpretation of Computer Programs',     4,  1985, 3, NULL, 1, 1, NULL, NULL, NULL, 0, 0),
-(5,  'The C Programming Language',                            5,  1978, 2, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(6,  'Introduction to Algorithms',                            6,  2009, 3, NULL, 1, 1, NULL, NULL, NULL, 0, 0),
-(7,  'Refactoring',                                           7,  2018, 1, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(8,  'Code Complete',                                         8,  2004, 5, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(9,  'The Mythical Man-Month',                                9,  1975, 1, NULL, 0, 2, NULL, NULL, NULL, 0, 0),
-(10, 'Effective Modern C++',                                 10,  2014, 4, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(11, 'C++ Primer',                                           11,  2012, 1, NULL, 1, 1, NULL, NULL, NULL, 0, 0),
-(12, 'Qt 6 Programming',                                     12,  2023, 6, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(13, 'Head First Design Patterns',                           13,  2020, 4, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(14, 'Working Effectively with Legacy Code',                 14,  2004, 2, NULL, 0, 1, NULL, NULL, NULL, 0, 0),
-(15, 'Domain-Driven Design',                                 15,  2003, 1, NULL, 1, 2, NULL, NULL, NULL, 0, 0),
+(1,  'The Pragmatic Programmer',                              1,  1999, 1, NULL, 0, 1, NULL, NULL, NULL, 3, 0),
+(2,  'Clean Code',                                            2,  2008, 2, NULL, 1, 1, NULL, NULL, NULL, 3, 0),
+(3,  'Design Patterns',                                       3,  1994, 1, NULL, 1, 2, NULL, NULL, NULL, 3, 0),
+(4,  'Structure and Interpretation of Computer Programs',     4,  1985, 3, NULL, 1, 1, NULL, NULL, NULL, 3, 0),
+(5,  'The C Programming Language',                            5,  1978, 2, NULL, 0, 1, NULL, NULL, NULL, 3, 0),
+(6,  'Introduction to Algorithms',                            6,  2009, 3, NULL, 1, 1, NULL, NULL, NULL, 1, 0),
+(7,  'Refactoring',                                           7,  2018, 1, NULL, 0, 1, NULL, NULL, NULL, 1, 0),
+(8,  'Code Complete',                                         8,  2004, 5, NULL, 0, 1, NULL, NULL, NULL, 1, 0),
+(9,  'The Mythical Man-Month',                                9,  1975, 1, NULL, 0, 2, NULL, NULL, NULL, 1, 0),
+(10, 'Effective Modern C++',                                 10,  2014, 4, NULL, 0, 1, NULL, NULL, NULL, 2, 0),
+(11, 'C++ Primer',                                           11,  2012, 1, NULL, 1, 1, NULL, NULL, NULL, 2, 0),
+(12, 'Qt 6 Programming',                                     12,  2023, 6, NULL, 0, 1, NULL, NULL, NULL, 0, 1),
+(13, 'Head First Design Patterns',                           13,  2020, 4, NULL, 0, 1, NULL, NULL, NULL, 0, 1),
+(14, 'Working Effectively with Legacy Code',                 14,  2004, 2, NULL, 0, 1, NULL, NULL, NULL, 0, 1),
+(15, 'Domain-Driven Design',                                 15,  2003, 1, NULL, 1, 2, NULL, NULL, NULL, 0, 1),
 (16, 'Algorithms',                                           16,  2011, 1, NULL, 1, 1, NULL, NULL, NULL, 0, 0),
 (17, 'The Art of Computer Programming',                      17,  1968, 1, NULL, 1, 3, NULL, NULL, NULL, 0, 0),
 (18, 'Compilers: Principles, Techniques, and Tools',         18,  2006, 5, NULL, 1, 1, NULL, NULL, NULL, 0, 0),

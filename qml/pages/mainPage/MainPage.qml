@@ -6,74 +6,51 @@ import Library
 Rectangle {
     id: root
 
-    // App-level identity (shown in the header). Kept as property so callers can
-    // swap branding without editing this file.
     property string appTitle: "DariszBooks"
     property string userName: ""
 
-    // Currently-reading list. Expect items: { title, author, coverSource,
-    // pagesRead, pagesTotal }. Falls back to an inline demo model.
-    property var readingModel: _demoReadingModel
-
-    // Category list. Expect items: { categoryId, title, subtitle, glyph, source }.
-    property var categoryModel: _demoCategoryModel
-
-    // Goal card data.
     property int goalCurrent: 1
     property int goalTotal: 5
 
     property string currentNavId: "library"
 
-    // Navigation intents — wire from outside to NavigationController.
-    signal searchRequested(string query)
     signal bookOpened(int bookIndex)
-    signal categoryOpened(string categoryId)
     signal navItemSelected(string navId)
 
     color: Theme.background
 
-    ListModel {
-        id: _demoReadingModel
-        ListElement {
-            title: qsTr("Night Wanderer")
-            author: qsTr("Elena Morozova")
-            coverSource: ""
-            pagesRead: 156
-            pagesTotal: 384
+    function _activeListTitle() {
+        switch (BookController.activeKind) {
+        case BookController.WantToRead:  return qsTr("Want to read");
+        case BookController.WantToBuy:   return qsTr("Want to buy");
+        case BookController.AlreadyRead: return qsTr("Already read");
         }
-        ListElement {
-            title: qsTr("Andromeda Constellation")
-            author: qsTr("Igor Savchenko")
-            coverSource: ""
-            pagesRead: 89
-            pagesTotal: 512
-        }
+        return "";
     }
 
-    ListModel {
-        id: _demoCategoryModel
-        ListElement {
-            categoryId: "wantToRead"
-            title: qsTr("Want to read")
-            subtitle: qsTr("%n book(s)", "", 1)
-            glyph: "📖"
+    readonly property var _categories: [
+        {
+            categoryId: BookController.WantToRead,
+            title: qsTr("Want to read"),
+            subtitle: qsTr("%n book(s)", "", BookController.wantToReadModel.count),
+            glyph: "📖",
+            source: ""
+        },
+        {
+            categoryId: BookController.WantToBuy,
+            title: qsTr("Want to buy"),
+            subtitle: qsTr("%n book(s)", "", BookController.wantToBuyModel.count),
+            glyph: "🛒",
+            source: ""
+        },
+        {
+            categoryId: BookController.AlreadyRead,
+            title: qsTr("Already read"),
+            subtitle: qsTr("%n book(s)", "", BookController.alreadyReadModel.count),
+            glyph: "✅",
             source: ""
         }
-        ListElement {
-            categoryId: "wantToBuy"
-            title: qsTr("Want to buy")
-            subtitle: qsTr("%n book(s)", "", 1)
-            glyph: "🛒"
-            source: ""
-        }
-        ListElement {
-            categoryId: "finished"
-            title: qsTr("Finished")
-            subtitle: qsTr("%n book(s)", "", 1)
-            glyph: "✅"
-            source: ""
-        }
-    }
+    ]
 
     readonly property var _navItems: [
         { id: "library",    label: qsTr("Library"),    glyph: "📚", source: "" },
@@ -119,8 +96,9 @@ Rectangle {
                     Layout.leftMargin: root._sidePadding
                     Layout.rightMargin: root._sidePadding
                     placeholderText: qsTr("Search books...")
-                    onTextEdited: root.searchRequested(text)
-                    onAccepted:   root.searchRequested(text)
+                    text: BookController.searchModel.searchQuery
+                    onTextEdited: BookController.searchModel.searchQuery = text
+                    onAccepted:   BookController.searchModel.searchQuery = text
                 }
 
                 GoalCard {
@@ -136,7 +114,8 @@ Rectangle {
                 CurrentlyReadingSection {
                     Layout.fillWidth: true
                     sidePadding: root._sidePadding
-                    model: root.readingModel
+                    title: qsTr("Currently reading")
+                    model: BookController.readInProgressModel
                     onBookOpened: (index) => root.bookOpened(index)
                 }
 
@@ -144,8 +123,11 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.leftMargin: root._sidePadding
                     Layout.rightMargin: root._sidePadding
-                    model: root.categoryModel
-                    onCategoryOpened: (id) => root.categoryOpened(id)
+                    model: root._categories
+                    onCategoryOpened: (categoryId) => {
+                        BookController.activeKind = categoryId;
+                        NavigationController.currentPage = NavigationController.CATEGORY_LIST_PAGE;
+                    }
                 }
 
                 Item {

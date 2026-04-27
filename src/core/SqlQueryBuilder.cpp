@@ -3,8 +3,7 @@
 namespace bl::core {
 
 SqlQueryBuilder &SqlQueryBuilder::select(const QStringList &columns) {
-  if (columns.isEmpty() ||
-      (columns.size() == 1 && columns.first().trimmed() == "*")) {
+  if (columns.isEmpty() || (columns.size() == 1 && columns.first().trimmed() == "*")) {
     _query = "SELECT *";
   } else {
     _query = "SELECT " + columns.join(", ");
@@ -17,8 +16,7 @@ SqlQueryBuilder &SqlQueryBuilder::selectCount() {
   return *this;
 }
 
-SqlQueryBuilder &SqlQueryBuilder::insertInto(const QString &table,
-                                             const QStringList &columns) {
+SqlQueryBuilder &SqlQueryBuilder::insertInto(const QString &table, const QStringList &columns) {
   _query += "INSERT INTO " + table + " (" + columns.join(", ") + ") VALUES (" +
             QString(", ?").repeated(columns.size()).mid(2) + ")";
   _values.clear();
@@ -30,8 +28,7 @@ SqlQueryBuilder &SqlQueryBuilder::update(const QString &table) {
   return *this;
 }
 
-SqlQueryBuilder &SqlQueryBuilder::from(const QString &table,
-                                       const QString &alias) {
+SqlQueryBuilder &SqlQueryBuilder::from(const QString &table, const QString &alias) {
   _query += " FROM " + table;
   if (!alias.isEmpty())
     _query += " " + alias;
@@ -53,8 +50,7 @@ SqlQueryBuilder &SqlQueryBuilder::set(const QStringList &columns) {
   return *this;
 }
 
-SqlQueryBuilder &SqlQueryBuilder::leftJoin(const QString &table,
-                                           const QString &alias) {
+SqlQueryBuilder &SqlQueryBuilder::leftJoin(const QString &table, const QString &alias) {
   _query += " LEFT JOIN " + table;
   if (!alias.isEmpty())
     _query += " " + alias;
@@ -66,8 +62,7 @@ SqlQueryBuilder &SqlQueryBuilder::on(const QString &condition) {
   return *this;
 }
 
-SqlQueryBuilder &SqlQueryBuilder::orderBy(const QString &column,
-                                          const QString &order) {
+SqlQueryBuilder &SqlQueryBuilder::orderBy(const QString &column, const QString &order) {
   _query += " ORDER BY " + column + " " + order;
   return *this;
 }

@@ -9,8 +9,7 @@ namespace bl::services {
 
 const QString BookTable::kTableName = QStringLiteral("books");
 
-BookTable::BookTable(std::shared_ptr<core::DatabaseManager> db)
-    : _db{std::move(db)} {}
+BookTable::BookTable(std::shared_ptr<core::DatabaseManager> db) : _db{std::move(db)} {}
 
 QList<BookDTO> BookTable::getAllBooks() {
   core::SqlQueryBuilder query;
@@ -47,8 +46,11 @@ QList<BookDTO> BookTable::getAllBooks() {
 
   QList<BookDTO> result;
   result.reserve(data.size());
-  for (const auto &row : std::as_const(data))
+  int rowIndex = 0;
+  for (const auto &row : std::as_const(data)) {
+    qDebug(lcBookTable) << rowIndex << ") " << row;
     result.emplaceBack(BookDTO::fromMap(row));
+  }
 
   qCInfo(lcBookTable) << "Loaded" << result.size() << "books";
   return result;
@@ -65,21 +67,17 @@ qint64 BookTable::addBook(const BookDTO &book) {
   QString error;
 
   query
-      .insertInto(kTableName,
-                  {"name", "author", "year", "publisher", "description",
-                   "isHardcover", "type", "globalRating", "localRating",
-                   "userRating", "status", "inWishList"})
-      .values({book.name, book.authorId, book.year,
-               nullableId(book.publisherId), book.description, book.isHardcover,
-               nullableId(book.typeId), book.globalRating, book.localRating,
-               book.userRating, book.status, book.inWishList});
+      .insertInto(kTableName, {"name", "author", "year", "publisher", "description", "isHardcover", "type",
+                               "globalRating", "localRating", "userRating", "status", "inWishList"})
+      .values({book.name, book.authorId, book.year, nullableId(book.publisherId), book.description, book.isHardcover,
+               nullableId(book.typeId), book.globalRating, book.localRating, book.userRating, book.status,
+               book.inWishList});
 
   qint64 id = _db->insert(query, &error);
   if (id > 0)
     qCInfo(lcBookTable) << "Added book id:" << id << "name:" << book.name;
   else
-    qCWarning(lcBookTable) << "Failed to add book:" << book.name
-                           << "error:" << error;
+    qCWarning(lcBookTable) << "Failed to add book:" << book.name << "error:" << error;
 
   return id;
 }
@@ -89,28 +87,24 @@ bool BookTable::updateBook(const BookDTO &book) {
   QString error;
 
   query.update(kTableName)
-      .set({"name", "author", "year", "publisher", "description", "isHardcover",
-            "type", "globalRating", "localRating", "userRating", "status",
-            "inWishList"})
+      .set({"name", "author", "year", "publisher", "description", "isHardcover", "type", "globalRating", "localRating",
+            "userRating", "status", "inWishList"})
       .where("id = ?")
-      .values({book.name, book.authorId, book.year,
-               nullableId(book.publisherId), book.description, book.isHardcover,
-               nullableId(book.typeId), book.globalRating, book.localRating,
-               book.userRating, book.status, book.inWishList, book.id});
+      .values({book.name, book.authorId, book.year, nullableId(book.publisherId), book.description, book.isHardcover,
+               nullableId(book.typeId), book.globalRating, book.localRating, book.userRating, book.status,
+               book.inWishList, book.id});
 
   int affected = _db->execute(query, &error);
 
   if (affected > 0) {
-    qCInfo(lcBookTable) << "Updated book id:" << book.id
-                        << "name:" << book.name;
+    qCInfo(lcBookTable) << "Updated book id:" << book.id << "name:" << book.name;
     return true;
   }
 
   if (affected == 0)
     qCWarning(lcBookTable) << "No book found with id:" << book.id;
   else
-    qCWarning(lcBookTable) << "Failed to update book id:" << book.id
-                           << "error:" << error;
+    qCWarning(lcBookTable) << "Failed to update book id:" << book.id << "error:" << error;
   return false;
 }
 
@@ -130,8 +124,7 @@ bool BookTable::deleteBook(qint64 id) {
   if (affected == 0)
     qCWarning(lcBookTable) << "No book found with id:" << id;
   else
-    qCWarning(lcBookTable) << "Failed to delete book id:" << id
-                           << "error:" << error;
+    qCWarning(lcBookTable) << "Failed to delete book id:" << id << "error:" << error;
   return false;
 }
 

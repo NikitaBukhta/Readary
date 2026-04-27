@@ -13,11 +13,10 @@ class BookTable;
 
 namespace bl::models {
 class BookListModel;
-class BookProxyModel;
 } // namespace bl::models
 
 namespace bl::controllers {
-class BookFormController;
+class BookController;
 class NavigationController;
 } // namespace bl::controllers
 
@@ -46,8 +45,7 @@ private:
   std::shared_ptr<DatabaseManager> _db;
   std::shared_ptr<services::BookTable> _bookTable;
   models::BookListModel *_bookListModel;
-  models::BookProxyModel *_bookProxyModel;
-  controllers::BookFormController *_bookFormController;
+  controllers::BookController *_bookController;
   controllers::NavigationController *_contextModel;
 };
 

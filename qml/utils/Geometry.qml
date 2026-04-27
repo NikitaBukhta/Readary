@@ -50,6 +50,10 @@ QtObject {
         readonly property int categoryRowHeight: 72
         readonly property int categoryIconBox:   48
 
+        readonly property int bookRowHeight:     104
+        readonly property int bookRowCoverWidth:  72
+        readonly property int bookRowCoverHeight: 88
+
         readonly property int bottomNavHeight: 68
         readonly property int bottomNavIcon:   22
     }

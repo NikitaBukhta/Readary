@@ -43,8 +43,7 @@ void DatabaseManager::close() {
 bool DatabaseManager::runScript(const QString &scriptFileName) {
   QFile file(scriptFileName);
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    qCWarning(lcDb) << "Cannot open script" << scriptFileName << ":"
-                    << file.errorString();
+    qCWarning(lcDb) << "Cannot open script" << scriptFileName << ":" << file.errorString();
     return false;
   }
 
@@ -56,8 +55,7 @@ bool DatabaseManager::runScript(const QString &scriptFileName) {
   return true;
 }
 
-QList<QVariantMap> DatabaseManager::select(const SqlQueryBuilder &builder,
-                                           QString *error) {
+QList<QVariantMap> DatabaseManager::select(const SqlQueryBuilder &builder, QString *error) {
   QSqlQuery query{_db};
 
   if (!execPrepared(query, builder, error))
@@ -128,15 +126,12 @@ bool DatabaseManager::exec(const QString &sql, QString *error) {
   return true;
 }
 
-bool DatabaseManager::execPrepared(QSqlQuery &query,
-                                   const SqlQueryBuilder &builder,
-                                   QString *error) {
+bool DatabaseManager::execPrepared(QSqlQuery &query, const SqlQueryBuilder &builder, QString *error) {
   const auto &params = builder.getValues();
   QString sql = builder.build();
 
   if (!query.prepare(sql)) {
-    qCWarning(lcDb) << "Prepare failed:" << query.lastError().text()
-                    << "sql:" << sql;
+    qCWarning(lcDb) << "Prepare failed:" << query.lastError().text() << "sql:" << sql;
     if (error)
       *error = query.lastError().text();
     return false;

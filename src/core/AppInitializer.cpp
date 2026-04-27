@@ -1,10 +1,9 @@
 #include "AppInitializer.hpp"
 #include "AppEnvironment.hpp"
 #include "DatabaseManager.hpp"
-#include "controllers/BookFormController.hpp"
+#include "controllers/BookController.hpp"
 #include "controllers/NavigationController.hpp"
 #include "models/BookListModel.hpp"
-#include "models/BookProxyModel.hpp"
 
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
@@ -16,10 +15,8 @@ Q_LOGGING_CATEGORY(lcInit, "bl.core.init")
 namespace bl::core {
 
 AppInitializer::AppInitializer(QGuiApplication &app, QObject *parent)
-    : QObject(parent), _app{app},
-      _engine{std::make_unique<QQmlApplicationEngine>()},
-      _bookListModel{nullptr}, _bookProxyModel{nullptr},
-      _bookFormController{nullptr}, _contextModel{nullptr} {}
+    : QObject(parent), _app{app}, _engine{std::make_unique<QQmlApplicationEngine>()}, _bookListModel{nullptr},
+      _bookController{nullptr}, _contextModel{nullptr} {}
 
 AppInitializer::~AppInitializer() = default;
 
@@ -58,13 +55,8 @@ void AppInitializer::initDatabase() {
 void AppInitializer::initModels() {
   _bookListModel = new models::BookListModel(_bookTable, this);
 
-  _bookProxyModel = new models::BookProxyModel(this);
-  _bookProxyModel->setSourceModel(_bookListModel);
-
-  _bookFormController =
-      new controllers::BookFormController(_bookTable, _bookListModel, this);
-  connect(_bookFormController, &controllers::BookFormController::bookSaved,
-          _bookListModel, &models::BookListModel::refresh);
+  _bookController = new controllers::BookController(_bookTable, _bookListModel, this);
+  connect(_bookController, &controllers::BookController::bookSaved, _bookListModel, &models::BookListModel::refresh);
 
   _contextModel = new controllers::NavigationController(this);
 
@@ -72,14 +64,12 @@ void AppInitializer::initModels() {
 }
 
 void AppInitializer::registerQmlTypes() {
-  models::BookListModel::setInstance(_bookListModel);
-  models::BookProxyModel::setInstance(_bookProxyModel);
-  controllers::BookFormController::setInstance(_bookFormController);
+  controllers::BookController::setInstance(_bookController);
   controllers::NavigationController::setInstance(_contextModel);
 
   QObject::connect(
-      _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app,
-      []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);
+      _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app, []() { QCoreApplication::exit(-1); },
+      Qt::QueuedConnection);
 
   _engine->loadFromModule("Library", "Main");
 
