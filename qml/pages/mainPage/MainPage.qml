@@ -51,8 +51,8 @@ Page {
                     Layout.rightMargin: root._sidePadding
                     placeholderText: qsTr("Search books...")
                     text: BookController.searchModel.searchQuery
-                    onTextEdited: BookController.searchModel.searchQuery = text
-                    onAccepted: BookController.searchModel.searchQuery = text
+                    onTextEdited: text => BookController.searchModel.searchQuery = text
+                    onAccepted: text => BookController.searchModel.searchQuery = text
                 }
 
                 GoalCard {

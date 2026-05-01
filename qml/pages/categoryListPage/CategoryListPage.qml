@@ -86,8 +86,8 @@ Page {
             Layout.topMargin: Geometry.spacing.lg
             placeholderText: qsTr("Search in this list...")
             text: BookController.searchModel.searchQuery
-            onTextEdited: BookController.searchModel.searchQuery = text
-            onAccepted: BookController.searchModel.searchQuery = text
+            onTextEdited: text => BookController.searchModel.searchQuery = text
+            onAccepted: text => BookController.searchModel.searchQuery = text
         }
 
         // List

@@ -7,6 +7,8 @@
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
+#include <vector>
+
 namespace bl::models {
 
 class BookSearchProxyModel : public QSortFilterProxyModel {
@@ -26,9 +28,23 @@ signals:
 
 protected:
   bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+  bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
+
+private:
+  qint8 calculateMatchScore(const QModelIndex &index, const QString &query) const;
+  qint8 cachedScore(int sourceRow) const;
+  static qint8 scoreField(const QString &text, const QString &query, qint32 weight, qsizetype matchIdx);
 
 private:
   QString _searchQuery;
+
+  // NOTE: in case of bug with searching during rowsInserted / rowsRemoved on the source model —
+  // _searchCache is keyed by source row index. Qt does NOT re-call filterAcceptsRow for rows that
+  // get shifted by an insert/remove, so cached scores end up associated with the wrong rows.
+  // dataChanged and modelReset are handled correctly because Qt re-runs the filter for affected
+  // rows, which lets filterAcceptsRow overwrite the cache. To fix the insert/remove case,
+  // connect to source's rowsInserted/rowsRemoved and clear (or shift) the cache accordingly.
+  mutable std::vector<qint8> _searchCache; // search match scores
 };
 
 } // namespace bl::models
