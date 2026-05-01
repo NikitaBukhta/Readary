@@ -21,6 +21,7 @@ from buildtools.providers import (
     ClangFormatProvider,
     GitProvider,
     MsvcProvider,
+    QmlFormatProvider,
     VcpkgProvider,
 )
 from buildtools.shell import Shell
@@ -41,20 +42,22 @@ class CommandRegistry:
         self._clang_format = ClangFormatProvider(
             self.shell, self._venv_mgr, config.project_dir,
         )
+        self._qml_format = QmlFormatProvider(self.shell, config)
 
     def build(self) -> dict[str, Command]:
         commands: dict[str, Command] = {
             "bootstrap": BootstrapCommand(
                 self.config, self.shell,
                 self._venv_mgr, self._cmake, self._vcpkg,
-                self._msvc, self._clang_format,
+                self._msvc, self._clang_format, self._qml_format,
             ),
             "compile": CompileCommand(
                 self.config, self.shell, self._cmake,
-                self._msvc, self._clang_format,
+                self._msvc, self._clang_format, self._qml_format,
             ),
             "format": FormatCommand(
                 self.config, self.shell, self._clang_format,
+                self._qml_format,
             ),
             "run": RunCommand(self.config),
             "test": TestCommand(self.config),

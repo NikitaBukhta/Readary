@@ -4,32 +4,24 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Library
 
-Rectangle {
+Page {
     id: root
 
     property string currentNavId: "library"
 
     signal bookOpened(int bookId)
-    signal navItemSelected(string navId)
-
-    color: Theme.background
 
     function _title() {
         switch (BookController.activeKind) {
-        case BookController.WantToRead:  return qsTr("Want to read");
-        case BookController.WantToBuy:   return qsTr("Want to buy");
-        case BookController.AlreadyRead: return qsTr("Already read");
+        case BookController.WantToRead:
+            return qsTr("Want to read");
+        case BookController.WantToBuy:
+            return qsTr("Want to buy");
+        case BookController.AlreadyRead:
+            return qsTr("Already read");
         }
         return "";
     }
-
-    readonly property var _navItems: [
-        { id: "library",    label: qsTr("Library"),    glyph: "📚", source: "" },
-        { id: "search",     label: qsTr("Search"),     glyph: "🔍", source: "" },
-        { id: "goals",      label: qsTr("Goals"),      glyph: "🎯", source: "" },
-        { id: "challenges", label: qsTr("Challenges"), glyph: "🏆", source: "" },
-        { id: "profile",    label: qsTr("Profile"),    glyph: "👤", source: "" }
-    ]
 
     readonly property int _sidePadding: Geometry.spacing.xxl
 
@@ -81,7 +73,7 @@ Rectangle {
             Layout.leftMargin: root._sidePadding
             Layout.rightMargin: root._sidePadding
             Layout.topMargin: Geometry.spacing.xs
-            text: qsTr("%n book(s)", "", BookController.searchModel.count)
+            text: qsTr("%n book(s)", "", list.count)
             color: Theme.textMuted
             font.pixelSize: Styles.fontSize.body
         }
@@ -95,7 +87,7 @@ Rectangle {
             placeholderText: qsTr("Search in this list...")
             text: BookController.searchModel.searchQuery
             onTextEdited: BookController.searchModel.searchQuery = text
-            onAccepted:   BookController.searchModel.searchQuery = text
+            onAccepted: BookController.searchModel.searchQuery = text
         }
 
         // List
@@ -112,26 +104,20 @@ Rectangle {
             model: BookController.searchModel
             boundsBehavior: Flickable.StopAtBounds
 
-            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+            }
 
             delegate: BookListRow {
                 required property var model
+                required property int index
+
                 width: ListView.view.width
                 name: model.name ?? ""
                 author: model.author ?? ""
                 type: model.type ?? ""
                 year: model.year ?? 0
-                onClicked: root.bookOpened(model.bookId)
-            }
-        }
-
-        BottomNavBar {
-            Layout.fillWidth: true
-            items: root._navItems
-            currentId: root.currentNavId
-            onItemSelected: (id) => {
-                root.currentNavId = id
-                root.navItemSelected(id)
+                onClicked: console.log("CategoryListPage.qml: ", "Open book at index", index) // TODO: open book details page
             }
         }
     }

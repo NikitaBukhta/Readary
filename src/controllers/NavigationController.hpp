@@ -21,7 +21,11 @@ class NavigationController : public QObject {
 public:
   enum class PageEnum {
     MAIN_PAGE = 1,
-    CATEGORY_LIST_PAGE = 2,
+    CATEGORY_LIST_PAGE,
+    SEARCH_PAGE,
+    GOALS_PAGE,
+    CHALLENGES_PAGE,
+    PROFILE_PAGE,
   };
   Q_ENUM(PageEnum)
 

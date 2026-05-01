@@ -13,7 +13,7 @@ Rectangle {
     property color iconBackground: Theme.primarySoft
     property color iconColor: Theme.primary
 
-    signal clicked()
+    signal clicked
 
     implicitHeight: Geometry.size.categoryRowHeight
     radius: Geometry.radius.lg

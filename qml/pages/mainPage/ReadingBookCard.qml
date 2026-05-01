@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Library
 
 Item {
@@ -12,72 +14,103 @@ Item {
     property int pagesRead: 0
     property int pagesTotal: 0
 
-    readonly property real progress: pagesTotal > 0
-                                     ? Math.min(1, pagesRead / pagesTotal) : 0
+    readonly property real progress: pagesTotal > 0 ? Math.min(1, pagesRead / pagesTotal) : 0
 
-    signal clicked()
+    signal clicked
 
     implicitWidth: Geometry.size.readingCardWidth
-    implicitHeight: coverContainer.height + meta.implicitHeight
-                    + Geometry.spacing.md
+    implicitHeight: layout.implicitHeight
+
+    MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.clicked()
+    }
 
     ColumnLayout {
+        id: layout
         anchors.fill: parent
         spacing: Geometry.spacing.sm
 
-        Item {
-            id: coverContainer
+        // Card surface: cover spans the full width; progress sits below it
+        // with a small inset.
+        Rectangle {
+            id: background
+            clip: true
             Layout.fillWidth: true
-            Layout.preferredHeight: Geometry.size.readingCoverHeight
+            Layout.preferredHeight: cardContent.implicitHeight
+            radius: Geometry.radius.lg
+            color: Theme.surface
 
-            Rectangle {
-                id: coverFallback
+            ColumnLayout {
+                id: cardContent
                 anchors.fill: parent
-                radius: Geometry.radius.md
-                color: root.coverFallbackColor
-                visible: !cover.visible
-            }
+                spacing: Geometry.spacing.sm
 
-            // For rounded-corner clipping on the image wrap this Image with a
-            // MultiEffect { maskEnabled: true; maskSource: coverFallback }.
-            Image {
-                id: cover
-                anchors.fill: parent
-                source: root.coverSource
-                fillMode: Image.PreserveAspectCrop
-                visible: source.toString().length > 0 && status === Image.Ready
-            }
+                Item {
+                    id: coverContainer
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Geometry.size.readingCoverHeight
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.clicked()
-            }
+                    // Hidden shape used as alpha mask for the cover layer below.
+                    // Applies rounded top corners to whatever cover content
+                    // (fallback Rectangle or real Image) draws underneath.
+                    Rectangle {
+                        id: coverMask
+                        anchors.fill: parent
+                        color: "white"
+                        topLeftRadius: Geometry.radius.lg
+                        topRightRadius: Geometry.radius.lg
+                        visible: false
+                        layer.enabled: true
+                    }
 
-            ProgressBar {
-                id: coverProgress
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: Geometry.spacing.md
-                anchors.rightMargin: Geometry.spacing.md
-                anchors.bottomMargin: Geometry.spacing.md
-                height: 5
-                progress: root.progress
-                trackColor: Qt.rgba(1, 1, 1, 0.45)
-                progressColor: Theme.primary
-            }
+                    Rectangle {
+                        id: coverFallback
+                        anchors.fill: parent
+                        color: root.coverFallbackColor
+                        visible: !cover.visible
+                    }
 
-            Text {
-                anchors.right: coverProgress.right
-                anchors.bottom: coverProgress.top
-                anchors.bottomMargin: Geometry.spacing.xs
-                text: qsTr("%1/%2").arg(root.pagesRead).arg(root.pagesTotal)
-                color: "#FFFFFF"
-                font.pixelSize: Styles.fontSize.caption
-                font.weight: Styles.fontWeight.semibold
-                style: Text.Raised
-                styleColor: Qt.rgba(0, 0, 0, 0.4)
+                    Image {
+                        id: cover
+                        anchors.fill: parent
+                        source: root.coverSource
+                        fillMode: Image.PreserveAspectCrop
+                        visible: source.toString().length > 0 && status === Image.Ready
+                    }
+
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskSource: coverMask
+                    }
+                }
+
+                ColumnLayout {
+                    id: progressColumn
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Geometry.spacing.md
+                    Layout.rightMargin: Geometry.spacing.md
+                    Layout.bottomMargin: Geometry.spacing.md
+                    spacing: Geometry.spacing.xs
+
+                    ProgressBar {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 5
+                        progress: root.progress
+                        trackColor: Theme.primarySoft
+                        progressColor: Theme.primary
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignRight
+                        text: qsTr("%1/%2").arg(root.pagesRead).arg(root.pagesTotal)
+                        color: Theme.textMuted
+                        font.pixelSize: Styles.fontSize.caption
+                        font.weight: Styles.fontWeight.semibold
+                    }
+                }
             }
         }
 
@@ -87,22 +120,27 @@ Item {
             spacing: 2
 
             Text {
-                Layout.fillWidth: true
+                id: titleText
                 text: root.title
                 color: Theme.textPrimary
+                elide: Text.ElideRight
                 font.pixelSize: Styles.fontSize.body
                 font.weight: Styles.fontWeight.semibold
-                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
                 maximumLineCount: 1
+
+                Layout.fillWidth: true
             }
 
             Text {
-                Layout.fillWidth: true
                 text: root.author
                 color: Theme.primary
-                font.pixelSize: Styles.fontSize.small
                 elide: Text.ElideRight
+                font.pixelSize: Styles.fontSize.small
+                horizontalAlignment: Text.AlignHCenter
                 maximumLineCount: 1
+
+                Layout.fillWidth: true
             }
         }
     }

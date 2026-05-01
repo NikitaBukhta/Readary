@@ -86,11 +86,16 @@ class HelpCommand(Command):
     def _print_tools(self) -> None:
         cmake_venv = self.config.venv_executable("cmake")
         vcpkg_path = self.config.vcpkg_executable()
+        clang_format_venv = self.config.venv_executable("clang-format")
+        qmlformat_exe = "qmlformat.exe" if self.config.is_windows else "qmlformat"
+        qmlformat_path = self.config.qt_tools_dir / qmlformat_exe
 
         tools: dict[str, list[Path]] = {
-            "git":   [],
-            "cmake": [cmake_venv],
-            "vcpkg": [vcpkg_path],
+            "git":          [],
+            "cmake":        [cmake_venv],
+            "vcpkg":        [vcpkg_path],
+            "clang-format": [clang_format_venv],
+            "qmlformat":    [qmlformat_path],
         }
 
         print("\nTools:")

@@ -3,6 +3,7 @@ from buildtools.config import ProjectConfig
 from buildtools.providers.clang_format import ClangFormatProvider
 from buildtools.providers.cmake import CMakeProvider
 from buildtools.providers.msvc import MsvcProvider
+from buildtools.providers.qml_format import QmlFormatProvider
 from buildtools.providers.vcpkg import VcpkgProvider
 from buildtools.shell import Shell
 from buildtools.venv_manager import VenvManager
@@ -17,7 +18,8 @@ class BootstrapCommand(Command):
     def __init__(self, config: ProjectConfig, shell: Shell,
                  venv_mgr: VenvManager, cmake: CMakeProvider,
                  vcpkg: VcpkgProvider, msvc: MsvcProvider,
-                 clang_format: ClangFormatProvider):
+                 clang_format: ClangFormatProvider,
+                 qml_format: QmlFormatProvider):
         self.config = config
         self.shell = shell
         self.venv_mgr = venv_mgr
@@ -25,6 +27,7 @@ class BootstrapCommand(Command):
         self.vcpkg = vcpkg
         self.msvc = msvc
         self.clang_format = clang_format
+        self.qml_format = qml_format
 
     def execute(self) -> None:
         self.venv_mgr.ensure()
@@ -42,6 +45,11 @@ class BootstrapCommand(Command):
         for d in self.config.cmake_defs:
             cmake_cmd.append(f"-D{d}")
         self.shell.run(cmake_cmd, env=env)
+
+        # qmlformat ships with Qt6 — only resolvable after vcpkg installs Qt
+        # during the cmake configure step above.
+        qmlformat_path = self.qml_format.ensure()
+        print(f"  qmlformat    : {qmlformat_path}")
 
         print("\nBootstrap complete.")
         print(f"  Dependencies : {self.config.deps_dir}")

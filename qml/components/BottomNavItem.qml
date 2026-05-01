@@ -10,7 +10,7 @@ Item {
     property url iconSource
     property bool active: false
 
-    signal clicked()
+    signal clicked
 
     implicitHeight: Geometry.size.bottomNavHeight
 
@@ -39,8 +39,7 @@ Item {
             text: root.label
             color: root._contentColor
             font.pixelSize: Styles.fontSize.caption
-            font.weight: root.active ? Styles.fontWeight.semibold
-                                     : Styles.fontWeight.medium
+            font.weight: root.active ? Styles.fontWeight.semibold : Styles.fontWeight.medium
         }
     }
 }

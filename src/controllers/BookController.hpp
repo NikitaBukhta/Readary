@@ -29,18 +29,10 @@ class BookController : public QObject {
 
   Q_PROPERTY(int currentBookId READ currentBookId WRITE setCurrentBookId NOTIFY currentBookIdChanged)
   Q_PROPERTY(QVariantMap currentBookData READ currentBookData NOTIFY currentBookIdChanged)
-  Q_PROPERTY(bool editMode READ editMode NOTIFY currentBookIdChanged)
   Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-  Q_PROPERTY(int yearMin READ yearMin CONSTANT)
-  Q_PROPERTY(int yearMax READ yearMax CONSTANT)
 
   Q_PROPERTY(ListKind activeKind READ activeKind WRITE setActiveKind NOTIFY activeKindChanged)
   Q_PROPERTY(bl::models::BookSearchProxyModel *searchModel READ searchModel CONSTANT)
-  Q_PROPERTY(bl::models::BookSortFilterProxyModel *wantToReadModel READ wantToReadModel CONSTANT)
-  Q_PROPERTY(bl::models::BookSortFilterProxyModel *wantToBuyModel READ wantToBuyModel CONSTANT)
-  Q_PROPERTY(bl::models::BookSortFilterProxyModel *alreadyReadModel READ alreadyReadModel CONSTANT)
-  Q_PROPERTY(bl::models::BookSortFilterProxyModel *readInProgressModel READ readInProgressModel CONSTANT)
-  Q_PROPERTY(bl::models::BookSortFilterProxyModel *activeModel READ activeModel NOTIFY activeKindChanged)
 
 public:
   enum class ListKind {
@@ -59,21 +51,14 @@ public:
   int currentBookId() const;
   void setCurrentBookId(int id);
   QVariantMap currentBookData() const;
-  bool editMode() const;
   QString errorMessage() const;
-  int yearMin() const;
-  int yearMax() const;
 
   // List
   ListKind activeKind() const;
   void setActiveKind(ListKind kind);
+  Q_INVOKABLE bl::models::BookSortFilterProxyModel *getSortFilterProxyForKind(ListKind kind) const;
 
   bl::models::BookSearchProxyModel *searchModel() const;
-  bl::models::BookSortFilterProxyModel *wantToReadModel() const;
-  bl::models::BookSortFilterProxyModel *wantToBuyModel() const;
-  bl::models::BookSortFilterProxyModel *alreadyReadModel() const;
-  bl::models::BookSortFilterProxyModel *readInProgressModel() const;
-  bl::models::BookSortFilterProxyModel *activeModel() const;
 
   static BookController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
   static void setInstance(BookController *instance);
@@ -85,10 +70,6 @@ signals:
   void activeKindChanged();
 
 private:
-  static QString normalizeIsbn(const QString &rawIsbn);
-  static QString stripIsbnPrefix(const QString &isbn);
-
-  bool validate(const QString &title, const QString &author, int year, const QString &isbn);
   void setErrorMessage(const QString &message);
 
   bl::models::BookSortFilterProxyModel *buildProxy(bl::models::BookListModel *source,

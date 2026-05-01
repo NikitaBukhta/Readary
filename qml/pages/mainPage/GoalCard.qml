@@ -28,12 +28,20 @@ Rectangle {
     }
 
     RowLayout {
-        anchors.fill: parent
-        anchors.margins: Geometry.spacing.xl
+        anchors {
+            fill: parent
+            left: parent.left
+            right: parent.right
+            leftMargin: Geometry.spacing.xl
+            rightMargin: Geometry.spacing.xl
+            verticalCenter: parent.verticalCenter
+        }
+
         spacing: Geometry.spacing.lg
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
             spacing: Geometry.spacing.xs
 
             Text {
@@ -55,18 +63,31 @@ Rectangle {
         Item {
             Layout.preferredWidth: Geometry.size.goalRing
             Layout.preferredHeight: Geometry.size.goalRing
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-            ProgressRing {
+            // Outer border ring (transparent center).
+            Rectangle {
                 anchors.fill: parent
-                progress: root.progress
-            }
+                radius: width / 2
+                color: "transparent"
+                border.width: Geometry.size.goalRingStroke
+                border.color: Theme.primary
 
-            Text {
-                anchors.centerIn: parent
-                text: qsTr("%1%").arg(Math.round(root.progress * 100))
-                color: Theme.primary
-                font.pixelSize: Styles.fontSize.bodySmall
-                font.weight: Styles.fontWeight.bold
+                ProgressRing {
+                    anchors.fill: parent
+                    anchors.margins: Geometry.spacing.sm
+                    strokeWidth: Geometry.size.goalRingStroke
+                    progress: root.progress
+                }
+                Text {
+                    anchors.fill: parent
+                    text: qsTr("%1%").arg(Math.round(root.progress * 100))
+                    color: Theme.primary
+                    font.pixelSize: Styles.fontSize.bodySmall
+                    font.weight: Styles.fontWeight.bold
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
         }
     }

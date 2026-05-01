@@ -29,7 +29,8 @@ NavigationController::PageInfo NavigationController::pageInfo(PageEnum page) {
   case PageEnum::CATEGORY_LIST_PAGE:
     return {QUrl{u"qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml"_qs}, 2};
   }
-  Q_UNREACHABLE();
+
+  return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_qs}, 1};
 }
 
 QUrl NavigationController::currentPagePath() const {

@@ -23,29 +23,27 @@ Item {
         antialiasing: true
 
         onPaint: {
-            const ctx = getContext("2d")
-            ctx.reset()
-            const cx = width / 2
-            const cy = height / 2
-            const r = Math.min(cx, cy) - root.strokeWidth / 2
+            const ctx = getContext("2d");
+            ctx.reset();
+            const cx = width / 2;
+            const cy = height / 2;
+            const r = Math.min(cx, cy) - root.strokeWidth / 2;
 
-            ctx.lineWidth = root.strokeWidth
-            ctx.lineCap = "round"
+            ctx.lineWidth = root.strokeWidth;
+            ctx.lineCap = "round";
 
-            ctx.strokeStyle = root.trackColor
-            ctx.beginPath()
-            ctx.arc(cx, cy, r, 0, Math.PI * 2)
-            ctx.stroke()
+            ctx.strokeStyle = root.trackColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
 
-            const clamped = Math.max(0, Math.min(1, root.progress))
+            const clamped = Math.max(0, Math.min(1, root.progress));
             if (clamped <= 0)
-                return
-
-            ctx.strokeStyle = root.progressColor
-            ctx.beginPath()
-            ctx.arc(cx, cy, r, -Math.PI / 2,
-                    -Math.PI / 2 + Math.PI * 2 * clamped)
-            ctx.stroke()
+                return;
+            ctx.strokeStyle = root.progressColor;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamped);
+            ctx.stroke();
         }
     }
 }

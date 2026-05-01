@@ -22,10 +22,18 @@ ColumnLayout {
         trailingText: list.count > 0 ? list.count.toString() : ""
     }
 
+    // Off-screen sizer: drives the list height from the card's actual
+    // implicitHeight, so layout stays in sync with ReadingBookCard changes.
+    ReadingBookCard {
+        id: cardSizer
+        visible: false
+        enabled: false
+    }
+
     ListView {
         id: list
         Layout.fillWidth: true
-        Layout.preferredHeight: Geometry.size.readingCoverHeight + 2 * Styles.fontSize.body + Geometry.spacing.lg
+        Layout.preferredHeight: cardSizer.implicitHeight
         orientation: ListView.Horizontal
         model: root.model
         spacing: Geometry.spacing.lg

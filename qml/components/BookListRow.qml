@@ -13,7 +13,7 @@ Rectangle {
     property url coverSource
     property color coverFallbackColor: Theme.primarySoft
 
-    signal clicked()
+    signal clicked
 
     implicitHeight: Geometry.size.bookRowHeight
     radius: Geometry.radius.lg
@@ -91,8 +91,10 @@ Rectangle {
                 Layout.fillWidth: true
                 text: {
                     const parts = [];
-                    if (root.type.length > 0) parts.push(root.type);
-                    if (root.year > 0)        parts.push(root.year);
+                    if (root.type.length > 0)
+                        parts.push(root.type);
+                    if (root.year > 0)
+                        parts.push(root.year);
                     return parts.join(" · ");
                 }
                 color: Theme.textMuted

@@ -6,7 +6,29 @@ import Library
 ColumnLayout {
     id: root
 
-    property var model
+    readonly property var _categories: [
+        {
+            categoryId: BookController.WantToRead,
+            title: qsTr("Want to read"),
+            subtitle: qsTr("%n book(s)", "", BookController.getSortFilterProxyForKind(BookController.WantToRead).count),
+            glyph: "📖",
+            source: ""
+        },
+        {
+            categoryId: BookController.WantToBuy,
+            title: qsTr("Want to buy"),
+            subtitle: qsTr("%n book(s)", "", BookController.getSortFilterProxyForKind(BookController.WantToBuy).count),
+            glyph: "🛒",
+            source: ""
+        },
+        {
+            categoryId: BookController.AlreadyRead,
+            title: qsTr("Already read"),
+            subtitle: qsTr("%n book(s)", "", BookController.getSortFilterProxyForKind(BookController.AlreadyRead).count),
+            glyph: "✅",
+            source: ""
+        }
+    ]
 
     signal categoryOpened(var categoryId)
 
@@ -18,7 +40,7 @@ ColumnLayout {
     }
 
     Repeater {
-        model: root.model
+        model: root._categories
 
         delegate: CategoryRow {
             required property var model

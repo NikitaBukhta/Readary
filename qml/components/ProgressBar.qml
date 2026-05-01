@@ -25,7 +25,10 @@ Item {
         color: root.progressColor
 
         Behavior on width {
-            NumberAnimation { duration: Styles.duration.normal; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                duration: Styles.duration.normal
+                easing.type: Easing.OutCubic
+            }
         }
     }
 }

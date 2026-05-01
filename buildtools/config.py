@@ -71,6 +71,12 @@ class ProjectConfig:
     def qt_qml_dir(self) -> Path:
         return self._vcpkg_triplet_dir / "Qt6" / "qml"
 
+    @property
+    def qt_tools_dir(self) -> Path:
+        # vcpkg places Qt6 host tools (qmlformat, moc, ...) under tools/Qt6/bin
+        # regardless of Debug/Release triplet variant.
+        return self.deps_dir / "x64-windows" / "tools" / "Qt6" / "bin"
+
     def vcpkg_executable(self) -> Path:
         """Return the expected path for the vcpkg binary."""
         exe = "vcpkg.exe" if self.is_windows else "vcpkg"

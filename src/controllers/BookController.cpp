@@ -53,18 +53,10 @@ QVariantMap BookController::currentBookData() const {
     return {};
 
   auto book = _listModel->getBook(_currentBookId);
-  if (!book.isEmpty())
-    book.insert("rawIsbn", stripIsbnPrefix(book.value("isbn").toString()));
   return book;
 }
 
-bool BookController::editMode() const { return _currentBookId > 0; }
-
 QString BookController::errorMessage() const { return _errorMessage; }
-
-int BookController::yearMin() const { return 1; }
-
-int BookController::yearMax() const { return QDate::currentDate().year(); }
 
 BookController::ListKind BookController::activeKind() const { return _activeKind; }
 
@@ -76,21 +68,11 @@ void BookController::setActiveKind(ListKind kind) {
   emit activeKindChanged();
 }
 
+bl::models::BookSortFilterProxyModel *BookController::getSortFilterProxyForKind(ListKind kind) const {
+  return _proxies.value(kind, nullptr);
+}
+
 bl::models::BookSearchProxyModel *BookController::searchModel() const { return _searchProxy; }
-
-bl::models::BookSortFilterProxyModel *BookController::wantToReadModel() const { return proxyFor(ListKind::WantToRead); }
-
-bl::models::BookSortFilterProxyModel *BookController::wantToBuyModel() const { return proxyFor(ListKind::WantToBuy); }
-
-bl::models::BookSortFilterProxyModel *BookController::alreadyReadModel() const {
-  return proxyFor(ListKind::AlreadyRead);
-}
-
-bl::models::BookSortFilterProxyModel *BookController::readInProgressModel() const {
-  return proxyFor(ListKind::InProgress);
-}
-
-bl::models::BookSortFilterProxyModel *BookController::activeModel() const { return proxyFor(_activeKind); }
 
 bl::models::BookSortFilterProxyModel *
 BookController::buildProxy(bl::models::BookListModel *source, const bl::models::filters::BookFilterStrategy &strategy) {
@@ -107,41 +89,7 @@ bl::models::BookSortFilterProxyModel *BookController::proxyFor(ListKind kind) co
 void BookController::applyActiveSourceToSearchProxy() {
   if (!_searchProxy)
     return;
-  _searchProxy->setSourceModel(activeModel());
-}
-
-QString BookController::normalizeIsbn(const QString &rawIsbn) {
-  QString trimmed = rawIsbn.trimmed();
-  if (trimmed.isEmpty())
-    return {};
-  if (trimmed.startsWith(kIsbnPrefix))
-    return trimmed;
-  return kIsbnPrefix + trimmed;
-}
-
-QString BookController::stripIsbnPrefix(const QString &isbn) {
-  if (isbn.startsWith(kIsbnPrefix))
-    return isbn.mid(kIsbnPrefix.length());
-  return isbn;
-}
-
-bool BookController::validate(const QString &title, const QString &author, int year, const QString &isbn) {
-  if (title.trimmed().isEmpty()) {
-    setErrorMessage(tr("Title is required."));
-    return false;
-  }
-
-  if (author.trimmed().isEmpty()) {
-    setErrorMessage(tr("Author is required."));
-    return false;
-  }
-
-  if (year != 0 && (year < yearMin() || year > yearMax())) {
-    setErrorMessage(tr("Year must be between %1 and %2.").arg(yearMin()).arg(yearMax()));
-    return false;
-  }
-
-  return true;
+  _searchProxy->setSourceModel(getSortFilterProxyForKind(_activeKind));
 }
 
 void BookController::setErrorMessage(const QString &message) {
