@@ -25,9 +25,12 @@ QList<BookDTO> BookTable::getAllBooks() {
           "b.publisher AS publisher_id",
           "p.name AS publisher",
           "b.description",
+          "b.coverUrl",
           "b.isHardcover",
           "b.type AS type_id",
           "t.name AS type",
+          "b.totalPages",
+          "b.pagesRead",
           "b.globalRating",
           "b.localRating",
           "b.userRating",
@@ -67,11 +70,12 @@ qint64 BookTable::addBook(const BookDTO &book) {
   QString error;
 
   query
-      .insertInto(kTableName, {"name", "author", "year", "publisher", "description", "isHardcover", "type",
-                               "globalRating", "localRating", "userRating", "status", "inWishList"})
-      .values({book.name, book.authorId, book.year, nullableId(book.publisherId), book.description, book.isHardcover,
-               nullableId(book.typeId), book.globalRating, book.localRating, book.userRating, book.status,
-               book.inWishList});
+      .insertInto(kTableName,
+                  {"name", "author", "year", "publisher", "description", "coverUrl", "isHardcover", "type",
+                   "totalPages", "pagesRead", "globalRating", "localRating", "userRating", "status", "inWishList"})
+      .values({book.name, book.authorId, book.year, nullableId(book.publisherId), book.description, book.coverUrl,
+               book.isHardcover, nullableId(book.typeId), book.totalPages, book.pagesRead, book.globalRating,
+               book.localRating, book.userRating, book.status, book.inWishList});
 
   qint64 id = _db->insert(query, &error);
   if (id > 0)
@@ -87,12 +91,12 @@ bool BookTable::updateBook(const BookDTO &book) {
   QString error;
 
   query.update(kTableName)
-      .set({"name", "author", "year", "publisher", "description", "isHardcover", "type", "globalRating", "localRating",
-            "userRating", "status", "inWishList"})
+      .set({"name", "author", "year", "publisher", "description", "coverUrl", "isHardcover", "type", "totalPages",
+            "pagesRead", "globalRating", "localRating", "userRating", "status", "inWishList"})
       .where("id = ?")
-      .values({book.name, book.authorId, book.year, nullableId(book.publisherId), book.description, book.isHardcover,
-               nullableId(book.typeId), book.globalRating, book.localRating, book.userRating, book.status,
-               book.inWishList, book.id});
+      .values({book.name, book.authorId, book.year, nullableId(book.publisherId), book.description, book.coverUrl,
+               book.isHardcover, nullableId(book.typeId), book.totalPages, book.pagesRead, book.globalRating,
+               book.localRating, book.userRating, book.status, book.inWishList, book.id});
 
   int affected = _db->execute(query, &error);
 
@@ -126,6 +130,48 @@ bool BookTable::deleteBook(qint64 id) {
   else
     qCWarning(lcBookTable) << "Failed to delete book id:" << id << "error:" << error;
   return false;
+}
+
+QStringList BookTable::getGenres(qint64 bookId) const {
+  core::SqlQueryBuilder query;
+  QString error;
+
+  query.select({"g.name"})
+      .from("book_genres", "bg")
+      .leftJoin("genres", "g")
+      .on("g.id = bg.genre_id")
+      .where("bg.book_id = ?")
+      .orderBy("g.name")
+      .values({bookId});
+
+  auto rows = _db->select(query, &error);
+  if (!error.isEmpty())
+    qCWarning(lcBookTable) << "Failed to load genres for book id:" << bookId << "error:" << error;
+
+  QStringList result;
+  result.reserve(rows.size());
+  for (const auto &row : std::as_const(rows)) {
+    result.append(row.value("name").toString());
+  }
+  return result;
+}
+
+QVariantList BookTable::getCharacters(qint64 bookId) const {
+  core::SqlQueryBuilder query;
+  QString error;
+
+  query.select({"id", "name", "role"}).from("book_characters").where("book_id = ?").orderBy("id").values({bookId});
+
+  auto rows = _db->select(query, &error);
+  if (!error.isEmpty())
+    qCWarning(lcBookTable) << "Failed to load characters for book id:" << bookId << "error:" << error;
+
+  QVariantList result;
+  result.reserve(rows.size());
+  for (const auto &row : std::as_const(rows)) {
+    result.append(row);
+  }
+  return result;
 }
 
 } // namespace bl::services

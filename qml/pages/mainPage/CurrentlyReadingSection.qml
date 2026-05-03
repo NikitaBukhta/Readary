@@ -10,7 +10,7 @@ ColumnLayout {
     property int sidePadding: Geometry.spacing.xxl
     property string title: qsTr("Currently reading")
 
-    signal bookOpened(int bookIndex)
+    signal bookOpened(int bookId)
 
     spacing: Geometry.spacing.md
 
@@ -22,8 +22,7 @@ ColumnLayout {
         trailingText: list.count > 0 ? list.count.toString() : ""
     }
 
-    // Off-screen sizer: drives the list height from the card's actual
-    // implicitHeight, so layout stays in sync with ReadingBookCard changes.
+    // Off-screen sizer: feeds list its preferredHeight without depending on a delegate instance.
     ReadingBookCard {
         id: cardSizer
         visible: false
@@ -40,7 +39,7 @@ ColumnLayout {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
-        // Side padding via header/footer keeps swipe physics natural.
+        // Side padding via header/footer keeps swipe momentum natural at the ends.
         header: Item {
             width: root.sidePadding
         }
@@ -53,10 +52,10 @@ ColumnLayout {
             required property int index
             title: model.name ?? ""
             author: model.author ?? ""
-            coverSource: model.coverSource ?? ""
+            coverSource: model.coverUrl ?? ""
             pagesRead: model.pagesRead ?? 0
-            pagesTotal: model.pagesTotal ?? 0
-            onClicked: root.bookOpened(index)
+            pagesTotal: model.totalPages ?? 0
+            onClicked: root.bookOpened(model.bookId)
         }
     }
 }

@@ -72,4 +72,7 @@ QtObject {
     readonly property color divider: palette.divider
     readonly property color shadow: palette.shadow
     readonly property color ringTrack: palette.ringTrack
+
+    readonly property color starColor: "#F59E0B"
+    readonly property color starColorEmpty: "#5AF59E0B" // 35% alpha
 }

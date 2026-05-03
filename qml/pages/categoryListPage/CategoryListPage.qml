@@ -29,8 +29,8 @@ Page {
         anchors.fill: parent
         spacing: 0
 
-        // Header: back button + title
         RowLayout {
+            id: header
             Layout.fillWidth: true
             Layout.leftMargin: root._sidePadding
             Layout.rightMargin: root._sidePadding
@@ -38,11 +38,13 @@ Page {
             spacing: Geometry.spacing.md
 
             Item {
+                id: backRow
                 Layout.preferredWidth: Geometry.size.iconLg
                 Layout.preferredHeight: Geometry.size.iconLg
                 Layout.alignment: Qt.AlignVCenter
 
                 IconGlyph {
+                    id: backIcon
                     anchors.centerIn: parent
                     glyph: "←"
                     color: Theme.primary
@@ -50,6 +52,7 @@ Page {
                 }
 
                 MouseArea {
+                    id: backArea
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: NavigationController.goBack()
@@ -57,6 +60,7 @@ Page {
             }
 
             Text {
+                id: titleText
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 text: root._title()
@@ -67,8 +71,8 @@ Page {
             }
         }
 
-        // Subtitle: book count
         Text {
+            id: subtitleText
             Layout.fillWidth: true
             Layout.leftMargin: root._sidePadding
             Layout.rightMargin: root._sidePadding
@@ -78,8 +82,8 @@ Page {
             font.pixelSize: Styles.fontSize.body
         }
 
-        // Search field
         AppSearchField {
+            id: searchField
             Layout.fillWidth: true
             Layout.leftMargin: root._sidePadding
             Layout.rightMargin: root._sidePadding
@@ -90,7 +94,6 @@ Page {
             onAccepted: text => BookController.searchModel.searchQuery = text
         }
 
-        // List
         ListView {
             id: list
             Layout.fillWidth: true
@@ -117,7 +120,8 @@ Page {
                 author: model.author ?? ""
                 type: model.type ?? ""
                 year: model.year ?? 0
-                onClicked: console.log("CategoryListPage.qml: ", "Open book at index", index) // TODO: open book details page
+                coverSource: model.coverUrl ?? ""
+                onClicked: BookController.openBook(model.bookId)
             }
         }
     }

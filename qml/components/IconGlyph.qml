@@ -9,8 +9,10 @@ Item {
     property int size: Geometry.size.iconMd
     property color color: Theme.textPrimary
 
-    implicitWidth: size
-    implicitHeight: size
+    readonly property bool _empty: glyph.length === 0 && source.toString().length === 0
+
+    implicitWidth: _empty ? 0 : size
+    implicitHeight: _empty ? 0 : size
 
     Image {
         id: image

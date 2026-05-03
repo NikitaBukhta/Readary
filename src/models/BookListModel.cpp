@@ -41,12 +41,18 @@ QVariant BookListModel::data(const QModelIndex &index, int role) const {
     return book.publisherName;
   case DescriptionRole:
     return book.description;
+  case CoverUrlRole:
+    return book.coverUrl;
   case IsHardcoverRole:
     return book.isHardcover;
   case TypeIdRole:
     return book.typeId;
   case TypeRole:
     return book.typeName;
+  case TotalPagesRole:
+    return book.totalPages;
+  case PagesReadRole:
+    return book.pagesRead;
   case GlobalRatingRole:
     return book.globalRating;
   case LocalRatingRole:
@@ -72,9 +78,12 @@ QHash<int, QByteArray> BookListModel::roleNames() const {
       {PublisherIdRole, "publisherId"},
       {PublisherRole, "publisher"},
       {DescriptionRole, "description"},
+      {CoverUrlRole, "coverUrl"},
       {IsHardcoverRole, "isHardcover"},
       {TypeIdRole, "typeId"},
       {TypeRole, "type"},
+      {TotalPagesRole, "totalPages"},
+      {PagesReadRole, "pagesRead"},
       {GlobalRatingRole, "globalRating"},
       {LocalRatingRole, "localRating"},
       {UserRatingRole, "userRating"},
@@ -83,7 +92,7 @@ QHash<int, QByteArray> BookListModel::roleNames() const {
   };
 }
 
-bool BookListModel::deleteBook(int id) {
+bool BookListModel::deleteBook(qint64 id) {
   if (!_bookTable->deleteBook(id)) {
     setErrorMessage(tr("Failed to delete book."));
     return false;
@@ -95,11 +104,10 @@ bool BookListModel::deleteBook(int id) {
   return true;
 }
 
-QVariantMap BookListModel::getBook(int id) const {
-  for (const auto &book : _books) {
-    if (book.id == id) {
-      return book.toMap();
-    }
+QVariantMap BookListModel::getBook(qint64 id) const {
+  auto it = std::find_if(_books.begin(), _books.end(), [id](const services::BookDTO &book) { return book.id == id; });
+  if (it != _books.end()) {
+    return it->toMap();
   }
   qCWarning(lcBookModel) << "getBook — book not found, id:" << id;
   return {};

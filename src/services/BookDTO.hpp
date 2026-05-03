@@ -8,7 +8,8 @@
 
 namespace bl::services {
 
-// status: 0 = NONE, 1 = WantToRead, 2 = InProgress, 3 = Finished
+// status mirrors BookStatus::Value (services/BookStatus.hpp) — kept as int
+// in storage; QML imports `BookStatus` to compare semantically.
 struct BookDTO {
   qint64 id = 0;
   QString name;
@@ -18,11 +19,14 @@ struct BookDTO {
   qint64 publisherId = 0;
   QString publisherName;
   QString description;
+  QString coverUrl;
   bool isHardcover = false;
   qint64 typeId = 0;
   QString typeName;
-  int globalRating = 0;
-  int localRating = 0;
+  int totalPages = 0;
+  int pagesRead = 0;
+  double globalRating = 0.0;
+  double localRating = 0.0;
   int userRating = 0;
   int status = 0;
   bool inWishList = false;

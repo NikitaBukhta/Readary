@@ -1,0 +1,152 @@
+# Models and Filters
+
+Three model classes plus a strategy hierarchy live in `src/models/`. Search
+behavior is documented separately in [book-search.md](book-search.md); this
+document covers the rest.
+
+## `BookListModel`
+
+Plain `QAbstractListModel` over a `QList<services::BookDTO>`. Owned by
+`AppInitializer` and passed by pointer to `BookController`.
+
+- `refresh()` reloads the list from `BookTable::getAllBooks()` and triggers
+  `modelReset` so all proxies recompute. Called on app start and after a book
+  is saved (`BookController::bookSaved` → `BookListModel::refresh`).
+- `getBook(qint64 id) const` — `std::find_if` over the local cache, returns
+  the matching DTO as a `QVariantMap`. Used by `BookController::currentBookData`
+  (which then augments the map with genres/characters).
+- `deleteBook(qint64 id)` — `Q_INVOKABLE`, deletes via `BookTable` and
+  refreshes. Sets `errorMessage` on failure.
+
+### Roles
+
+```
+IdRole, NameRole, AuthorIdRole, AuthorRole, YearRole, PublisherIdRole,
+PublisherRole, DescriptionRole, CoverUrlRole,
+IsHardcoverRole, TypeIdRole, TypeRole,
+TotalPagesRole, PagesReadRole,
+GlobalRatingRole, LocalRatingRole, UserRatingRole,
+StatusRole, InWishListRole
+```
+
+QML role names (`roleNames()`) — one-to-one with the enum, names match the
+DTO keys (`bookId`, `name`, `author`, `year`, `coverUrl`, `totalPages`,
+`pagesRead`, `globalRating`, `localRating`, `userRating`, `status`,
+`inWishList`, …). See [`BookListModel.cpp::roleNames`](../../src/models/BookListModel.cpp)
+for the full mapping.
+
+`BookListModel` is **not** a QML-visible type — QML always reaches data
+through one of the proxies on `BookController`.
+
+## `BookSortFilterProxyModel`
+
+Generic `QSortFilterProxyModel` parameterized by a flexible filter API.
+Marked `QML_ANONYMOUS` so QML can resolve property types but cannot
+instantiate it directly.
+
+### Filter API
+
+```cpp
+proxy.addFilter(role, value, Op::Equal);   // Op defaults to Equal
+proxy.removeFilter(role);                   // remove all filters for that role
+proxy.clearFilter();                        // remove everything
+```
+
+Available operators (`Op`, `Q_ENUM`):
+`Equal`, `NotEqual`, `Less`, `LessOrEqual`, `Greater`, `GreaterOrEqual`,
+`Contains`.
+
+**Combination semantics:**
+
+- Filters on the **same role** are OR'ed together (covers "status IN (1, 2)"
+  type queries).
+- Filters on **different roles** are AND'ed together.
+
+Implemented by iterating `_filters.uniqueKeys()`, taking the equal_range per
+role, and rejecting the row if any role has no matching filter.
+
+### Sort
+
+- `setSortField(role)` (`Q_PROPERTY sortField`) — picks which role to sort
+  by. Default: `BookListModel::NameRole`.
+- `setSortDescending(bool)` (`Q_PROPERTY sortDescending`).
+- `lessThan` policy:
+  - `YearRole`, `TotalPagesRole`, `PagesReadRole` — `toInt()` compare;
+  - `GlobalRatingRole`, `LocalRatingRole`, `UserRatingRole` — `toDouble()`
+    compare (ratings are stored as REAL in SQL except `userRating`);
+  - everything else — `QString::localeAwareCompare`.
+
+### `count` property
+
+Q_PROPERTY `int count READ rowCount NOTIFY countChanged`. The model
+reconnects `rowsInserted/rowsRemoved/modelReset/layoutChanged` to a
+`countChanged` signal so QML bindings on `count` re-evaluate reactively.
+
+Used by main-page categories to show "%n book(s)" subtitles.
+
+## Strategy pattern
+
+Configuration of the four sort/filter proxies (one per `ListKind`) is done
+through `BookFilterStrategy` (`src/models/filters/`). The strategy wraps
+"how to configure a `BookSortFilterProxyModel` for this category".
+
+### Hierarchy
+
+```cpp
+class BookFilterStrategy {
+public:
+  virtual ~BookFilterStrategy() = default;
+  virtual void apply(BookSortFilterProxyModel *proxy) const = 0;
+};
+
+class WantToReadFilterStrategy   : public BookFilterStrategy { ... };
+class WantToBuyFilterStrategy    : public BookFilterStrategy { ... };
+class AlreadyReadFilterStrategy  : public BookFilterStrategy { ... };
+class ReadInProgressFilterStrategy : public BookFilterStrategy { ... };
+```
+
+### Concrete strategies
+
+| Strategy | What it does |
+|----------|--------------|
+| `WantToReadFilterStrategy` | `addFilter(StatusRole, 1)` — status == WantToRead |
+| `ReadInProgressFilterStrategy` | `addFilter(StatusRole, 2)` — status == InProgress |
+| `AlreadyReadFilterStrategy` | `addFilter(StatusRole, 3)` — status == Finished |
+| `WantToBuyFilterStrategy` | `addFilter(InWishListRole, true)` |
+
+Each strategy starts with `proxy->clearFilter()` so the proxy's prior state
+is irrelevant — strategies are idempotent.
+
+### How `BookController` uses them
+
+```cpp
+BookSortFilterProxyModel *
+BookController::buildProxy(BookListModel *source,
+                           const BookFilterStrategy &strategy) {
+  auto *proxy = new BookSortFilterProxyModel(this);
+  proxy->setSourceModel(source);
+  strategy.apply(proxy);
+  return proxy;
+}
+```
+
+Adding a fifth list = adding a new strategy class + a new `ListKind` entry +
+one `_proxies.insert(...)` line. No changes to `BookSortFilterProxyModel`.
+
+### Why Strategy and not State
+
+Strategies don't transition between each other and they don't carry the
+"active list" state. The active list is held by `BookController` (the
+context); switching is just "look up a different proxy in the QHash". So the
+classification problem is "configure the algorithm for this category", which
+is Strategy. The user's earlier State-pattern attempt forced a
+context/state lifecycle that didn't exist here.
+
+## File map
+
+| File | Purpose |
+|------|---------|
+| [src/models/BookListModel.hpp](../../src/models/BookListModel.hpp) / [.cpp](../../src/models/BookListModel.cpp) | Source model over the books table |
+| [src/models/BookSortFilterProxyModel.hpp](../../src/models/BookSortFilterProxyModel.hpp) / [.cpp](../../src/models/BookSortFilterProxyModel.cpp) | Generic filter/sort proxy with `addFilter`/`Op` API |
+| [src/models/BookSearchProxyModel.hpp](../../src/models/BookSearchProxyModel.hpp) / [.cpp](../../src/models/BookSearchProxyModel.cpp) | Search + relevance ranking — see [book-search.md](book-search.md) |
+| [src/models/filters/BookFilterStrategy.hpp](../../src/models/filters/BookFilterStrategy.hpp) / [.cpp](../../src/models/filters/BookFilterStrategy.cpp) | Strategy interface + 4 concrete strategies |

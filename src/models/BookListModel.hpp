@@ -25,9 +25,12 @@ public:
     PublisherIdRole,
     PublisherRole,
     DescriptionRole,
+    CoverUrlRole,
     IsHardcoverRole,
     TypeIdRole,
     TypeRole,
+    TotalPagesRole,
+    PagesReadRole,
     GlobalRatingRole,
     LocalRatingRole,
     UserRatingRole,
@@ -42,9 +45,9 @@ public:
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
   QHash<int, QByteArray> roleNames() const override;
 
-  Q_INVOKABLE bool deleteBook(int id);
+  Q_INVOKABLE bool deleteBook(qint64 id);
 
-  QVariantMap getBook(int id) const;
+  QVariantMap getBook(qint64 id) const;
   void refresh();
   QString errorMessage() const;
 

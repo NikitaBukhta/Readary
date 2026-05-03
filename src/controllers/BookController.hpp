@@ -27,7 +27,7 @@ class BookController : public QObject {
   QML_ELEMENT
   QML_SINGLETON
 
-  Q_PROPERTY(int currentBookId READ currentBookId WRITE setCurrentBookId NOTIFY currentBookIdChanged)
+  Q_PROPERTY(qint64 currentBookId READ currentBookId WRITE setCurrentBookId NOTIFY currentBookIdChanged)
   Q_PROPERTY(QVariantMap currentBookData READ currentBookData NOTIFY currentBookIdChanged)
   Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
@@ -47,16 +47,16 @@ public:
                           QObject *parent);
   ~BookController() override;
 
-  // Form
-  int currentBookId() const;
-  void setCurrentBookId(int id);
+  qint64 currentBookId() const;
+  void setCurrentBookId(qint64 id);
   QVariantMap currentBookData() const;
   QString errorMessage() const;
 
-  // List
   ListKind activeKind() const;
   void setActiveKind(ListKind kind);
   Q_INVOKABLE bl::models::BookSortFilterProxyModel *getSortFilterProxyForKind(ListKind kind) const;
+
+  Q_INVOKABLE void openBook(qint64 id);
 
   bl::models::BookSearchProxyModel *searchModel() const;
 
@@ -68,13 +68,13 @@ signals:
   void errorMessageChanged();
   void bookSaved();
   void activeKindChanged();
+  void bookOpenRequested(qint64 id);
 
 private:
   void setErrorMessage(const QString &message);
 
   bl::models::BookSortFilterProxyModel *buildProxy(bl::models::BookListModel *source,
                                                    const bl::models::filters::BookFilterStrategy &strategy);
-  bl::models::BookSortFilterProxyModel *proxyFor(ListKind kind) const;
   void applyActiveSourceToSearchProxy();
 
   static BookController *s_instance;
@@ -87,7 +87,9 @@ private:
   ListKind _activeKind = ListKind::WantToRead;
 
   QString _errorMessage;
-  int _currentBookId = 0;
+  qint64 _currentBookId = 0;
+
+  mutable QVariantMap _cachedBookData;
 };
 
 } // namespace bl::controllers

@@ -116,10 +116,13 @@ bool BookSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelInd
 
   switch (sortRole()) {
   case BookListModel::YearRole:
+  case BookListModel::TotalPagesRole:
+  case BookListModel::PagesReadRole:
+    return leftData.toInt() < rightData.toInt();
   case BookListModel::GlobalRatingRole:
   case BookListModel::LocalRatingRole:
   case BookListModel::UserRatingRole:
-    return leftData.toInt() < rightData.toInt();
+    return leftData.toDouble() < rightData.toDouble();
   default:
     return QString::localeAwareCompare(leftData.toString(), rightData.toString()) < 0;
   }
