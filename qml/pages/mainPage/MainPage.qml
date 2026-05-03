@@ -70,7 +70,7 @@ Page {
                     sidePadding: root._sidePadding
                     title: qsTr("Currently reading")
                     model: BookController.getSortFilterProxyForKind(BookController.InProgress)
-                    onBookOpened: index => console.log("MainPage.qml: ", "Open book at index", index) // TODO: open book details page
+                    onBookOpened: bookId => BookController.openBook(bookId)
                 }
 
                 CategoriesSection {

@@ -26,6 +26,7 @@ public:
     GOALS_PAGE,
     CHALLENGES_PAGE,
     PROFILE_PAGE,
+    BOOK_DETAIL_PAGE,
   };
   Q_ENUM(PageEnum)
 

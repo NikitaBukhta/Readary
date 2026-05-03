@@ -32,8 +32,6 @@ Item {
         anchors.fill: parent
         spacing: Geometry.spacing.sm
 
-        // Card surface: cover spans the full width; progress sits below it
-        // with a small inset.
         Rectangle {
             id: background
             clip: true
@@ -52,9 +50,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Geometry.size.readingCoverHeight
 
-                    // Hidden shape used as alpha mask for the cover layer below.
-                    // Applies rounded top corners to whatever cover content
-                    // (fallback Rectangle or real Image) draws underneath.
+                    // Alpha mask: rounded top corners for the cover content below.
                     Rectangle {
                         id: coverMask
                         anchors.fill: parent
@@ -97,7 +93,7 @@ Item {
 
                     ProgressBar {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 5
+                        Layout.preferredHeight: Styles.progressBar.md
                         progress: root.progress
                         trackColor: Theme.primarySoft
                         progressColor: Theme.primary

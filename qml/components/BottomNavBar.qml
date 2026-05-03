@@ -6,7 +6,6 @@ import Library
 Rectangle {
     id: root
 
-    // Each item: { id: string, label: string, glyph: string, source: url }
     readonly property var _navItems: [
         {
             id: NavigationController.MAIN_PAGE,

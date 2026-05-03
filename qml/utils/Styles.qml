@@ -24,8 +24,12 @@ QtObject {
     }
 
     component ElevationSpec: QtObject {
-        readonly property int card: 8
-        readonly property int sheet: 16
+        readonly property real subtleOffset: 2
+        readonly property real subtleBlur: 0.4
+        readonly property real cardOffset: 3
+        readonly property real cardBlur: 0.5
+        readonly property real heroOffset: 6
+        readonly property real heroBlur: 0.8
     }
 
     component OpacitySpec: QtObject {
@@ -39,9 +43,16 @@ QtObject {
         readonly property int slow: 320
     }
 
+    component ProgressBarSpec: QtObject {
+        readonly property int sm: 4
+        readonly property int md: 5
+        readonly property int lg: 6
+    }
+
     readonly property FontSizeSpec fontSize: FontSizeSpec {}
     readonly property FontWeightSpec fontWeight: FontWeightSpec {}
     readonly property ElevationSpec elevation: ElevationSpec {}
     readonly property OpacitySpec opacity: OpacitySpec {}
     readonly property DurationSpec duration: DurationSpec {}
+    readonly property ProgressBarSpec progressBar: ProgressBarSpec {}
 }

@@ -36,6 +36,7 @@ QtObject {
         readonly property int iconMd: 20
         readonly property int iconLg: 24
         readonly property int iconXl: 28
+        readonly property int iconHuge: 36
 
         readonly property int avatarSm: 36
         readonly property int avatarMd: 48
@@ -54,6 +55,13 @@ QtObject {
         readonly property int bookRowHeight: 104
         readonly property int bookRowCoverWidth: 72
         readonly property int bookRowCoverHeight: 88
+
+        readonly property int bookDetailCoverWidth: 100
+        readonly property int bookDetailCoverHeight: 140
+
+        readonly property int actionButtonHeight: 56
+        readonly property int pillButtonHeight: 52
+        readonly property int characterRowHeight: 64
 
         readonly property int bottomNavHeight: 68
         readonly property int bottomNavIcon: 22

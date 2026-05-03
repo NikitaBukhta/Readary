@@ -28,9 +28,15 @@ NavigationController::PageInfo NavigationController::pageInfo(PageEnum page) {
     return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_qs}, 1};
   case PageEnum::CATEGORY_LIST_PAGE:
     return {QUrl{u"qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml"_qs}, 2};
+  case PageEnum::BOOK_DETAIL_PAGE:
+    return {QUrl{u"qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml"_qs}, 3};
+  case PageEnum::SEARCH_PAGE:
+  case PageEnum::GOALS_PAGE:
+  case PageEnum::CHALLENGES_PAGE:
+  case PageEnum::PROFILE_PAGE:
+    return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_qs}, 1};
   }
-
-  return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_qs}, 1};
+  Q_UNREACHABLE_RETURN({});
 }
 
 QUrl NavigationController::currentPagePath() const {

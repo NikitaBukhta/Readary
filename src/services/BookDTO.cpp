@@ -12,9 +12,12 @@ QVariantMap BookDTO::toMap() const {
       {"publisher_id", publisherId},
       {"publisher", publisherName},
       {"description", description},
+      {"coverUrl", coverUrl},
       {"isHardcover", isHardcover},
       {"type_id", typeId},
       {"type", typeName},
+      {"totalPages", totalPages},
+      {"pagesRead", pagesRead},
       {"globalRating", globalRating},
       {"localRating", localRating},
       {"userRating", userRating},
@@ -33,11 +36,14 @@ BookDTO BookDTO::fromMap(const QVariantMap &data) {
   dto.publisherId = data.value("publisher_id").toLongLong();
   dto.publisherName = data.value("publisher").toString();
   dto.description = data.value("description").toString();
+  dto.coverUrl = data.value("coverUrl").toString();
   dto.isHardcover = data.value("isHardcover").toBool();
   dto.typeId = data.value("type_id").toLongLong();
   dto.typeName = data.value("type").toString();
-  dto.globalRating = data.value("globalRating").toInt();
-  dto.localRating = data.value("localRating").toInt();
+  dto.totalPages = data.value("totalPages").toInt();
+  dto.pagesRead = data.value("pagesRead").toInt();
+  dto.globalRating = data.value("globalRating").toDouble();
+  dto.localRating = data.value("localRating").toDouble();
   dto.userRating = data.value("userRating").toInt();
   dto.status = data.value("status").toInt();
   dto.inWishList = data.value("inWishList").toBool();

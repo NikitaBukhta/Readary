@@ -8,7 +8,7 @@ Item {
     property color trackColor: Qt.rgba(1, 1, 1, 0.55)
     property color progressColor: Theme.primary
 
-    implicitHeight: 4
+    implicitHeight: Styles.progressBar.sm
 
     Rectangle {
         id: track

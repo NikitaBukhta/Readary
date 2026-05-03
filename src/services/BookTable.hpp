@@ -18,6 +18,9 @@ public:
   bool updateBook(const BookDTO &book);
   bool deleteBook(qint64 id);
 
+  QStringList getGenres(qint64 bookId) const;
+  QVariantList getCharacters(qint64 bookId) const;
+
 private:
   static const QString kTableName;
   std::shared_ptr<core::DatabaseManager> _db;

@@ -60,6 +60,10 @@ void AppInitializer::initModels() {
 
   _contextModel = new controllers::NavigationController(this);
 
+  connect(_bookController, &controllers::BookController::bookOpenRequested, _contextModel, [this](qint64) {
+    _contextModel->setCurrentPage(controllers::NavigationController::PageEnum::BOOK_DETAIL_PAGE);
+  });
+
   qCInfo(lcInit) << "Models ready";
 }
 

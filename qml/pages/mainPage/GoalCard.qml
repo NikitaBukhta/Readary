@@ -65,8 +65,8 @@ Rectangle {
             Layout.preferredHeight: Geometry.size.goalRing
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-            // Outer border ring (transparent center).
             Rectangle {
+                id: outerRing
                 anchors.fill: parent
                 radius: width / 2
                 color: "transparent"
