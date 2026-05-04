@@ -4,7 +4,7 @@ import Library
 Item {
     id: root
 
-    default property alias content: container.children
+    default property alias content: container.data
     property int padding: Geometry.spacing.sm
 
     signal clicked

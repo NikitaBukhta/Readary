@@ -113,7 +113,9 @@ The repo uses CMake presets (see [CMakePresets.json](../../CMakePresets.json)
 if present) and a `bootstrap.py` wrapper:
 
 ```
-python bootstrap.py compile      # configure + build (debug)
+python bootstrap.py compile                    # configure + build (debug, with static analysis)
+python bootstrap.py compile --skip-analyze     # faster, no analyzers
+python bootstrap.py analyze                    # standalone clang-tidy pass, no compile
 ```
 
 For tests:
@@ -122,6 +124,87 @@ For tests:
 cmake --build build --target BookSearchProxyModelTest
 ctest --test-dir build -V -R BookSearchProxy
 ```
+
+## Static analysis
+
+`compile` gates the build through **MSVC `/analyze`** and **clang-tidy**
+running on every TU. The clang-tidy profile in [`.clang-tidy`](../../.clang-tidy)
+enables `bugprone-* cert-* clang-analyzer-* concurrency-* cppcoreguidelines-*
+misc-* modernize-* performance-* portability-* readability-*` with
+`WarningsAsErrors: '*'` — every finding fails the build. `--skip-analyze`
+toggles `ENABLE_ANALYZE=OFF` and reconfigures CMake automatically.
+
+### Wrapper around clang-tidy
+
+CMake doesn't call clang-tidy directly. `CMAKE_CXX_CLANG_TIDY` points at a
+Python wrapper:
+[`buildtools/clang_tidy_wrapper.py`](../../buildtools/clang_tidy_wrapper.py).
+It exists for two reasons that aren't fixable from the `.clang-tidy` config
+alone:
+
+1. **Skip machine-generated TUs.** Anything under `build/` (`*_autogen/`,
+   `.rcc/qmlcache/`, `*_qmltyperegistrations.cpp`, `*plugin*.cpp`, `moc_*`,
+   `qrc_*`, `*_qml.cpp`) is emitted by Qt's MOC/QML toolchain and trips
+   identifier-naming, internal-linkage and member-init checks for no real
+   reason. The wrapper detects these by path and returns success without
+   linting.
+
+2. **Lift MSVC flags that clang-cl silently drops under `--driver-mode=cl`.**
+   When clang-tidy is invoked with cl-mode (which CMake does for MSVC
+   projects), several flags inside the compile command are quietly ignored:
+   - `-external:I<path>`, `/imsvc <path>`, `-imsvc <path>`, `-isystem <path>`
+     — Qt include roots fail to register, so `<QString>` resolves to
+     "file not found" and the whole TU bails.
+   - `/std:c++17`, `/Zc:__cplusplus`, `/permissive-` — language mode stays
+     at C++14; Qt 6 headers then fail with "Qt requires a C++17 compiler",
+     `'auto' not allowed in template parameter`, etc.
+
+   The wrapper rewrites these as `--extra-arg=-I<path>` and `--extra-arg=...`
+   options before `--`. Clang-tidy's own driver applies them, bypassing
+   cl-mode parsing.
+
+`HeaderFilterRegex` in `.clang-tidy` (`^.*[/\\]src[/\\](?!.*[/\\]build[/\\]).*$`)
+restricts diagnostics to `src/`, so warnings inside Qt headers stay
+suppressed even when those headers are parsed.
+
+### Tests use a relaxed sub-config
+
+[`src/tests/.clang-tidy`](../../src/tests/.clang-tidy) inherits the project
+config (`InheritParentConfig: true`) but disables checks that fight the
+Qt Test idiom:
+
+| Disabled | Why |
+|----------|-----|
+| `misc-use-internal-linkage` | `Q_OBJECT` test class can't move into anonymous namespace — MOC needs the class by name |
+| `readability-convert-member-functions-to-static` | `private slots:` are invoked through MOC reflection, can't be `static` |
+| `readability-identifier-naming` | Test methods follow `scenarioName_expectedBehaviour` convention (underscores) |
+| `cppcoreguidelines-pro-bounds-avoid-unchecked-container-access` | Tests index into hand-built stubs |
+| `misc-const-correctness` | `QCoreApplication app; app.exec();` can't be const |
+
+### Standing carve-outs in the project config
+
+A few global disables exist for clang-tidy checks that produce only false
+positives on Qt code:
+
+- `-cppcoreguidelines-avoid-do-while` — Qt macros (`QCOMPARE`, `QVERIFY`,
+  `Q_UNREACHABLE_RETURN`, etc.) expand to `do { ... } while (0)`.
+- `-misc-confusable-identifiers` — fires on our namespace `bl` against Qt
+  internals (`b1` in `quuid.h`, etc.).
+
+### Patterns to know when writing new code
+
+- Wrap `Q_LOGGING_CATEGORY` in an anonymous namespace to satisfy
+  `misc-use-internal-linkage`:
+  ```cpp
+  namespace {
+  Q_LOGGING_CATEGORY(lcXxx, "bl.module.name")
+  }
+  ```
+- Use `Q_UNUSED(name)` for unused parameters in QML `create()` overrides
+  (parameter names stay intact, matches the .hpp declaration).
+- Prefer `u"..."_s` from `Qt::StringLiterals` over the deprecated `_qs`.
+- Naming: private members `_xxx`, anonymous-namespace globals `g_xxx`,
+  classes/structs/enums CamelCase, everything else camelBack.
 
 ## File map
 
@@ -132,3 +215,6 @@ ctest --test-dir build -V -R BookSearchProxy
 | [src/core/AppEnvironment.hpp](../../src/core/AppEnvironment.hpp) / [.cpp](../../src/core/AppEnvironment.cpp) | Paths, file logger |
 | [src/core/AppInitializer.hpp](../../src/core/AppInitializer.hpp) / [.cpp](../../src/core/AppInitializer.cpp) | Bootstraps DB → models → controllers → QML engine |
 | [db/db_scripts.qrc](../../db/db_scripts.qrc) | qrc manifest for SQL scripts |
+| [.clang-tidy](../../.clang-tidy) | Strict static-analysis profile |
+| [src/tests/.clang-tidy](../../src/tests/.clang-tidy) | Relaxed rules for Qt Test classes |
+| [buildtools/clang_tidy_wrapper.py](../../buildtools/clang_tidy_wrapper.py) | Wrapper that skips autogen TUs and lifts MSVC flags |

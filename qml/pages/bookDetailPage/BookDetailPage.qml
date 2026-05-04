@@ -79,7 +79,6 @@ Page {
                 pagesRead: root._pagesRead
                 pagesTotal: root._totalPages
                 actionLabel: root._actionLabel
-                onActionClicked: console.log(root._logTag, "Primary action:", root._actionLabel)
             }
 
             RatingsCard {

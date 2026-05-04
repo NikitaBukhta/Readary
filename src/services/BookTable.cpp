@@ -1,6 +1,7 @@
 #include "BookTable.hpp"
 #include "core/SqlQueryBuilder.hpp"
 
+#include <QDateTime>
 #include <QLoggingCategory>
 
 namespace {
@@ -174,6 +175,42 @@ QVariantList BookTable::getCharacters(qint64 bookId) const {
     result.append(row);
   }
   return result;
+}
+
+bool BookTable::updatePagesRead(qint64 bookId, int pagesRead) {
+  core::SqlQueryBuilder query;
+  QString error;
+
+  query.update(kTableName).set({"pagesRead"}).where("id = ?").values({pagesRead, bookId});
+  const int affected = _db->execute(query, &error);
+
+  if (affected > 0) {
+    qCInfo(lcBookTable) << "Updated pagesRead — book id:" << bookId << "value:" << pagesRead;
+    return true;
+  }
+  if (affected == 0)
+    qCWarning(lcBookTable) << "updatePagesRead: no book found with id:" << bookId;
+  else
+    qCWarning(lcBookTable) << "updatePagesRead failed for book id:" << bookId << "error:" << error;
+  return false;
+}
+
+qint64 BookTable::insertReadingSession(qint64 bookId, int pagesFrom, int pagesTo, int durationSeconds) {
+  core::SqlQueryBuilder query;
+  QString error;
+
+  const QDateTime endedAt = QDateTime::currentDateTimeUtc();
+  const QDateTime startedAt = endedAt.addSecs(-durationSeconds);
+
+  query.insertInto("reading_sessions", {"book_id", "started_at", "ended_at", "pages_from", "pages_to"})
+      .values({bookId, startedAt.toString(Qt::ISODate), endedAt.toString(Qt::ISODate), pagesFrom, pagesTo});
+
+  const qint64 id = _db->insert(query, &error);
+  if (id > 0)
+    qCInfo(lcBookTable) << "Inserted session — book id:" << bookId << "duration(s):" << durationSeconds;
+  else
+    qCWarning(lcBookTable) << "insertReadingSession failed for book id:" << bookId << "error:" << error;
+  return id;
 }
 
 } // namespace bl::services

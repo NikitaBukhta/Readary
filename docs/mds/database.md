@@ -6,7 +6,10 @@ SQLite via Qt SQL. Three pieces:
 - `SqlQueryBuilder` — fluent builder that produces a parameterized SQL
   string and a `QVariantList` of bound values.
 - `BookTable` — typed CRUD over `BookDTO`, plus side-table accessors
-  (`getGenres`, `getCharacters`) for the book detail page.
+  (`getGenres`, `getCharacters`) for the book detail page and progress
+  writers (`updatePagesRead`, `insertReadingSession`) for the reading timer.
+- `ReadingSessionCache` — `QSettings`-backed per-book timer-state store
+  (cross-launch persistence). Static-only, called by `BookController`.
 
 All three live in `src/core/` and `src/services/`. The DB layer **does not
 depend on Qt Quick or QML** — it can run from tests or other non-UI code.
@@ -111,6 +114,8 @@ book with its author/publisher/type names already resolved.
 | `deleteBook(id)` | DELETE by id |
 | `getGenres(bookId) const` | `QStringList` of genre names for one book |
 | `getCharacters(bookId) const` | `QVariantList` of `{id, name, role}` maps |
+| `updatePagesRead(bookId, pagesRead)` | Targeted `UPDATE books SET pagesRead = ?`; called by `BookController::updateReadingProgress` after a session ends |
+| `insertReadingSession(bookId, pagesFrom, pagesTo, durationSeconds)` | Inserts one row in `reading_sessions` with `started_at = now − duration` |
 
 Side-table reads (`getGenres`, `getCharacters`) are intentionally NOT folded
 into `getAllBooks()` — list views don't need them, and joining them on every
@@ -155,6 +160,45 @@ overlap (re-reading same range), so:
 The big comment at the top of [`init.sql`](../../db/init.sql) lists the
 derived metrics formulas (julianday for duration, etc.).
 
+## `ReadingSessionCache` (QSettings)
+
+Sits next to `BookTable` in `services/`. Stores per-book reading-timer state
+(`{seconds, phase, lastSyncAt}`) in `QSettings` under group
+`readingSession/<bookId>/`. Static methods, no instance state — the storage
+is the file QSettings writes to (registry on Windows, `~/.config` on Linux,
+plist on macOS).
+
+| Method | Purpose |
+|--------|---------|
+| `save(bookId, seconds, phase)` | Writes the snapshot and refreshes `lastSyncAt = now`. Called periodically (every 5s while running) and on QML page destroy. |
+| `takeState(bookId)` | Reads-and-deletes the snapshot. When the saved phase was `Running`, adds wall-clock seconds elapsed since `lastSyncAt` so a running timer keeps counting across restarts. Returns `{}` if nothing saved. |
+| `clear(bookId)` | Drops the group; called on page destroy when phase is `Stopped`. |
+
+**Why QSettings, not the SQL DB:** the cache is fast-path UI state, not a
+permanent log. Sessions that complete (user hits "Save") get logged to
+`reading_sessions` via `BookTable::insertReadingSession`; sessions in
+progress (or paused) live only in the cache and are reset by app restart
+without restore.
+
+For QSettings to land in a stable location across debug/release/installer
+builds, [`main.cpp`](../../src/main.cpp) sets
+`QGuiApplication::setOrganizationName/Domain/setApplicationName` before any
+QSettings instance is constructed.
+
+The QML-visible enum that mirrors the integer `phase` column is
+[`ReadingPhase`](../../src/services/ReadingPhase.hpp) (Q_GADGET):
+
+```cpp
+enum Value {
+    Stopped = 0,
+    Running = 1,
+    Paused  = 2,
+};
+```
+
+C++ uses `ReadingPhase::Running` directly, QML writes
+`ReadingPhase.Running` — single source of truth.
+
 ## Schema and seed data
 
 - `db/init.sql` — schema. Uses `CREATE TABLE IF NOT EXISTS`, so changing a
@@ -180,7 +224,9 @@ wiring and the `Q_INIT_RESOURCE` quirk in `main.cpp`.
 | [src/core/SqlQueryBuilder.hpp](../../src/core/SqlQueryBuilder.hpp) / [.cpp](../../src/core/SqlQueryBuilder.cpp) | Fluent query builder |
 | [src/services/BookDTO.hpp](../../src/services/BookDTO.hpp) / [.cpp](../../src/services/BookDTO.cpp) | DTO, `toMap`/`fromMap` |
 | [src/services/BookStatus.hpp](../../src/services/BookStatus.hpp) | Q_GADGET enum-namespace mirroring `status` for QML |
-| [src/services/BookTable.hpp](../../src/services/BookTable.hpp) / [.cpp](../../src/services/BookTable.cpp) | CRUD + genres/characters readers |
+| [src/services/BookTable.hpp](../../src/services/BookTable.hpp) / [.cpp](../../src/services/BookTable.cpp) | CRUD + genres/characters readers + reading-progress writers |
+| [src/services/ReadingPhase.hpp](../../src/services/ReadingPhase.hpp) | Q_GADGET enum-namespace shared by C++ cache and QML timer |
+| [src/services/ReadingSessionCache.hpp](../../src/services/ReadingSessionCache.hpp) / [.cpp](../../src/services/ReadingSessionCache.cpp) | Per-book reading-timer state via QSettings (cross-launch) |
 | [db/init.sql](../../db/init.sql) | Schema |
 | [db/test_data.sql](../../db/test_data.sql) | Seed (debug only) |
 | [db/db_scripts.qrc](../../db/db_scripts.qrc) | Resource manifest |

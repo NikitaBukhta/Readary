@@ -21,6 +21,9 @@ public:
   QStringList getGenres(qint64 bookId) const;
   QVariantList getCharacters(qint64 bookId) const;
 
+  bool updatePagesRead(qint64 bookId, int pagesRead);
+  qint64 insertReadingSession(qint64 bookId, int pagesFrom, int pagesTo, int durationSeconds);
+
 private:
   static const QString kTableName;
   std::shared_ptr<core::DatabaseManager> _db;

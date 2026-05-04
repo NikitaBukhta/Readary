@@ -62,6 +62,7 @@ QtObject {
         readonly property int actionButtonHeight: 56
         readonly property int pillButtonHeight: 52
         readonly property int characterRowHeight: 64
+        readonly property int dialogPrimaryWidth: 160
 
         readonly property int bottomNavHeight: 68
         readonly property int bottomNavIcon: 22

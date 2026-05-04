@@ -8,7 +8,7 @@
 | [book-search.md](book-search.md) | Search proxy: ranking, cache, tests |
 | [database.md](database.md) | DB layer: `DatabaseManager`, `SqlQueryBuilder`, `BookTable`, `BookDTO`, `BookStatus` |
 | [qml.md](qml.md) | QML structure: pages, components, theme, geometry |
-| [build-and-resources.md](build-and-resources.md) | CMake setup, qrc resources, app env, file logger |
+| [build-and-resources.md](build-and-resources.md) | CMake setup, qrc resources, app env, file logger, **static analysis (clang-tidy + MSVC `/analyze`)** |
 
 ## Conventions
 
@@ -17,5 +17,12 @@
   `bl::controllers`.
 - QML module URI: `Library`. Singleton entry points (controllers, theme,
   geometry, styles) are accessed by class name from QML.
-- Member fields prefixed with `_` (e.g. `_searchProxy`).
-- `Q_LOGGING_CATEGORY(lcXxx, "bl.<area>.<topic>")` for runtime logs.
+- Naming (enforced by [`.clang-tidy`](../../.clang-tidy)):
+  - Private members: `_xxx` (e.g. `_searchProxy`).
+  - Anonymous-namespace globals in .cpp: `g_xxx` (e.g. `g_logFile`).
+  - Classes, structs, enums: `CamelCase`. Everything else: `camelBack`.
+- `Q_LOGGING_CATEGORY(lcXxx, "bl.<area>.<topic>")` for runtime logs — wrap
+  in `namespace { ... }` so it gets internal linkage.
+- Static analysis (clang-tidy + MSVC `/analyze`) gates every build by
+  default. See [build-and-resources.md](build-and-resources.md#static-analysis)
+  for what's enabled and how to skip with `--skip-analyze`.

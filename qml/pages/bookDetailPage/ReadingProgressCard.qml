@@ -12,8 +12,6 @@ PaddedCard {
     readonly property real progress: pagesTotal > 0 ? Math.min(1, pagesRead / pagesTotal) : 0
     readonly property bool _hasPages: root.pagesTotal > 0
 
-    signal actionClicked
-
     ColumnLayout {
         id: layout
         anchors.fill: parent
@@ -67,11 +65,24 @@ PaddedCard {
 
         PrimaryButton {
             id: actionButton
+            visible: !progressTimer.active
             Layout.fillWidth: true
             Layout.topMargin: root._hasPages ? Geometry.spacing.sm : 0
             label: root.actionLabel
             iconGlyph: "▶"
-            onClicked: root.actionClicked()
+            onClicked: progressTimer.phase = ReadingPhase.Running
+        }
+
+        ReadingProgressTimer {
+            id: progressTimer
+            visible: progressTimer.active
+            Layout.fillWidth: true
+            Layout.topMargin: root._hasPages ? Geometry.spacing.sm : 0
+            currentPage: root.pagesRead
+            pagesTotal: root.pagesTotal
+            onEndSessionConfirmed: (pageNumber, durationSeconds) => {
+                BookController.updateReadingProgress(pageNumber, durationSeconds);
+            }
         }
     }
 }

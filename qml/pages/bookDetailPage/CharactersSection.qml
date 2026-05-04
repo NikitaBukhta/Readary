@@ -29,19 +29,14 @@ ColumnLayout {
             font.weight: Styles.fontWeight.bold
         }
 
-        TouchTarget {
+        TextButton {
             id: addButton
             visible: root.addLabel.length > 0
-            padding: Geometry.spacing.md
+            label: root.addLabel
+            labelColor: Theme.primary
+            labelSize: Styles.fontSize.body
+            labelWeight: Styles.fontWeight.semibold
             onClicked: root.addClicked()
-
-            Text {
-                id: addLink
-                text: root.addLabel
-                color: Theme.primary
-                font.pixelSize: Styles.fontSize.body
-                font.weight: Styles.fontWeight.semibold
-            }
         }
     }
 

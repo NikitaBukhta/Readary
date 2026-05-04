@@ -3,6 +3,7 @@
 #include "models/BookSearchProxyModel.hpp"
 #include "models/BookSortFilterProxyModel.hpp"
 #include "models/filters/BookFilterStrategy.hpp"
+#include "services/ReadingSessionCache.hpp"
 
 #include <QLoggingCategory>
 
@@ -95,6 +96,44 @@ void BookController::openBook(qint64 id) {
     return;
   setCurrentBookId(id);
   emit bookOpenRequested(id);
+}
+
+void BookController::saveReadingSession(qint64 bookId, int seconds, int phase) {
+  if (bookId <= 0)
+    return;
+  services::ReadingSessionCache::save(bookId, seconds, phase);
+}
+
+QVariantMap BookController::takeReadingSession(qint64 bookId) {
+  if (bookId <= 0)
+    return {};
+  return services::ReadingSessionCache::takeState(bookId);
+}
+
+void BookController::clearReadingSession(qint64 bookId) {
+  if (bookId <= 0)
+    return;
+  services::ReadingSessionCache::clear(bookId);
+}
+
+void BookController::updateReadingProgress(int pageNumber, int durationSeconds) {
+  if (_currentBookId <= 0)
+    return;
+
+  const auto book = _listModel->getBook(_currentBookId);
+  const int pagesFrom = book.value("pagesRead").toInt();
+
+  if (!_bookTable->updatePagesRead(_currentBookId, pageNumber)) {
+    setErrorMessage(tr("Failed to update reading progress."));
+    return;
+  }
+
+  if (durationSeconds > 0 &&
+      _bookTable->insertReadingSession(_currentBookId, pagesFrom, pageNumber, durationSeconds) <= 0) {
+    qCWarning(lcBook) << "Reading progress saved, but session log insert failed for book id:" << _currentBookId;
+  }
+
+  emit bookSaved();
 }
 
 bl::models::BookSearchProxyModel *BookController::searchModel() const { return _searchProxy; }

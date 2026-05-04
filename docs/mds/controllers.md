@@ -25,6 +25,10 @@ responsibilities deliberately, since both are book-scoped and small:
 | `searchModel` | property (RO, `BookSearchProxyModel*`) | what QML lists bind to |
 | `getSortFilterProxyForKind(kind)` | `Q_INVOKABLE` | proxy for a specific kind |
 | `openBook(id)` | `Q_INVOKABLE` | sets `currentBookId` and emits `bookOpenRequested(id)` for the router to pick up |
+| `updateReadingProgress(pageNumber, durationSeconds)` | `Q_INVOKABLE` | persists current reading position in `books.pagesRead` and logs a row in `reading_sessions`; emits `bookSaved` so the list refreshes |
+| `saveReadingSession(bookId, seconds, phase)` | `Q_INVOKABLE static` | per-book timer-state writer; thin wrapper over `services::ReadingSessionCache::save`. Static because there's no instance state — the bookId is explicit |
+| `takeReadingSession(bookId)` | `Q_INVOKABLE static` | reads-and-clears the timer-state group via `ReadingSessionCache::takeState`. Returns `{}` if nothing saved |
+| `clearReadingSession(bookId)` | `Q_INVOKABLE static` | drops the timer-state group |
 | `bookSaved` | signal | emitted after a successful save; wired to `BookListModel::refresh` |
 | `bookOpenRequested(qint64 id)` | signal | wired in `AppInitializer` to `NavigationController::setCurrentPage(BOOK_DETAIL_PAGE)` |
 
@@ -42,6 +46,11 @@ QML accesses values as `BookController.WantToRead`, etc.
 For the `status` enum used on the detail page (`BookStatus.Finished`,
 `BookStatus.InProgress`, …), see [`BookStatus`](../../src/services/BookStatus.hpp)
 — it's a separate Q_GADGET to avoid name clashes with `ListKind` members.
+
+For the reading-timer phase (`ReadingPhase.Stopped` / `Running` / `Paused`),
+see [`ReadingPhase`](../../src/services/ReadingPhase.hpp) — also Q_GADGET,
+single source of truth shared between `ReadingSessionCache` (C++) and
+`ReadingProgressTimer` (QML).
 
 ### `openBook(id)` flow
 
@@ -86,6 +95,30 @@ The getter performs two side-table reads (`getGenres`, `getCharacters`) per
 
 `currentBookId` and `currentBookData` share the `currentBookIdChanged`
 NOTIFY signal — semantically slightly fuzzy but functionally correct.
+
+### Reading-timer flow
+
+The `ReadingProgressTimer` QML component drives a stopwatch over the current
+reading session. State (`seconds`, `phase`) is persisted via
+[`ReadingSessionCache`](../../src/services/ReadingSessionCache.hpp) (QSettings
+under `readingSession/<bookId>/`) so it survives app restarts.
+
+Two distinct paths through `BookController`:
+
+- **Per-tick state** — `saveReadingSession`/`takeReadingSession`/`clearReadingSession`
+  proxy to `ReadingSessionCache::*`. They take `bookId` explicitly so the QML
+  side can capture the bookId at component creation and use the same id at
+  destruction even if `currentBookId` shifts in between. Static because they
+  carry no controller state of their own.
+- **Final progress** — when the user confirms the page on session end,
+  `updateReadingProgress(pageNumber, durationSeconds)` runs a real DB write:
+  - `BookTable::updatePagesRead` → `UPDATE books SET pagesRead = ?`
+  - `BookTable::insertReadingSession` → `INSERT INTO reading_sessions (...)`
+    with `started_at = now − duration`. Failure here is logged but does not
+    block the primary update.
+  - `emit bookSaved` triggers `BookListModel::refresh`, which rebuilds the
+    list (and our cache invalidates), so any QML binding on
+    `currentBookData.pagesRead` reflects the new value immediately.
 
 ### Internal layout
 

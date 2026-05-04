@@ -26,6 +26,17 @@ python bootstrap.py compile --release
 python bootstrap.py run --release
 ```
 
+`compile` runs **clang-tidy + MSVC `/analyze`** as a gate by default.
+Skip the analyzers for fast iteration:
+
+```bash
+python bootstrap.py compile --skip-analyze
+python bootstrap.py analyze              # standalone clang-tidy pass
+```
+
+See [docs/mds/build-and-resources.md](docs/mds/build-and-resources.md#static-analysis)
+for what's enabled and the project's clang-tidy quirks.
+
 ## Tests
 
 ```bash

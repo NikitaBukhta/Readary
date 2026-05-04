@@ -16,7 +16,9 @@ Core                        ← DatabaseManager, SqlQueryBuilder, AppEnvironment
 
 QML never reaches into models or services directly — controllers are the only
 QML-visible entry points (singletons). Models are exposed as properties on the
-controllers.
+controllers. Two Q_GADGET enum-namespaces — [`BookStatus`](../../src/services/BookStatus.hpp)
+and [`ReadingPhase`](../../src/services/ReadingPhase.hpp) — are also QML-visible
+through `QML_ELEMENT`, but only as type registrations (no instances).
 
 ## Object lifecycle
 
@@ -37,6 +39,12 @@ controllers.
 
 All Qt objects are parented to `AppInitializer` so they're destroyed before
 `QQmlApplicationEngine` shuts down.
+
+[`main.cpp`](../../src/main.cpp) sets `QGuiApplication::setOrganizationName /
+setOrganizationDomain / setApplicationName` *before* constructing
+`AppInitializer`. This anchors `QSettings` (used by `ReadingSessionCache`
+for cross-launch reading-timer persistence) to a stable per-user location
+regardless of the binary name or build kind.
 
 ## Source list / search / category list (data flow)
 
@@ -79,7 +87,7 @@ pattern) at construction time; see [models-and-filters.md](models-and-filters.md
 ```
 src/
   core/        AppEnvironment, AppInitializer, DatabaseManager, SqlQueryBuilder
-  services/    BookTable, BookDTO
+  services/    BookTable, BookDTO, BookStatus, ReadingPhase, ReadingSessionCache
   models/      BookListModel, BookSearchProxyModel, BookSortFilterProxyModel
     filters/   BookFilterStrategy + 4 concrete strategies
   controllers/ BookController, NavigationController

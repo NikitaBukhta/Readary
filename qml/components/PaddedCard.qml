@@ -19,5 +19,5 @@ SurfaceCard {
         anchors.margins: root.contentPadding
     }
 
-    default property alias content: contentRoot.children
+    default property alias content: contentRoot.data
 }

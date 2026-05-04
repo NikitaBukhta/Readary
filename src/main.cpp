@@ -7,6 +7,11 @@
 int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
 
+  // Anchor QSettings to a fixed location regardless of binary name / build kind.
+  QGuiApplication::setOrganizationName("DarieszzBooks");
+  QGuiApplication::setOrganizationDomain("darieszzbooks.local");
+  QGuiApplication::setApplicationName("DarieszzBooks");
+
   // Resources from a static library can be stripped by the linker; force init.
   Q_INIT_RESOURCE(db_scripts);
 

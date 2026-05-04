@@ -3,8 +3,9 @@
 QML module URI: `Library`. All `.qml` files under `qml/` are bundled by
 `qt_add_qml_module`, with three QML singletons (`Geometry`, `Styles`,
 `Theme`) declared via `QT_QML_SINGLETON_TYPE TRUE` in CMake.
-[`BookStatus`](../../src/services/BookStatus.hpp) is also visible from QML
-as a Q_GADGET enum-namespace (registered via `QML_ELEMENT`).
+[`BookStatus`](../../src/services/BookStatus.hpp) and
+[`ReadingPhase`](../../src/services/ReadingPhase.hpp) are also visible from
+QML as Q_GADGET enum-namespaces (registered via `QML_ELEMENT`).
 
 ## Layout
 
@@ -24,7 +25,8 @@ qml/
     bookDetailPage/
       BookDetailPage.qml           Detail page bound to BookController.currentBookData
       BookDetailHeader.qml         Back arrow + cover + title/author/meta + inline rating
-      ReadingProgressCard.qml      Progress block (hidden if totalPages=0) + PrimaryButton
+      ReadingProgressCard.qml      Progress block + action button OR embedded ReadingProgressTimer
+      ReadingProgressTimer.qml     Stopwatch (Phase enum) + end-session form; persists via BookController
       RatingsCard.qml              Two RatingTile halves separated by a divider
       RatingTile.qml               Optional label + value/total + optional StarRating row
       CharactersSection.qml        Header (title + "+ Add" link) + Repeater of CharacterRow
@@ -34,8 +36,11 @@ qml/
     SurfaceCard.qml                Rectangle + radius.lg + Theme.surface + MultiEffect shadow
     PressableSurface.qml           SurfaceCard + MouseArea + signal clicked + readonly pressed alias
     PaddedCard.qml                 SurfaceCard with contentPadding and auto implicit size
-    PrimaryButton.qml              PressableSurface in primary fill, pill shape, opacity press feedback
+    PrimaryButton.qml              PressableSurface in primary fill, pill, opacity press feedback
+    SecondaryButton.qml            PressableSurface in primarySoft fill, pill, primary content
     ActionButton.qml               PressableSurface with icon + label, surface fill, primarySoft tint on press
+    IconButton.qml                 Circular PressableSurface (radius=width/2); pressedColor defaults to restColor
+    TextButton.qml                 TouchTarget with a single Text — used for Cancel / "+ Add" style links
     TouchTarget.qml                Item wrapping content with positive padding + click area
     StarRating.qml                 Row of ★/☆ glyphs with rounded fill against value
     TagPill.qml                    Pill-shaped genre/tag label
@@ -119,12 +124,33 @@ pattern.
 
 Pill-shaped action button: `restColor: Theme.primary`, pill radius, content
 opacity dimmed on press (so the shadow stays full). Used inside
-`ReadingProgressCard` for the Continue/Read again/Start reading button.
+`ReadingProgressCard` for the Continue/Read again/Start reading button and
+inside `ReadingProgressTimer` for the Save action.
+
+### `SecondaryButton : PressableSurface`
+
+Pill-shaped, but with `restColor: Theme.primarySoft` and primary-coloured
+content. Visual middle ground between `PrimaryButton` and `ActionButton`.
+Used for «End session and save progress» in `ReadingProgressTimer`.
 
 ### `ActionButton : PressableSurface`
 
 Surface-coloured button with icon + label: `pressedColor:
 Theme.primarySoft`. Used for PDF / Statistics / Favorite on the detail page.
+
+### `IconButton : PressableSurface`
+
+Circular icon-only button (`radius: width / 2`). `pressedColor` defaults to
+`restColor` (binding) — press feedback flows through `opacity` so caller
+overrides only `restColor`/`iconColor`. Used for the play/pause and reset
+controls inside `ReadingProgressTimer`.
+
+### `TextButton : TouchTarget`
+
+A `Text` inside a `TouchTarget` with `padding: Geometry.spacing.md`. Caller
+sets `label`, `labelColor`, `labelSize`, `labelWeight`. Used for muted
+"Cancel" actions and primary-coloured "+ Add"-style links — anywhere a
+button without chrome is needed.
 
 ## Pages
 
@@ -177,9 +203,13 @@ Layout (top → bottom):
    title/author/meta (`%n page(s)` plural), optional star rating row.
 2. `ReadingProgressCard` — progress block (Progress label, % indicator,
    `ProgressBar`, "X of N pages") visible only when `pagesTotal > 0`. Below
-   it the `PrimaryButton` whose label is computed at the page level by
-   switching on `BookStatus.Finished` / `InProgress` / default → `Read again`
-   / `Continue reading` / `Start reading`.
+   it, **either** the `PrimaryButton` (visible when timer is `Stopped`)
+   whose label is computed at the page level by switching on
+   `BookStatus.Finished` / `InProgress` / default → `Read again` /
+   `Continue reading` / `Start reading`, **or** the `ReadingProgressTimer`
+   (visible when timer is active). The two never co-exist — the action
+   button starts a session, the timer takes over, and reset/save returns
+   to the action button.
 3. `RatingsCard` — two `RatingTile`s separated by a HiDPI-aware divider
    (`Math.max(1, Math.ceil(Screen.devicePixelRatio))`). Left: user's rating
    with stars (decimals: 0). Right: global rating without stars (decimals: 1
@@ -195,6 +225,41 @@ Status semantics: see [`BookStatus`](../../src/services/BookStatus.hpp).
 The page references `BookStatus.Finished` / `InProgress` directly — the
 component (`ReadingProgressCard`) takes `actionLabel: string` and stays
 ignorant of status meaning.
+
+### `ReadingProgressTimer.qml`
+
+Stopwatch over the current reading session. State machine driven by the
+[`ReadingPhase`](../../src/services/ReadingPhase.hpp) Q_GADGET enum:
+`Stopped` → idle (timer hidden, action button shown), `Running` → ticking,
+`Paused` → frozen but visible.
+
+Key behaviours:
+
+- **Tick loop** — internal `Timer { interval: 1000; running: phase ===
+  Running }` increments `seconds`.
+- **Persistence** — on `Component.onCompleted` the timer captures
+  `BookController.currentBookId` into `_bookIdAtCreation` and pulls saved
+  state via `BookController.takeReadingSession(_bookIdAtCreation)`. A
+  second `Timer { interval: 5000 }` flushes `(seconds, phase)` to
+  `ReadingSessionCache` while running, so a non-graceful shutdown loses at
+  most 5s. `Component.onDestruction` does a final save (or clear when
+  Stopped). See [database.md → ReadingSessionCache](database.md#readingsessioncache-qsettings).
+- **Confirm form** — tapping "End session and save progress" opens an
+  inline form (`Where did you stop?` + page-number `TextField` + Cancel
+  / Save). Open auto-pauses if currently Running and remembers
+  `_phaseBeforeConfirm`; Cancel restores it; Save emits
+  `endSessionConfirmed(pageNumber, durationSeconds)` and resets to
+  Stopped.
+- **Wiring on save** — `ReadingProgressCard.onEndSessionConfirmed` calls
+  `BookController.updateReadingProgress(pageNumber, durationSeconds)`
+  which writes `books.pagesRead` and inserts a row in `reading_sessions`
+  (see [controllers.md → Reading-timer flow](controllers.md#reading-timer-flow)).
+
+The component knows nothing about specific bookIds at the API level — the
+QML side captures one at creation and uses it consistently. Even if
+`BookController.currentBookId` shifts mid-life (future feature: jump
+between books from within the detail page), the timer keeps writing under
+its original id.
 
 ## Components
 
@@ -223,10 +288,12 @@ tokens: `starColor` (#F59E0B amber) and `starColorEmpty` (35% alpha amber)
 — same across all four palettes (Pink/Blue/Yellow/Purple).
 
 `Geometry` (singleton, named-component sub-specs):
+
 - `WindowSpec`, `SpacingSpec`, `RadiusSpec`, `SizeSpec`.
 - New `SizeSpec` tokens: `iconHuge: 36`, `bookDetailCoverWidth: 100`,
   `bookDetailCoverHeight: 140`, `actionButtonHeight: 56`,
-  `pillButtonHeight: 52`, `characterRowHeight: 64`.
+  `pillButtonHeight: 52`, `characterRowHeight: 64`,
+  `dialogPrimaryWidth: 160`.
 
 Wrapping nested QtObjects in named components keeps qmlls' type info accurate
 (it lets the language server resolve `Geometry.size.foo` as `int` rather
@@ -264,7 +331,8 @@ than untyped `QtObject`).
 | [qml/pages/mainPage/MainPage.qml](../../qml/pages/mainPage/MainPage.qml) | Home page |
 | [qml/pages/categoryListPage/CategoryListPage.qml](../../qml/pages/categoryListPage/CategoryListPage.qml) | Per-category list |
 | [qml/pages/bookDetailPage/BookDetailPage.qml](../../qml/pages/bookDetailPage/BookDetailPage.qml) | Book detail page |
-| [qml/components/](../../qml/components/) | Reusable widgets |
+| [qml/pages/bookDetailPage/ReadingProgressTimer.qml](../../qml/pages/bookDetailPage/ReadingProgressTimer.qml) | Stopwatch + end-session form, persists via `BookController` |
+| [qml/components/](../../qml/components/) | Reusable widgets — base chassis (`SurfaceCard`, `PressableSurface`, `PaddedCard`, `TouchTarget`), buttons (`PrimaryButton`, `SecondaryButton`, `ActionButton`, `IconButton`, `TextButton`), atoms (`StarRating`, `TagPill`, `IconGlyph`, `ProgressBar`, `ProgressRing`) and rows |
 | [qml/theme/Theme.qml](../../qml/theme/Theme.qml) | Theme singleton |
 | [qml/utils/Geometry.qml](../../qml/utils/Geometry.qml) | Spacing / radius / size tokens |
 | [qml/utils/Styles.qml](../../qml/utils/Styles.qml) | Font / opacity / duration / progressBar / elevation tokens |
