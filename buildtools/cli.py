@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from buildtools.commands import (
+    AnalyzeCommand,
     BootstrapCommand,
     CleanCommand,
     Command,
@@ -19,6 +20,7 @@ from buildtools.errors import BuildError, ToolNotFoundError
 from buildtools.providers import (
     CMakeProvider,
     ClangFormatProvider,
+    ClangTidyProvider,
     GitProvider,
     MsvcProvider,
     QmlFormatProvider,
@@ -42,6 +44,7 @@ class CommandRegistry:
         self._clang_format = ClangFormatProvider(
             self.shell, self._venv_mgr, config.project_dir,
         )
+        self._clang_tidy = ClangTidyProvider(self.shell, self._venv_mgr)
         self._qml_format = QmlFormatProvider(self.shell, config)
 
     def build(self) -> dict[str, Command]:
@@ -49,11 +52,16 @@ class CommandRegistry:
             "bootstrap": BootstrapCommand(
                 self.config, self.shell,
                 self._venv_mgr, self._cmake, self._vcpkg,
-                self._msvc, self._clang_format, self._qml_format,
+                self._msvc, self._clang_format, self._clang_tidy,
+                self._qml_format,
             ),
             "compile": CompileCommand(
                 self.config, self.shell, self._cmake,
-                self._msvc, self._clang_format, self._qml_format,
+                self._msvc, self._clang_format, self._clang_tidy,
+                self._qml_format,
+            ),
+            "analyze": AnalyzeCommand(
+                self.config, self.shell, self._clang_tidy,
             ),
             "format": FormatCommand(
                 self.config, self.shell, self._clang_format,
@@ -110,11 +118,21 @@ class CLI:
         p_compile = subs.add_parser(
             "compile", parents=[help_parser, release_parser],
             add_help=False,
-            help="Build the project",
+            help="Build the project (with static analysis by default)",
         )
         p_compile.add_argument(
             "-j", "--jobs", type=int, default=None,
             help="Parallel build jobs",
+        )
+        p_compile.add_argument(
+            "--skip-analyze", action="store_true",
+            help="Skip clang-tidy + MSVC /analyze gate (faster, less safe)",
+        )
+
+        subs.add_parser(
+            "analyze", parents=[help_parser, release_parser],
+            add_help=False,
+            help="Run clang-tidy over the project (no compile)",
         )
 
         subs.add_parser(
@@ -165,6 +183,8 @@ class CLI:
         cmake_defs = getattr(args, "cmake_defs", None)
         if cmake_defs:
             kwargs["cmake_defs"] = cmake_defs
+        if getattr(args, "skip_analyze", False):
+            kwargs["skip_analyze"] = True
         config = ProjectConfig(**kwargs)
         command_name = args.command or "help"
         registry = CommandRegistry(config)

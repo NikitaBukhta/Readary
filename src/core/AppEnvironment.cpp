@@ -10,12 +10,16 @@
 #include <QStandardPaths>
 #include <QTextStream>
 
+#include <iostream>
+
+namespace {
 Q_LOGGING_CATEGORY(lcAppEnv, "bl.core.env")
 
-namespace bl::core {
+QFile *g_logFile = nullptr;
+QMutex g_logMutex;
+} // namespace
 
-static QFile *s_logFile = nullptr;
-static QMutex s_logMutex;
+namespace bl::core {
 
 QString AppEnvironment::ensureDataDir() {
   QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -44,10 +48,10 @@ void AppEnvironment::installFileLogger() {
 
   const QString path = logFilePath();
 
-  s_logFile = new QFile(path);
-  if (!s_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
-    delete s_logFile;
-    s_logFile = nullptr;
+  g_logFile = new QFile(path);
+  if (!g_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+    delete g_logFile;
+    g_logFile = nullptr;
     qCWarning(lcAppEnv) << "Cannot open log file:" << path;
     return;
   }
@@ -58,17 +62,17 @@ void AppEnvironment::installFileLogger() {
 void AppEnvironment::shutdownFileLogger() {
   qInstallMessageHandler(nullptr);
 
-  QMutexLocker locker(&s_logMutex);
-  if (s_logFile) {
-    s_logFile->flush();
-    s_logFile->close();
-    delete s_logFile;
-    s_logFile = nullptr;
+  const QMutexLocker locker(&g_logMutex);
+  if (g_logFile) {
+    g_logFile->flush();
+    g_logFile->close();
+    delete g_logFile;
+    g_logFile = nullptr;
   }
 }
 
 void AppEnvironment::cleanupOldLogs(int keepDays) {
-  QDir dir(dataPath());
+  const QDir dir(dataPath());
   const QDateTime cutoff = QDateTime::currentDateTime().addDays(-keepDays);
 
   const auto entries = dir.entryInfoList({"log_*.log"}, QDir::Files, QDir::Time);
@@ -81,7 +85,7 @@ void AppEnvironment::cleanupOldLogs(int keepDays) {
 }
 
 void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  if (!s_logFile)
+  if (!g_logFile)
     return;
 
   const char *level = nullptr;
@@ -108,13 +112,13 @@ void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &co
 
   const QString line = QStringLiteral("%1 [%2] %3: %4\n").arg(timestamp, level, category, msg);
 
-  QMutexLocker locker(&s_logMutex);
-  QTextStream stream(s_logFile);
+  const QMutexLocker locker(&g_logMutex);
+  QTextStream stream(g_logFile);
   stream << line;
   stream.flush();
 
 #ifndef QT_NO_DEBUG
-  fprintf(stderr, "%s", line.toLocal8Bit().constData());
+  std::cerr << line.toLocal8Bit().constData();
 #endif
 }
 

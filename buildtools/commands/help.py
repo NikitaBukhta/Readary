@@ -66,8 +66,10 @@ class HelpCommand(Command):
 
         print("\nFlags:")
         print("  --release        Use Release mode (default: Debug)")
-        print("                   Applies to: bootstrap, compile, run")
+        print("                   Applies to: bootstrap, compile, run, analyze")
         print("  -j, --jobs N     Limit parallel build jobs (default: all cores)")
+        print("                   Applies to: compile")
+        print("  --skip-analyze   Skip clang-tidy + MSVC /analyze gate")
         print("                   Applies to: compile")
 
     def _print_paths(self) -> None:
@@ -87,6 +89,7 @@ class HelpCommand(Command):
         cmake_venv = self.config.venv_executable("cmake")
         vcpkg_path = self.config.vcpkg_executable()
         clang_format_venv = self.config.venv_executable("clang-format")
+        clang_tidy_venv = self.config.venv_executable("clang-tidy")
         qmlformat_exe = "qmlformat.exe" if self.config.is_windows else "qmlformat"
         qmlformat_path = self.config.qt_tools_dir / qmlformat_exe
 
@@ -95,6 +98,7 @@ class HelpCommand(Command):
             "cmake":        [cmake_venv],
             "vcpkg":        [vcpkg_path],
             "clang-format": [clang_format_venv],
+            "clang-tidy":   [clang_tidy_venv],
             "qmlformat":    [qmlformat_path],
         }
 

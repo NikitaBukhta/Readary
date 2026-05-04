@@ -7,7 +7,9 @@
 #include <QSqlRecord>
 #include <QVariantMap>
 
+namespace {
 Q_LOGGING_CATEGORY(lcDb, "bl.core.db")
+}
 
 namespace bl::core {
 
@@ -128,7 +130,7 @@ bool DatabaseManager::exec(const QString &sql, QString *error) {
 
 bool DatabaseManager::execPrepared(QSqlQuery &query, const SqlQueryBuilder &builder, QString *error) {
   const auto &params = builder.getValues();
-  QString sql = builder.build();
+  const QString sql = builder.build();
 
   if (!query.prepare(sql)) {
     qCWarning(lcDb) << "Prepare failed:" << query.lastError().text() << "sql:" << sql;
@@ -156,7 +158,7 @@ void DatabaseManager::trimRun(QTextStream &script) {
   QString currentCommand;
 
   while (!script.atEnd()) {
-    QString line = script.readLine();
+    const QString line = script.readLine();
     if (line.isEmpty() || line.startsWith("--"))
       continue;
 

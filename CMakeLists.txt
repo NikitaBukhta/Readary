@@ -11,6 +11,45 @@ find_package(Qt6 REQUIRED COMPONENTS Quick Sql)
 qt_standard_project_setup(REQUIRES 6.8)
 
 # ---------------------------------------------------------------------------
+# Static analysis (clang-tidy + MSVC /analyze)
+# Toggle off for one-off builds:  python bootstrap.py compile --skip-analyze
+# ---------------------------------------------------------------------------
+option(ENABLE_ANALYZE "Run clang-tidy and MSVC /analyze during compilation" ON)
+
+if(ENABLE_ANALYZE)
+    if(DEFINED CLANG_TIDY_EXECUTABLE AND EXISTS "${CLANG_TIDY_EXECUTABLE}")
+        set(_CLANG_TIDY_BIN "${CLANG_TIDY_EXECUTABLE}")
+    else()
+        find_program(_CLANG_TIDY_BIN NAMES clang-tidy)
+    endif()
+    if(_CLANG_TIDY_BIN)
+        # On MSVC we route clang-tidy through a Python wrapper that strips
+        # MSVC-only switches clang-cl can't parse (dash-form -external:I etc).
+        # CMake auto-appends `--extra-arg-before=--driver-mode=cl` for MSVC,
+        # so we don't pass --driver-mode ourselves.
+        if(MSVC AND CLANG_TIDY_WRAPPER_PYTHON AND CLANG_TIDY_WRAPPER_SCRIPT)
+            set(CMAKE_CXX_CLANG_TIDY
+                "${CLANG_TIDY_WRAPPER_PYTHON};${CLANG_TIDY_WRAPPER_SCRIPT};${_CLANG_TIDY_BIN}")
+            message(STATUS "Static analysis: clang-tidy via wrapper "
+                "(${CLANG_TIDY_WRAPPER_SCRIPT}) -> ${_CLANG_TIDY_BIN}")
+        else()
+            set(CMAKE_CXX_CLANG_TIDY "${_CLANG_TIDY_BIN}")
+            message(STATUS "Static analysis: clang-tidy = ${_CLANG_TIDY_BIN}")
+        endif()
+    else()
+        message(WARNING
+            "ENABLE_ANALYZE=ON but clang-tidy not found. "
+            "Run `python bootstrap.py bootstrap` to install it.")
+    endif()
+    if(MSVC)
+        add_compile_options(/analyze /analyze:external-)
+        message(STATUS "Static analysis: MSVC /analyze enabled")
+    endif()
+else()
+    message(STATUS "Static analysis disabled (ENABLE_ANALYZE=OFF)")
+endif()
+
+# ---------------------------------------------------------------------------
 # Core library (shared between app and tests) + QML module backing target
 # ---------------------------------------------------------------------------
 file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS

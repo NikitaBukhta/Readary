@@ -85,13 +85,13 @@ bool BookSortFilterProxyModel::matches(const QVariant &cell, const Filter &filte
 }
 
 bool BookSortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
-  QAbstractItemModel *model = sourceModel();
+  const QAbstractItemModel *model = sourceModel();
   if (!model)
     return false;
   if (_filters.isEmpty())
     return true;
 
-  QModelIndex idx = model->index(sourceRow, 0, sourceParent);
+  const QModelIndex idx = model->index(sourceRow, 0, sourceParent);
 
   // Same role -> OR; different roles -> AND.
   for (const int role : _filters.uniqueKeys()) {
@@ -111,8 +111,8 @@ bool BookSortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex
 }
 
 bool BookSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const {
-  QVariant leftData = sourceModel()->data(left, sortRole());
-  QVariant rightData = sourceModel()->data(right, sortRole());
+  const QVariant leftData = sourceModel()->data(left, sortRole());
+  const QVariant rightData = sourceModel()->data(right, sortRole());
 
   switch (sortRole()) {
   case BookListModel::YearRole:

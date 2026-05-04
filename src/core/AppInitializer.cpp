@@ -10,7 +10,9 @@
 #include <QQmlContext>
 #include <QtQml>
 
+namespace {
 Q_LOGGING_CATEGORY(lcInit, "bl.core.init")
+}
 
 namespace bl::core {
 
@@ -22,7 +24,7 @@ AppInitializer::~AppInitializer() = default;
 
 int AppInitializer::run() {
   init();
-  int res = _app.exec();
+  const int res = QGuiApplication::exec();
   _engine.reset();
   AppEnvironment::shutdownFileLogger();
   return res;

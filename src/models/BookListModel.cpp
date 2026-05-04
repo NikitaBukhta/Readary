@@ -2,7 +2,9 @@
 
 #include <QLoggingCategory>
 
+namespace {
 Q_LOGGING_CATEGORY(lcBookModel, "bl.models.books")
+}
 
 namespace bl::models {
 

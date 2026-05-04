@@ -21,14 +21,14 @@ public:
   bool runScript(const QString &scriptFileName);
 
   bool exec(const QString &sql, QString *error = nullptr);
-  QList<QVariantMap> select(const SqlQueryBuilder &query, QString *error = nullptr);
-  int execute(const SqlQueryBuilder &query, QString *error = nullptr);
-  qint64 insert(const SqlQueryBuilder &query, QString *error = nullptr);
+  QList<QVariantMap> select(const SqlQueryBuilder &builder, QString *error = nullptr);
+  int execute(const SqlQueryBuilder &builder, QString *error = nullptr);
+  qint64 insert(const SqlQueryBuilder &builder, QString *error = nullptr);
 
 private:
-  bool execPrepared(QSqlQuery &query, const SqlQueryBuilder &builder, QString *error);
+  static bool execPrepared(QSqlQuery &query, const SqlQueryBuilder &builder, QString *error);
   void trimRun(QTextStream &script);
-  QList<QVariantMap> getDataFromQuery(QSqlQuery &query);
+  static QList<QVariantMap> getDataFromQuery(QSqlQuery &query);
 
   static constexpr const char *kConnectionName = "BeeLibrary";
 

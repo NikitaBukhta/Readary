@@ -6,7 +6,9 @@
 
 #include <QLoggingCategory>
 
+namespace {
 Q_LOGGING_CATEGORY(lcBook, "bl.controllers.book")
+}
 
 namespace bl::controllers {
 
@@ -37,7 +39,9 @@ BookController::~BookController() = default;
 
 void BookController::setInstance(BookController *instance) { s_instance = instance; }
 
-BookController *BookController::create(QQmlEngine *, QJSEngine *) {
+BookController *BookController::create(QQmlEngine *engine, QJSEngine *scriptEngine) {
+  Q_UNUSED(engine)
+  Q_UNUSED(scriptEngine)
   Q_ASSERT_X(s_instance, "BookController::create", "setInstance() must be called before the QML engine loads");
   QQmlEngine::setObjectOwnership(s_instance, QQmlEngine::CppOwnership);
   return s_instance;

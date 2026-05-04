@@ -3,7 +3,9 @@
 
 #include <QLoggingCategory>
 
+namespace {
 Q_LOGGING_CATEGORY(lcBookTable, "bl.services.books")
+}
 
 namespace bl::services {
 
@@ -49,7 +51,7 @@ QList<BookDTO> BookTable::getAllBooks() {
 
   QList<BookDTO> result;
   result.reserve(data.size());
-  int rowIndex = 0;
+  const int rowIndex = 0;
   for (const auto &row : std::as_const(data)) {
     qDebug(lcBookTable) << rowIndex << ") " << row;
     result.emplaceBack(BookDTO::fromMap(row));
@@ -77,7 +79,7 @@ qint64 BookTable::addBook(const BookDTO &book) {
                book.isHardcover, nullableId(book.typeId), book.totalPages, book.pagesRead, book.globalRating,
                book.localRating, book.userRating, book.status, book.inWishList});
 
-  qint64 id = _db->insert(query, &error);
+  const qint64 id = _db->insert(query, &error);
   if (id > 0)
     qCInfo(lcBookTable) << "Added book id:" << id << "name:" << book.name;
   else
@@ -98,7 +100,7 @@ bool BookTable::updateBook(const BookDTO &book) {
                book.isHardcover, nullableId(book.typeId), book.totalPages, book.pagesRead, book.globalRating,
                book.localRating, book.userRating, book.status, book.inWishList, book.id});
 
-  int affected = _db->execute(query, &error);
+  const int affected = _db->execute(query, &error);
 
   if (affected > 0) {
     qCInfo(lcBookTable) << "Updated book id:" << book.id << "name:" << book.name;
@@ -118,7 +120,7 @@ bool BookTable::deleteBook(qint64 id) {
 
   query.deleteFrom(kTableName).where("id = ?").values({id});
 
-  int affected = _db->execute(query, &error);
+  const int affected = _db->execute(query, &error);
 
   if (affected > 0) {
     qCInfo(lcBookTable) << "Deleted book id:" << id;

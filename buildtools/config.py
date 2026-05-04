@@ -16,6 +16,7 @@ class ProjectConfig:
     release: bool = False
     jobs: int = field(default_factory=lambda: os.cpu_count() or 1)
     cmake_defs: list[str] = field(default_factory=list)
+    skip_analyze: bool = False
 
     venv_dir: Path = field(init=False)
     deps_dir: Path = field(init=False)
