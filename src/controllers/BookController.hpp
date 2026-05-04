@@ -61,6 +61,7 @@ public:
   static Q_INVOKABLE void saveReadingSession(qint64 bookId, int seconds, int phase);
   static Q_INVOKABLE QVariantMap takeReadingSession(qint64 bookId);
   static Q_INVOKABLE void clearReadingSession(qint64 bookId);
+  Q_INVOKABLE void setBookStatus(int status);
   Q_INVOKABLE void updateReadingProgress(int pageNumber, int durationSeconds);
 
   bl::models::BookSearchProxyModel *searchModel() const;

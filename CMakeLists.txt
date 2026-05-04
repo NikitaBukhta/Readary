@@ -68,9 +68,10 @@ foreach(qml_file IN LISTS QML_FILES)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${alias})
 endforeach()
 
-set_source_files_properties(qml/utils/Geometry.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
-set_source_files_properties(qml/utils/Styles.qml   PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
-set_source_files_properties(qml/theme/Theme.qml    PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/utils/Geometry.qml             PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/utils/Styles.qml               PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/Theme.qml                PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/components/ToastService.qml    PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_library(BeeLibraryCore STATIC ${LIB_SOURCES})
 target_include_directories(BeeLibraryCore PUBLIC src src/models src/controllers src/core src/services)

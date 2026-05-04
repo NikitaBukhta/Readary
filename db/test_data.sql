@@ -11,7 +11,8 @@ INSERT OR IGNORE INTO publishers (id, name) VALUES
 (5,  'Pearson'),
 (6,  'Packt'),
 (7,  'Wiley'),
-(8,  'McGraw-Hill');
+(8,  'McGraw-Hill'),
+(9,  'Эксмо');
 
 INSERT OR IGNORE INTO authors (id, name) VALUES
 (1,  'David Thomas, Andrew Hunt'),
@@ -33,7 +34,8 @@ INSERT OR IGNORE INTO authors (id, name) VALUES
 (17, 'Donald E. Knuth'),
 (18, 'Alfred V. Aho et al.'),
 (19, 'Abraham Silberschatz et al.'),
-(20, 'James Kurose, Keith Ross');
+(20, 'James Kurose, Keith Ross'),
+(21, 'Серена Валентино');
 
 INSERT OR IGNORE INTO genres (id, name) VALUES
 (1, 'Software Engineering'),
@@ -44,13 +46,15 @@ INSERT OR IGNORE INTO genres (id, name) VALUES
 (6, 'Design Patterns'),
 (7, 'Networking'),
 (8, 'Operating Systems'),
-(9, 'Refactoring');
+(9, 'Refactoring'),
+(10, 'Fantasy'),
+(11, 'Children''s Literature');
 
 -- Seed distribution per UI category:
 --   Finished     (status=3):       ids 1-5
 --   WantToRead   (status=1):       ids 6-9
 --   InProgress   (status=2):       ids 10-11
---   WantToBuy    (inWishList=1):   ids 12-15
+--   WantToBuy    (inWishList=1):   ids 12-15, 21
 --   Uncategorized:                 ids 16-20
 -- Cover URLs use Open Library Covers API by ISBN; missing ISBNs fall back to the QML placeholder.
 INSERT OR REPLACE INTO books
@@ -76,7 +80,8 @@ VALUES
 (17, 'The Art of Computer Programming',                      17,  1968, 1, 'Knuth''s monumental, multi-volume reference covering the analysis of algorithms in extraordinary depth.', 'https://covers.openlibrary.org/b/isbn/0201896834-M.jpg', 1, 3, 650, 0, 9.5, 9.4, NULL, 0, 0),
 (18, 'Compilers: Principles, Techniques, and Tools',         18,  2006, 5, 'The "Dragon Book" — comprehensive introduction to compiler design, parsing, optimization, and code generation.', 'https://covers.openlibrary.org/b/isbn/0321486811-M.jpg', 1, 1, 1009, 0, 8.9, 8.7, NULL, 0, 0),
 (19, 'Operating System Concepts',                            19,  2018, 7, 'A standard textbook covering process management, memory, file systems, and concurrent programming.', 'https://covers.openlibrary.org/b/isbn/1119320917-M.jpg', 1, 1, 944, 0, 8.5, 8.3, NULL, 0, 0),
-(20, 'Computer Networking: A Top-Down Approach',             20,  2016, 5, 'Networking from the application layer down — covers HTTP, TCP, IP, and the protocols underpinning the modern internet.', 'https://covers.openlibrary.org/b/isbn/0133594149-M.jpg', 1, 1, 864, 0, 8.6, 8.5, NULL, 0, 0);
+(20, 'Computer Networking: A Top-Down Approach',             20,  2016, 5, 'Networking from the application layer down — covers HTTP, TCP, IP, and the protocols underpinning the modern internet.', 'https://covers.openlibrary.org/b/isbn/0133594149-M.jpg', 1, 1, 864, 0, 8.6, 8.5, NULL, 0, 0),
+(21, 'Леди Тремейн. История злой мачехи',                    21,  2021, 9, 'Все знают историю Золушки и её злой мачехи, которая с дочерьми мучила бедную будущую принцессу. Но никто никогда не задумывался о том, почему леди Тремейн была так жестока, а Анастасия и Дризелла — злобны и завистливы. Что привело знатную светскую даму в глушь далёкого затерянного королевства? Каково ей было оказаться вдали от дома, от привычной роскоши и сонма слуг? И зачем отец Золушки решил жениться на такой холодной и жёсткой женщине? Быть может, она не всегда была бессердечной, а стала такой, потому что кто-то разбил ей сердце?', 'https://cdn.eksmo.ru/v2/ITD000000001154470/COVER/cover1__w600.jpg', 1, 1, 320, 0, NULL, NULL, NULL, 0, 1);
 
 INSERT OR IGNORE INTO book_genres (book_id, genre_id) VALUES
 (1, 1), (1, 2),
@@ -98,7 +103,8 @@ INSERT OR IGNORE INTO book_genres (book_id, genre_id) VALUES
 (17, 3), (17, 4),
 (18, 4), (18, 2),
 (19, 8),
-(20, 7);
+(20, 7),
+(21, 10), (21, 11);
 
 INSERT OR IGNORE INTO book_characters (book_id, name, role) VALUES
 (10, 'auto&&',     'Universal type deduction'),

@@ -3,6 +3,7 @@
 #include "models/BookSearchProxyModel.hpp"
 #include "models/BookSortFilterProxyModel.hpp"
 #include "models/filters/BookFilterStrategy.hpp"
+#include "services/BookStatus.hpp"
 #include "services/ReadingSessionCache.hpp"
 
 #include <QLoggingCategory>
@@ -116,14 +117,39 @@ void BookController::clearReadingSession(qint64 bookId) {
   services::ReadingSessionCache::clear(bookId);
 }
 
+void BookController::setBookStatus(int status) {
+  if (_currentBookId <= 0)
+    return;
+
+  services::BookDTO book = services::BookDTO::fromMap(currentBookData());
+  if (book.status == status)
+    return;
+
+  book.status = status;
+  if (!_bookTable->updateBook(book)) {
+    setErrorMessage(tr("Failed to update book status."));
+    return;
+  }
+
+  qCInfo(lcBook) << "Set status — book id:" << _currentBookId << "status:" << status;
+  emit bookSaved();
+}
+
 void BookController::updateReadingProgress(int pageNumber, int durationSeconds) {
   if (_currentBookId <= 0)
     return;
 
-  const auto book = _listModel->getBook(_currentBookId);
-  const int pagesFrom = book.value("pagesRead").toInt();
+  services::BookDTO book = services::BookDTO::fromMap(currentBookData());
+  const int pagesFrom = book.pagesRead;
+  if (book.pagesRead >= pageNumber || pageNumber > book.totalPages) {
+    qDebug(lcBook) << "Not updating reading progress — invalid page number:" << pageNumber
+                   << "current pages read:" << book.pagesRead << "total pages:" << book.totalPages;
+    return;
+  }
+  book.status = pageNumber == book.totalPages ? services::BookStatus::Finished : services::BookStatus::InProgress;
+  book.pagesRead = pageNumber;
 
-  if (!_bookTable->updatePagesRead(_currentBookId, pageNumber)) {
+  if (!_bookTable->updateBook(book)) {
     setErrorMessage(tr("Failed to update reading progress."));
     return;
   }

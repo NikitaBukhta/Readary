@@ -20,6 +20,24 @@ ApplicationWindow {
         source: NavigationController.currentPagePath
     }
 
+    Toast {
+        id: toast
+        anchors {
+            top: parent.top
+            topMargin: Geometry.spacing.lg
+            horizontalCenter: parent.horizontalCenter
+        }
+        width: Math.min(parent.width - 2 * Geometry.spacing.lg, Geometry.window.contentMaxWidth)
+        z: 1000
+    }
+
+    Connections {
+        target: ToastService
+        function onRequested(message) {
+            toast.show(message);
+        }
+    }
+
     footer: BottomNavBar {
         Layout.fillWidth: true
     }

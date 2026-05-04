@@ -48,6 +48,10 @@ PaddedCard {
     }
 
     function _saveConfirm() {
+        if (_pageInput < currentPage) {
+            ToastService.show(qsTr("Cannot save page lower than current (%1)").arg(currentPage));
+            return;
+        }
         endSessionConfirmed(_pageInput, seconds);
         phase = ReadingPhase.Stopped;
     }
@@ -56,6 +60,8 @@ PaddedCard {
         if (phase === ReadingPhase.Stopped) {
             seconds = 0;
             _confirming = false;
+        } else if (phase === ReadingPhase.Running) {
+            BookController.setBookStatus(BookStatus.InProgress);
         }
     }
 
@@ -216,6 +222,10 @@ PaddedCard {
                     onTextEdited: {
                         const n = parseInt(text, 10);
                         if (!isNaN(n)) {
+                            if (n > root.pagesTotal) {
+                                ToastService.show(qsTr("Cannot save page higher than total (%1)").arg(root.pagesTotal));
+                            }
+
                             const max = root.pagesTotal > 0 ? root.pagesTotal : n;
                             root._pageInput = Math.max(0, Math.min(n, max));
                         }
