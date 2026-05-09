@@ -8,11 +8,20 @@ QML (Library module)        ← pages, reusable components, theme
 Controllers                 ← BookController, NavigationController
    ↑ owns / observes
 Models                      ← BookListModel + proxies + filter strategies
-   ↑ uses
+   ↑ uses                            ↘ returns
 Services                    ← BookTable (CRUD over BookDTO)
+   ↑ uses                       wraps ↗
+QML types                   ← Q_GADGET wrappers (BookDTOObject) — moc-touched value types exposed at the controller→QML boundary
    ↑ uses
 Core                        ← DatabaseManager, SqlQueryBuilder, AppEnvironment
 ```
+
+`src/qmltypes/` is a thin layer between services and controllers. It
+holds value types (Q_GADGETs) that adapt service-layer DTOs for QML:
+they inherit from the plain DTO and add `Q_PROPERTY MEMBER` aliases
+(plus any view-only fields like `genres` for the book detail page).
+The data layer stays free of moc/Q_GADGET, while controllers can
+return a typed gadget that QML reads members directly off.
 
 QML never reaches into models or services directly — controllers are the only
 QML-visible entry points (singletons). Models are exposed as properties on the
@@ -87,8 +96,9 @@ pattern) at construction time; see [models-and-filters.md](models-and-filters.md
 ```
 src/
   core/        AppEnvironment, AppInitializer, DatabaseManager, SqlQueryBuilder
-  services/    BookTable, BookDTO, BookStatus, ReadingPhase, ReadingSessionCache
-  models/      BookListModel, BookSearchProxyModel, BookSortFilterProxyModel
+  services/    BookTable, BookDTO, CharacterDTO, BookStatus, ReadingPhase, ReadingSessionCache
+  qmltypes/    BookDTOObject (Q_GADGET wrapper over BookDTO, exposed by BookController to QML)
+  models/      BookListModel, BookSearchProxyModel, BookSortFilterProxyModel, BookCharactersModel
     filters/   BookFilterStrategy + 4 concrete strategies
   controllers/ BookController, NavigationController
   tests/       Qt Test units (BookSearchProxyModelTest, etc.)

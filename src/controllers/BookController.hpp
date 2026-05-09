@@ -1,8 +1,10 @@
 #ifndef BEELIBRARY_CONTROLLERS_BOOKCONTROLLER_HPP
 #define BEELIBRARY_CONTROLLERS_BOOKCONTROLLER_HPP
 
+#include "models/BookCharactersModel.hpp"
 #include "models/BookSearchProxyModel.hpp"
 #include "models/BookSortFilterProxyModel.hpp"
+#include "qmltypes/BookDTOObject.hpp"
 #include "services/BookTable.hpp"
 
 #include <QHash>
@@ -28,11 +30,12 @@ class BookController : public QObject {
   QML_SINGLETON
 
   Q_PROPERTY(qint64 currentBookId READ currentBookId WRITE setCurrentBookId NOTIFY currentBookIdChanged)
-  Q_PROPERTY(QVariantMap currentBookData READ currentBookData NOTIFY currentBookIdChanged)
+  Q_PROPERTY(bl::qmltypes::BookDTOObject currentBookData READ currentBookData NOTIFY currentBookIdChanged)
   Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
   Q_PROPERTY(ListKind activeKind READ activeKind WRITE setActiveKind NOTIFY activeKindChanged)
   Q_PROPERTY(bl::models::BookSearchProxyModel *searchModel READ searchModel CONSTANT)
+  Q_PROPERTY(bl::models::BookCharactersModel *charactersModel READ charactersModel CONSTANT)
 
 public:
   enum class ListKind {
@@ -49,7 +52,7 @@ public:
 
   qint64 currentBookId() const;
   void setCurrentBookId(qint64 id);
-  QVariantMap currentBookData() const;
+  bl::qmltypes::BookDTOObject currentBookData() const;
   QString errorMessage() const;
 
   ListKind activeKind() const;
@@ -65,6 +68,7 @@ public:
   Q_INVOKABLE void updateReadingProgress(int pageNumber, int durationSeconds);
 
   bl::models::BookSearchProxyModel *searchModel() const;
+  bl::models::BookCharactersModel *charactersModel() const;
 
   static BookController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
   static void setInstance(BookController *instance);
@@ -88,6 +92,7 @@ private:
   std::shared_ptr<services::BookTable> _bookTable;
   bl::models::BookListModel *_listModel;
   bl::models::BookSearchProxyModel *_searchProxy;
+  bl::models::BookCharactersModel *_charactersModel;
 
   QHash<ListKind, bl::models::BookSortFilterProxyModel *> _proxies;
   ListKind _activeKind = ListKind::WantToRead;
@@ -95,7 +100,8 @@ private:
   QString _errorMessage;
   qint64 _currentBookId = 0;
 
-  mutable QVariantMap _cachedBookData;
+  mutable bl::qmltypes::BookDTOObject _cachedBookData;
+  mutable bool _cacheValid = false;
 };
 
 } // namespace bl::controllers

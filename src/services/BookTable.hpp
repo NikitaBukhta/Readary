@@ -2,6 +2,7 @@
 #define BEELIBRARY_SERVICES_BOOKTABLE_HPP
 
 #include "BookDTO.hpp"
+#include "CharacterDTO.hpp"
 #include "core/DatabaseManager.hpp"
 
 #include <QString>
@@ -19,7 +20,7 @@ public:
   bool deleteBook(qint64 id);
 
   QStringList getGenres(qint64 bookId) const;
-  QVariantList getCharacters(qint64 bookId) const;
+  QList<CharacterDTO> getCharacters(qint64 bookId) const;
 
   bool updatePagesRead(qint64 bookId, int pagesRead);
   qint64 insertReadingSession(qint64 bookId, int pagesFrom, int pagesTo, int durationSeconds);

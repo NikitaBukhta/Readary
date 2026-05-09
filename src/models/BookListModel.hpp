@@ -47,7 +47,7 @@ public:
 
   Q_INVOKABLE bool deleteBook(qint64 id);
 
-  QVariantMap getBook(qint64 id) const;
+  services::BookDTO getBook(qint64 id) const;
   void refresh();
   QString errorMessage() const;
 

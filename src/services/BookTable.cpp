@@ -159,7 +159,7 @@ QStringList BookTable::getGenres(qint64 bookId) const {
   return result;
 }
 
-QVariantList BookTable::getCharacters(qint64 bookId) const {
+QList<CharacterDTO> BookTable::getCharacters(qint64 bookId) const {
   core::SqlQueryBuilder query;
   QString error;
 
@@ -169,10 +169,10 @@ QVariantList BookTable::getCharacters(qint64 bookId) const {
   if (!error.isEmpty())
     qCWarning(lcBookTable) << "Failed to load characters for book id:" << bookId << "error:" << error;
 
-  QVariantList result;
+  QList<CharacterDTO> result;
   result.reserve(rows.size());
   for (const auto &row : std::as_const(rows)) {
-    result.append(row);
+    result.emplaceBack(CharacterDTO::fromMap(row));
   }
   return result;
 }

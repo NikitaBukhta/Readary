@@ -85,10 +85,20 @@ struct BookDTO {
   int     status = 0;           // mirrors BookStatus::Value
   bool    inWishList = false;
 
-  QVariantMap toMap() const;
   static BookDTO fromMap(const QVariantMap &);
 };
 ```
+
+`BookDTO` itself is a plain POD — no Q_GADGET, no moc — so the services
+layer stays free of QML metadata. The QML-facing wrapper lives in a
+separate `qmltypes/` layer at
+[`src/qmltypes/BookDTOObject.hpp`](../../src/qmltypes/BookDTOObject.hpp):
+it inherits from `BookDTO`, adds a Q_GADGET + Q_PROPERTY MEMBER aliases
+for every field, and tacks on the detail-view-only `QStringList genres`.
+`BookController::currentBookData` returns the wrapper so QML reads
+members directly off the gadget without going through a `QVariantMap`
+shim; data-layer code (BookListModel, BookTable) keeps using the bare
+`BookDTO`.
 
 `status` is plain `int` in storage; the QML-visible enum lives in
 [`BookStatus`](../../src/services/BookStatus.hpp) (Q_GADGET, `QML_ELEMENT`),
@@ -113,15 +123,17 @@ book with its author/publisher/type names already resolved.
 | `updateBook(book)` | UPDATE by id |
 | `deleteBook(id)` | DELETE by id |
 | `getGenres(bookId) const` | `QStringList` of genre names for one book |
-| `getCharacters(bookId) const` | `QVariantList` of `{id, name, role}` maps |
+| `getCharacters(bookId) const` | `QList<CharacterDTO>` (`id`, `name`, `role`) for one book; consumed by `BookCharactersModel` |
 | `updatePagesRead(bookId, pagesRead)` | Targeted `UPDATE books SET pagesRead = ?`; called by `BookController::updateReadingProgress` after a session ends |
 | `insertReadingSession(bookId, pagesFrom, pagesTo, durationSeconds)` | Inserts one row in `reading_sessions` with `started_at = now − duration` |
 
 Side-table reads (`getGenres`, `getCharacters`) are intentionally NOT folded
 into `getAllBooks()` — list views don't need them, and joining them on every
-list refresh would multiply rows. The detail page picks them up via
-`BookController::currentBookData()`, which calls these methods on demand and
-caches the merged map per `currentBookId`.
+list refresh would multiply rows. `getGenres` is pulled on demand by
+`BookController::currentBookData()` and assigned onto the cached `BookDTO`
+per `currentBookId`. `getCharacters` is pulled by `BookCharactersModel`
+(owned by `BookController`) on every `setBookId` and held in memory for
+paged exposure to QML.
 
 ## Schema overview
 

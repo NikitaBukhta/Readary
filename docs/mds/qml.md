@@ -29,8 +29,12 @@ qml/
       ReadingProgressTimer.qml     Stopwatch (Phase enum) + end-session form; persists via BookController
       RatingsCard.qml              Two RatingTile halves separated by a divider
       RatingTile.qml               Optional label + value/total + optional StarRating row
-      CharactersSection.qml        Header (title + "+ Add" link) + Repeater of CharacterRow
+      BookDetailSummary.qml        Composes BookDetailHeader/ReadingProgressCard/RatingsCard/description/actions for the book overview block
       CharacterRow.qml             Avatar + name/role; PressableSurface base
+      CharactersListDelegate.qml   Wrapper around CharacterRow used as the inner ListView delegate (anchored side margins)
+      CharactersListHeader.qml     "Characters" title + "+ Add" — used as ListView.header
+      CharactersToggle.qml         Show less / Show more pair — used as ListView.footer; centered, hidden when nothing to do
+      BookGenreTags.qml            Flow of TagPill for genres, sits below the characters ListView
   components/
     AppSearchField.qml             Pill-shaped text field with magnifier glyph
     SurfaceCard.qml                Rectangle + radius.lg + Theme.surface + MultiEffect shadow
@@ -116,9 +120,9 @@ Item {
 ```
 
 Wraps a small icon/text in a click area larger than the icon itself.
-Used for the back-arrow in `BookDetailHeader` and the "+ Add" link in
-`CharactersSection`. Replaces the older "negative-margin MouseArea"
-pattern.
+Used for the back-arrow in `BookDetailHeader` and the "+ Add" link inline
+in `BookDetailPage`'s ListView header. Replaces the older "negative-margin
+MouseArea" pattern.
 
 ### `PrimaryButton : PressableSurface`
 
@@ -193,33 +197,65 @@ tap.
 
 ### `BookDetailPage.qml`
 
-Bound to `BookController.currentBookData`. Caches the QVariantMap once into
-`_book` and derives 13 small `_xxx` properties through `?? defaults` so
-each child component reads typed values directly.
+Bound to `BookController.currentBookData` (a `bl::qmltypes::BookDTOObject`
+Q_GADGET — wrapper that inherits from the plain `BookDTO` data struct
+and adds Q_PROPERTY aliases plus the detail-only `genres` field). Caches
+the gadget once into `_book` and child sections read its members
+directly. (Characters are NOT in `_book` — they're owned by a separate
+model, see below.)
 
-Layout (top → bottom):
+The page is an outer `Flickable` (single scroll surface) holding a
+`ColumnLayout` with three top-level sections: a `BookDetailSummary`
+(everything about the book), a focused `ListView` for the character
+rows, and a `BookGenreTags` `Flow`. The character `ListView`'s only
+job is the rows — `header` is a `CharactersListHeader` ("Characters"
+title + "+ Add"), `footer` is a `CharactersToggle` (Show less / Show
+more), `delegate` is `CharactersListDelegate`. It runs with
+`interactive: false` and `implicitHeight: contentHeight` so the outer
+`Flickable` owns the scroll; the C++-side model already caps `rowCount`
+at `_visibleCount` (5 by default), so only the buffered rows
+instantiate.
 
-1. `BookDetailHeader` — back arrow, cover (`SurfaceCard` with hero shadow),
-   title/author/meta (`%n page(s)` plural), optional star rating row.
-2. `ReadingProgressCard` — progress block (Progress label, % indicator,
-   `ProgressBar`, "X of N pages") visible only when `pagesTotal > 0`. Below
-   it, **either** the `PrimaryButton` (visible when timer is `Stopped`)
-   whose label is computed at the page level by switching on
-   `BookStatus.Finished` / `InProgress` / default → `Read again` /
-   `Continue reading` / `Start reading`, **or** the `ReadingProgressTimer`
-   (visible when timer is active). The two never co-exist — the action
-   button starts a session, the timer takes over, and reset/save returns
-   to the action button.
-3. `RatingsCard` — two `RatingTile`s separated by a HiDPI-aware divider
-   (`Math.max(1, Math.ceil(Screen.devicePixelRatio))`). Left: user's rating
-   with stars (decimals: 0). Right: global rating without stars (decimals: 1
-   so 9.0 renders as "9.0", not "9"). Each tile shows "Not rated" when
-   `value <= 0`.
-4. Description — header + body text, hidden when description is empty.
-5. Three `ActionButton`s (PDF / Statistics / Favorite).
-6. `CharactersSection` — title + "+ Add" link (via `TouchTarget`); Repeater
-   of `CharacterRow`. Signal `characterClicked(int characterId)`.
-7. `Flow` of `TagPill` for genres, hidden when empty.
+The character model is `BookController.charactersModel`
+([`BookCharactersModel`](../../src/models/BookCharactersModel.hpp)) —
+a `QAbstractListModel` that pulls all rows for the current book in one
+SQL query and exposes them in pages of 5 via internal `_visibleCount`.
+The `CharactersToggle` buttons are bound to `canHide` / `canLoadMore`
+and call `hide()` / `loadMore()`; each click does the matching
+`beginInsertRows`/`endInsertRows` (or remove pair) on the changed page —
+no SQL, no model reset, no scroll jump.
+
+Layout (top → bottom, all inside the page-level Flickable's ColumnLayout):
+
+**1. `BookDetailSummary`** (single component, contents in order):
+1.1. `BookDetailHeader` — back arrow, cover (`SurfaceCard` with hero shadow),
+     title/author/meta (`%n page(s)` plural), optional star rating row.
+1.2. `ReadingProgressCard` — progress block (Progress label, % indicator,
+     `ProgressBar`, "X of N pages") visible only when `pagesTotal > 0`.
+     Below it, **either** the `PrimaryButton` (visible when timer is
+     `Stopped`) whose label is computed by `BookDetailSummary` from
+     `status` — `BookStatus.Finished` / `InProgress` / default →
+     `Read again` / `Continue reading` / `Start reading` — **or** the
+     `ReadingProgressTimer` (visible when timer is active). The two
+     never co-exist.
+1.3. `RatingsCard` — two `RatingTile`s separated by a HiDPI-aware divider
+     (`Math.max(1, Math.ceil(Screen.devicePixelRatio))`). Left: user's
+     rating with stars (decimals: 0). Right: global rating without stars
+     (decimals: 1). Each tile shows "Not rated" when `value <= 0`.
+1.4. Description — header + body text, hidden when description is empty.
+1.5. Three `ActionButton`s (PDF / Statistics / Favorite).
+
+**2. Characters `ListView`** (focused — only the rows live here):
+- `header`: `CharactersListHeader` ("Characters" title + "+ Add" button).
+- `delegate`: `CharactersListDelegate` over `BookController.charactersModel`
+  (the model exposes the first 5 rows, the rest stay buffered in C++).
+- `footer`: `CharactersToggle` — centered "Show less" (visible while
+  `canHide`) and "Show more" (visible while `canLoadMore`); each click
+  shrinks/expands the model's visible window by one page.
+- `interactive: false`, `implicitHeight: contentHeight` so the page's
+  outer `Flickable` owns the scroll.
+
+**3. `BookGenreTags`** — `Flow` of `TagPill`, hidden when empty.
 
 Status semantics: see [`BookStatus`](../../src/services/BookStatus.hpp).
 The page references `BookStatus.Finished` / `InProgress` directly — the

@@ -1,9 +1,8 @@
 #ifndef BEELIBRARY_SERVICES_BOOKDTO_HPP
 #define BEELIBRARY_SERVICES_BOOKDTO_HPP
 
-#include <QMap>
 #include <QString>
-#include <QVariant>
+#include <QVariantMap>
 #include <QtTypes>
 
 namespace bl::services {
@@ -31,7 +30,6 @@ struct BookDTO {
   int status = 0;
   bool inWishList = false;
 
-  QVariantMap toMap() const;
   static BookDTO fromMap(const QVariantMap &data);
 };
 

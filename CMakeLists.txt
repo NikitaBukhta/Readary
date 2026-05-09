@@ -57,6 +57,7 @@ file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS
     src/core/DatabaseManager.cpp src/core/DatabaseManager.hpp
     src/core/SqlQueryBuilder.cpp src/core/SqlQueryBuilder.hpp
     src/services/*.cpp src/services/*.hpp
+    src/qmltypes/*.cpp src/qmltypes/*.hpp
     src/models/*.cpp src/models/*.hpp
     src/controllers/*.cpp src/controllers/*.hpp
 )
@@ -74,7 +75,7 @@ set_source_files_properties(qml/theme/Theme.qml                PROPERTIES QT_QML
 set_source_files_properties(qml/components/ToastService.qml    PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_library(BeeLibraryCore STATIC ${LIB_SOURCES})
-target_include_directories(BeeLibraryCore PUBLIC src src/models src/controllers src/core src/services)
+target_include_directories(BeeLibraryCore PUBLIC src src/models src/controllers src/core src/services src/qmltypes)
 target_link_libraries(BeeLibraryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick)
 
 qt_add_qml_module(BeeLibraryCore

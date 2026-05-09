@@ -106,10 +106,10 @@ bool BookListModel::deleteBook(qint64 id) {
   return true;
 }
 
-QVariantMap BookListModel::getBook(qint64 id) const {
+services::BookDTO BookListModel::getBook(qint64 id) const {
   auto it = std::find_if(_books.begin(), _books.end(), [id](const services::BookDTO &book) { return book.id == id; });
   if (it != _books.end()) {
-    return it->toMap();
+    return *it;
   }
   qCWarning(lcBookModel) << "getBook — book not found, id:" << id;
   return {};

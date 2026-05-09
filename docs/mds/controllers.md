@@ -19,10 +19,11 @@ responsibilities deliberately, since both are book-scoped and small:
 | Member | Kind | Purpose |
 |--------|------|---------|
 | `currentBookId` | property (R/W, `qint64`) | id of the book being shown/edited; 0 = none |
-| `currentBookData` | property (RO, `QVariantMap`) | scalar fields from `BookListModel::getBook(id)` augmented with `genres` (`QStringList`) and `characters` (`QVariantList`) from `BookTable`; cached per id |
+| `currentBookData` | property (RO, `bl::qmltypes::BookDTOObject` Q_GADGET) | typed snapshot of the current book: scalar fields inherited from `BookDTO` plus `genres` (`QStringList`) loaded from `BookTable`; cached per id. Characters are NOT here — see `charactersModel` |
 | `errorMessage` | property (RO, `QString`) | last validation/error string |
 | `activeKind` | property (R/W, `ListKind`) | which category is currently active |
 | `searchModel` | property (RO, `BookSearchProxyModel*`) | what QML lists bind to |
+| `charactersModel` | property (RO, `BookCharactersModel*`) | per-current-book character list with paged exposure (`canLoadMore` / `loadMore()` to expand by 5; `canHide` / `hide()` to collapse back to first page); auto-syncs when `currentBookId` changes |
 | `getSortFilterProxyForKind(kind)` | `Q_INVOKABLE` | proxy for a specific kind |
 | `openBook(id)` | `Q_INVOKABLE` | sets `currentBookId` and emits `bookOpenRequested(id)` for the router to pick up |
 | `updateReadingProgress(pageNumber, durationSeconds)` | `Q_INVOKABLE` | persists current reading position in `books.pagesRead` and logs a row in `reading_sessions`; emits `bookSaved` so the list refreshes |
@@ -85,16 +86,31 @@ cross-include between controllers).
 
 ### `currentBookData` caching
 
-The getter performs two side-table reads (`getGenres`, `getCharacters`) per
-`currentBookId`. To avoid hitting the DB on every QML binding evaluation:
+The getter performs one side-table read (`getGenres`) per `currentBookId`.
+To avoid hitting the DB on every QML binding evaluation:
 
-- `mutable QVariantMap _cachedBookData;` is filled lazily on first read.
-- Cleared in `setCurrentBookId(id)` when id changes.
-- Cleared on `_listModel->modelReset` (followed by re-emitting
+- `mutable BookDTOObject _cachedBookData;` + `mutable bool _cacheValid` are
+  filled lazily on first read.
+- Invalidated in `setCurrentBookId(id)` when id changes.
+- Invalidated on `_listModel->modelReset` (followed by re-emitting
   `currentBookIdChanged` so QML re-evaluates with fresh data).
 
 `currentBookId` and `currentBookData` share the `currentBookIdChanged`
 NOTIFY signal — semantically slightly fuzzy but functionally correct.
+
+### `charactersModel`
+
+A [`BookCharactersModel`](../../src/models/BookCharactersModel.hpp)
+(`QAbstractListModel`) owned by the controller and auto-synced to
+`currentBookId` via the same `currentBookIdChanged` signal: on every
+emit the model calls `setBookId(currentBookId)` which reloads the full
+list from `BookTable::getCharacters` in one SQL query, then exposes
+the first 5 rows. `loadMore()` advances the visible window by another
+page through `beginInsertRows`/`endInsertRows`; `hide()` collapses it
+back to the first page through `beginRemoveRows`/`endRemoveRows` —
+no extra DB queries, no full model reset, no scroll jump. `canLoadMore`
+and `canHide` (`Q_PROPERTY`s) drive the QML "Show more" / "Show less"
+button visibility.
 
 ### Reading-timer flow
 

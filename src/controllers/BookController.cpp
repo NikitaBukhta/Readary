@@ -19,7 +19,8 @@ BookController *BookController::s_instance = nullptr;
 BookController::BookController(std::shared_ptr<services::BookTable> bookTable, bl::models::BookListModel *listModel,
                                QObject *parent)
     : QObject(parent), _bookTable{std::move(bookTable)}, _listModel{listModel},
-      _searchProxy{new bl::models::BookSearchProxyModel(this)} {
+      _searchProxy{new bl::models::BookSearchProxyModel(this)},
+      _charactersModel{new bl::models::BookCharactersModel(_bookTable, this)} {
   using namespace bl::models::filters;
 
   _proxies.insert(ListKind::WantToRead, buildProxy(_listModel, WantToReadFilterStrategy{}));
@@ -29,10 +30,13 @@ BookController::BookController(std::shared_ptr<services::BookTable> bookTable, b
 
   applyActiveSourceToSearchProxy();
 
+  QObject::connect(this, &BookController::currentBookIdChanged, this,
+                   [this] { _charactersModel->setBookId(_currentBookId); });
+
   QObject::connect(_listModel, &QAbstractItemModel::modelReset, this, [this] {
-    if (_cachedBookData.isEmpty())
+    if (!_cacheValid)
       return;
-    _cachedBookData.clear();
+    _cacheValid = false;
     emit currentBookIdChanged();
   });
 }
@@ -55,24 +59,25 @@ void BookController::setCurrentBookId(qint64 id) {
   if (_currentBookId == id)
     return;
   _currentBookId = id;
-  _cachedBookData.clear();
+  _cacheValid = false;
   emit currentBookIdChanged();
 }
 
-QVariantMap BookController::currentBookData() const {
+bl::qmltypes::BookDTOObject BookController::currentBookData() const {
   if (_currentBookId <= 0)
     return {};
 
-  if (!_cachedBookData.isEmpty())
+  if (_cacheValid)
     return _cachedBookData;
 
-  auto book = _listModel->getBook(_currentBookId);
-  if (book.isEmpty())
-    return book;
+  auto base = _listModel->getBook(_currentBookId);
+  if (base.id == 0)
+    return {};
 
-  book.insert("genres", _bookTable->getGenres(_currentBookId));
-  book.insert("characters", _bookTable->getCharacters(_currentBookId));
-  _cachedBookData = book;
+  bl::qmltypes::BookDTOObject result(std::move(base));
+  result.genres = _bookTable->getGenres(_currentBookId);
+  _cachedBookData = std::move(result);
+  _cacheValid = true;
   return _cachedBookData;
 }
 
@@ -121,7 +126,7 @@ void BookController::setBookStatus(int status) {
   if (_currentBookId <= 0)
     return;
 
-  services::BookDTO book = services::BookDTO::fromMap(currentBookData());
+  qmltypes::BookDTOObject book = currentBookData();
   if (book.status == status)
     return;
 
@@ -139,7 +144,7 @@ void BookController::updateReadingProgress(int pageNumber, int durationSeconds) 
   if (_currentBookId <= 0)
     return;
 
-  services::BookDTO book = services::BookDTO::fromMap(currentBookData());
+  qmltypes::BookDTOObject book = currentBookData();
   const int pagesFrom = book.pagesRead;
   if (book.pagesRead >= pageNumber || pageNumber > book.totalPages) {
     qDebug(lcBook) << "Not updating reading progress — invalid page number:" << pageNumber
@@ -163,6 +168,8 @@ void BookController::updateReadingProgress(int pageNumber, int durationSeconds) 
 }
 
 bl::models::BookSearchProxyModel *BookController::searchModel() const { return _searchProxy; }
+
+bl::models::BookCharactersModel *BookController::charactersModel() const { return _charactersModel; }
 
 bl::models::BookSortFilterProxyModel *
 BookController::buildProxy(bl::models::BookListModel *source, const bl::models::filters::BookFilterStrategy &strategy) {

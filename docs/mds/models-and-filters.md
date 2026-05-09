@@ -1,6 +1,6 @@
 # Models and Filters
 
-Three model classes plus a strategy hierarchy live in `src/models/`. Search
+Four model classes plus a strategy hierarchy live in `src/models/`. Search
 behavior is documented separately in [book-search.md](book-search.md); this
 document covers the rest.
 
@@ -13,8 +13,10 @@ Plain `QAbstractListModel` over a `QList<services::BookDTO>`. Owned by
   `modelReset` so all proxies recompute. Called on app start and after a book
   is saved (`BookController::bookSaved` → `BookListModel::refresh`).
 - `getBook(qint64 id) const` — `std::find_if` over the local cache, returns
-  the matching DTO as a `QVariantMap`. Used by `BookController::currentBookData`
-  (which then augments the map with genres/characters).
+  the matching plain `BookDTO`. Used by `BookController::currentBookData`,
+  which wraps the result in a `BookDTOObject` (a Q_GADGET subclass that
+  adds the `genres` field for the detail view). Characters are loaded by
+  a separate `BookCharactersModel`, not folded into this struct.
 - `deleteBook(qint64 id)` — `Q_INVOKABLE`, deletes via `BookTable` and
   refreshes. Sets `errorMessage` on failure.
 
@@ -83,6 +85,40 @@ reconnects `rowsInserted/rowsRemoved/modelReset/layoutChanged` to a
 `countChanged` signal so QML bindings on `count` re-evaluate reactively.
 
 Used by main-page categories to show "%n book(s)" subtitles.
+
+## `BookCharactersModel`
+
+Standalone `QAbstractListModel` over `QList<services::CharacterDTO>` for
+the current book's characters. Owned by `BookController` (one instance,
+auto-synced to `currentBookId`). Roles: `id`, `name`, `role`. Exists as
+a separate model — and not as another field of `currentBookData` —
+because the detail page lists characters one by one with virtualization,
+and a "Show more" UX gate, neither of which fits inside a value-type
+`BookDTO` snapshot.
+
+API:
+
+- `setBookId(qint64)` — runs `BookTable::getCharacters(id)` once
+  (one full SELECT, no LIMIT/OFFSET), stores all rows in `_allItems`,
+  exposes the first 5 via `_visibleCount`. Internal: invoked by
+  `BookController` on every `currentBookIdChanged`.
+- `loadMore()` (`Q_INVOKABLE`) — advances `_visibleCount` by another
+  page (5) through `beginInsertRows`/`endInsertRows`, so the QML
+  `ListView` only sees the new rows arriving (no full reset, no
+  scroll jump).
+- `hide()` (`Q_INVOKABLE`) — collapses `_visibleCount` back to the
+  initial page (5) through `beginRemoveRows`/`endRemoveRows`. Mirror
+  of `loadMore`.
+- `canLoadMore` / `canHide` (both `Q_PROPERTY` with NOTIFY) — true when
+  there are still buffered rows / the visible window has been expanded
+  past the first page. Drive the "Show more" / "Show less" button
+  visibility on the detail page.
+
+Why one query upfront, not paginated SQL: a typical book has on the
+order of dozens of characters; one `SELECT id, name, role FROM
+book_characters WHERE book_id = ?` is sub-millisecond on SQLite, and
+keeping all rows in memory costs single-digit KB. Multiple round-trips
+would only add latency.
 
 ## Strategy pattern
 

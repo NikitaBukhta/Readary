@@ -2,30 +2,6 @@
 
 namespace bl::services {
 
-QVariantMap BookDTO::toMap() const {
-  return {
-      {"id", id},
-      {"name", name},
-      {"author_id", authorId},
-      {"author", authorName},
-      {"year", year},
-      {"publisher_id", publisherId},
-      {"publisher", publisherName},
-      {"description", description},
-      {"coverUrl", coverUrl},
-      {"isHardcover", isHardcover},
-      {"type_id", typeId},
-      {"type", typeName},
-      {"totalPages", totalPages},
-      {"pagesRead", pagesRead},
-      {"globalRating", globalRating},
-      {"localRating", localRating},
-      {"userRating", userRating},
-      {"status", status},
-      {"inWishList", inWishList},
-  };
-}
-
 BookDTO BookDTO::fromMap(const QVariantMap &data) {
   BookDTO dto;
   dto.id = data.value("id").toLongLong();
