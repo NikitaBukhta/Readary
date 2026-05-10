@@ -107,7 +107,7 @@ Filter strategies (see [models-and-filters.md](models-and-filters.md))
 still use raw int values internally.
 
 The three rating fields are deliberately distinct, not duplicates —
-see [`BookSortFilterProxyModel::lessThan`](../../src/models/BookSortFilterProxyModel.cpp)
+see [`BookSortFilterProxyModel::lessThan`](../../src/models/books/BookSortFilterProxyModel.cpp)
 for the comparison policy (year/totalPages/pagesRead as int, ratings as
 double).
 

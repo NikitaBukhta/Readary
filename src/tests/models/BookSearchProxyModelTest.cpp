@@ -1,5 +1,5 @@
-#include "models/BookSearchProxyModel.hpp"
-#include "models/BookListModel.hpp"
+#include "models/books/BookSearchProxyModel.hpp"
+#include "models/books/BookListModel.hpp"
 
 #include <QAbstractListModel>
 #include <QList>

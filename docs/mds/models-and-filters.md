@@ -1,8 +1,15 @@
 # Models and Filters
 
-Four model classes plus a strategy hierarchy live in `src/models/`. Search
-behavior is documented separately in [book-search.md](book-search.md); this
-document covers the rest.
+Models are organized by domain under `src/models/`:
+
+- `src/models/books/` — book-related models (this document)
+- `src/models/books/filters/` — strategy hierarchy for book filters
+- `src/models/settings/` — user-preference models (e.g. `LanguageModel`,
+  see [i18n.md](i18n.md))
+
+Four book models plus a strategy hierarchy live under `src/models/books/`.
+Search behavior is documented separately in
+[book-search.md](book-search.md); this document covers the rest.
 
 ## `BookListModel`
 
@@ -34,7 +41,7 @@ StatusRole, InWishListRole
 QML role names (`roleNames()`) — one-to-one with the enum, names match the
 DTO keys (`bookId`, `name`, `author`, `year`, `coverUrl`, `totalPages`,
 `pagesRead`, `globalRating`, `localRating`, `userRating`, `status`,
-`inWishList`, …). See [`BookListModel.cpp::roleNames`](../../src/models/BookListModel.cpp)
+`inWishList`, …). See [`BookListModel.cpp::roleNames`](../../src/models/books/BookListModel.cpp)
 for the full mapping.
 
 `BookListModel` is **not** a QML-visible type — QML always reaches data
@@ -123,8 +130,8 @@ would only add latency.
 ## Strategy pattern
 
 Configuration of the four sort/filter proxies (one per `ListKind`) is done
-through `BookFilterStrategy` (`src/models/filters/`). The strategy wraps
-"how to configure a `BookSortFilterProxyModel` for this category".
+through `BookFilterStrategy` (`src/models/books/filters/`). The strategy
+wraps "how to configure a `BookSortFilterProxyModel` for this category".
 
 ### Hierarchy
 
@@ -182,7 +189,8 @@ context/state lifecycle that didn't exist here.
 
 | File | Purpose |
 |------|---------|
-| [src/models/BookListModel.hpp](../../src/models/BookListModel.hpp) / [.cpp](../../src/models/BookListModel.cpp) | Source model over the books table |
-| [src/models/BookSortFilterProxyModel.hpp](../../src/models/BookSortFilterProxyModel.hpp) / [.cpp](../../src/models/BookSortFilterProxyModel.cpp) | Generic filter/sort proxy with `addFilter`/`Op` API |
-| [src/models/BookSearchProxyModel.hpp](../../src/models/BookSearchProxyModel.hpp) / [.cpp](../../src/models/BookSearchProxyModel.cpp) | Search + relevance ranking — see [book-search.md](book-search.md) |
-| [src/models/filters/BookFilterStrategy.hpp](../../src/models/filters/BookFilterStrategy.hpp) / [.cpp](../../src/models/filters/BookFilterStrategy.cpp) | Strategy interface + 4 concrete strategies |
+| [src/models/books/BookListModel.hpp](../../src/models/books/BookListModel.hpp) / [.cpp](../../src/models/books/BookListModel.cpp) | Source model over the books table |
+| [src/models/books/BookSortFilterProxyModel.hpp](../../src/models/books/BookSortFilterProxyModel.hpp) / [.cpp](../../src/models/books/BookSortFilterProxyModel.cpp) | Generic filter/sort proxy with `addFilter`/`Op` API |
+| [src/models/books/BookSearchProxyModel.hpp](../../src/models/books/BookSearchProxyModel.hpp) / [.cpp](../../src/models/books/BookSearchProxyModel.cpp) | Search + relevance ranking — see [book-search.md](book-search.md) |
+| [src/models/books/BookCharactersModel.hpp](../../src/models/books/BookCharactersModel.hpp) / [.cpp](../../src/models/books/BookCharactersModel.cpp) | Per-book characters list with windowed reveal |
+| [src/models/books/filters/BookFilterStrategy.hpp](../../src/models/books/filters/BookFilterStrategy.hpp) / [.cpp](../../src/models/books/filters/BookFilterStrategy.cpp) | Strategy interface + 4 concrete strategies |

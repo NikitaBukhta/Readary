@@ -6,38 +6,40 @@ import Library
 Rectangle {
     id: root
 
-    readonly property var _navItems: [
-        {
-            id: NavigationController.MAIN_PAGE,
-            label: qsTr("Library"),
-            glyph: "📚",
-            source: ""
-        },
-        {
-            id: NavigationController.SEARCH_PAGE,
-            label: qsTr("Search"),
-            glyph: "🔍",
-            source: ""
-        },
-        {
-            id: NavigationController.GOALS_PAGE,
-            label: qsTr("Goals"),
-            glyph: "🎯",
-            source: ""
-        },
-        {
-            id: NavigationController.CHALLENGES_PAGE,
-            label: qsTr("Challenges"),
-            glyph: "🏆",
-            source: ""
-        },
-        {
-            id: NavigationController.PROFILE_PAGE,
-            label: qsTr("Profile"),
-            glyph: "👤",
-            source: ""
-        }
-    ]
+    readonly property var _navItems: {
+        return [
+            {
+                id: NavigationController.MAIN_PAGE,
+                label: qsTr("Library"),
+                glyph: "📚",
+                source: ""
+            },
+            {
+                id: NavigationController.SEARCH_PAGE,
+                label: qsTr("Search"),
+                glyph: "🔍",
+                source: ""
+            },
+            {
+                id: NavigationController.GOALS_PAGE,
+                label: qsTr("Goals"),
+                glyph: "🎯",
+                source: ""
+            },
+            {
+                id: NavigationController.CHALLENGES_PAGE,
+                label: qsTr("Challenges"),
+                glyph: "🏆",
+                source: ""
+            },
+            {
+                id: NavigationController.PROFILE_PAGE,
+                label: qsTr("Profile"),
+                glyph: "👤",
+                source: ""
+            }
+        ];
+    }
     property int currentId: NavigationController.currentPage
 
     implicitHeight: Geometry.size.bottomNavHeight

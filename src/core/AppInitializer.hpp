@@ -18,6 +18,7 @@ class BookListModel;
 namespace bl::controllers {
 class BookController;
 class NavigationController;
+class SettingsController;
 } // namespace bl::controllers
 
 namespace bl::core {
@@ -47,6 +48,7 @@ private:
   models::BookListModel *_bookListModel;
   controllers::BookController *_bookController;
   controllers::NavigationController *_contextModel;
+  controllers::SettingsController *_settingsController;
 };
 
 } // namespace bl::core

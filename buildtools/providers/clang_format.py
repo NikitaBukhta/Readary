@@ -1,5 +1,5 @@
 import re
-import subprocess
+import subprocess  # nosec B404 — invokes clang-format from venv-resolved path
 from pathlib import Path
 
 from buildtools.errors import ToolNotFoundError
@@ -53,7 +53,7 @@ class ClangFormatProvider(ToolProvider):
 
         cf_path = self.ensure()
         print(f"Generating .clang-format (base: {CLANG_FORMAT_BASE_STYLE})...")
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 — cf_path is the resolved clang-format binary
             [str(cf_path), f"-style={CLANG_FORMAT_BASE_STYLE}",
              "--dump-config"],
             capture_output=True, text=True, check=True,

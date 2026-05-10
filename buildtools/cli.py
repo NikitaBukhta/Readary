@@ -1,5 +1,5 @@
 import argparse
-import subprocess
+import subprocess  # nosec B404 — build CLI: invokes vetted toolchain binaries only
 import sys
 from pathlib import Path
 
@@ -14,6 +14,7 @@ from buildtools.commands import (
     PackageCommand,
     RunCommand,
     TestCommand,
+    TranslateCommand,
 )
 from buildtools.config import ProjectConfig
 from buildtools.errors import BuildError, ToolNotFoundError
@@ -22,6 +23,7 @@ from buildtools.providers import (
     ClangFormatProvider,
     ClangTidyProvider,
     GitProvider,
+    LinguistProvider,
     MsvcProvider,
     QmlFormatProvider,
     VcpkgProvider,
@@ -46,6 +48,7 @@ class CommandRegistry:
         )
         self._clang_tidy = ClangTidyProvider(self.shell, self._venv_mgr)
         self._qml_format = QmlFormatProvider(self.shell, config)
+        self._linguist = LinguistProvider(self.shell, config)
 
     def build(self) -> dict[str, Command]:
         commands: dict[str, Command] = {
@@ -69,6 +72,9 @@ class CommandRegistry:
             ),
             "run": RunCommand(self.config),
             "test": TestCommand(self.config),
+            "translate": TranslateCommand(
+                self.config, self.shell, self._venv_mgr, self._linguist,
+            ),
             "package": PackageCommand(self.config, self.shell),
             "clean": CleanCommand(self.config),
         }
@@ -157,6 +163,12 @@ class CLI:
             "format", parents=[help_parser],
             add_help=False,
             help="Auto-format C++ source files",
+        )
+
+        subs.add_parser(
+            "translate", parents=[help_parser],
+            add_help=False,
+            help="Update .ts and compile .qm translation files",
         )
 
         subs.add_parser(

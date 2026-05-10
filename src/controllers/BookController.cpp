@@ -1,8 +1,8 @@
 #include "BookController.hpp"
-#include "models/BookListModel.hpp"
-#include "models/BookSearchProxyModel.hpp"
-#include "models/BookSortFilterProxyModel.hpp"
-#include "models/filters/BookFilterStrategy.hpp"
+#include "models/books/BookListModel.hpp"
+#include "models/books/BookSearchProxyModel.hpp"
+#include "models/books/BookSortFilterProxyModel.hpp"
+#include "models/books/filters/BookFilterStrategy.hpp"
 #include "services/BookStatus.hpp"
 #include "services/ReadingSessionCache.hpp"
 

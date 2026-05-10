@@ -1,5 +1,5 @@
 import concurrent.futures
-import subprocess
+import subprocess  # nosec B404 — fans out clang-tidy invocations over the source tree
 from pathlib import Path
 
 from buildtools.commands.base import Command
@@ -90,7 +90,7 @@ class AnalyzeCommand(Command):
     @staticmethod
     def _run_one(cmd_template: list[str],
                  source: Path) -> tuple[bool, str]:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 — cmd_template[0] is the resolved clang-tidy binary
             [*cmd_template, str(source)],
             capture_output=True, text=True,
         )

@@ -11,8 +11,10 @@ ApplicationWindow {
     minimumWidth: Geometry.window.minimumWidth
     minimumHeight: Geometry.window.minimumHeight
     visible: true
-    title: qsTr("DariszBooks")
+    title: "DarisszeBooks"
     color: Theme.background
+
+    readonly property var _retranslatableLoaders: [pageLoader, bottomNavBarLoader]
 
     Loader {
         id: pageLoader
@@ -31,6 +33,19 @@ ApplicationWindow {
         z: 1000
     }
 
+    Component {
+        id: bottomNavBarComponent
+        BottomNavBar {
+            Layout.fillWidth: true
+        }
+    }
+
+    footer: Loader {
+        id: bottomNavBarLoader
+        Layout.fillWidth: true
+        sourceComponent: bottomNavBarComponent
+    }
+
     Connections {
         target: ToastService
         function onRequested(message) {
@@ -38,7 +53,14 @@ ApplicationWindow {
         }
     }
 
-    footer: BottomNavBar {
-        Layout.fillWidth: true
+    Connections {
+        target: SettingsController.languageModel
+        function onCurrentChanged() {
+            // reload current view;
+            for (let i = 0; i < root._retranslatableLoaders.length; ++i) {
+                root._retranslatableLoaders[i].active = false;
+                root._retranslatableLoaders[i].active = true;
+            }
+        }
     }
 }

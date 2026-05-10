@@ -9,7 +9,6 @@ Page {
 
     readonly property string _logTag: "BookDetailPage.qml: "
     readonly property int _sidePadding: Geometry.spacing.xxl
-
     readonly property var _book: BookController.currentBookData
 
     Flickable {
@@ -21,8 +20,7 @@ Page {
         boundsBehavior: Flickable.StopAtBounds
 
         ScrollBar.vertical: ScrollBar {
-            id: scrollBar
-            policy: ScrollBar.AsNeeded
+            policy: ScrollBar.AlwaysOff
         }
 
         ColumnLayout {

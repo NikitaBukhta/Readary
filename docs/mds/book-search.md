@@ -161,8 +161,8 @@ or run `BookSearchProxyModelTest.exe` directly from the build directory.
 
 | File | Purpose |
 |------|---------|
-| [src/models/BookSearchProxyModel.hpp](../../src/models/BookSearchProxyModel.hpp) | Model and cache declaration |
-| [src/models/BookSearchProxyModel.cpp](../../src/models/BookSearchProxyModel.cpp) | Filter, scoring and sorting implementation |
+| [src/models/books/BookSearchProxyModel.hpp](../../src/models/books/BookSearchProxyModel.hpp) | Model and cache declaration |
+| [src/models/books/BookSearchProxyModel.cpp](../../src/models/books/BookSearchProxyModel.cpp) | Filter, scoring and sorting implementation |
 | [src/controllers/BookController.cpp](../../src/controllers/BookController.cpp) | Owns `_searchProxy`, binds it to the active list |
 | [qml/components/AppSearchField.qml](../../qml/components/AppSearchField.qml) | Search input UI component |
 | [qml/pages/mainPage/MainPage.qml](../../qml/pages/mainPage/MainPage.qml) | Search on the main page |

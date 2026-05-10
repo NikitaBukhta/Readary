@@ -10,3 +10,14 @@ target_link_libraries(BookSearchProxyModelTest PRIVATE
 )
 
 add_test(NAME BookSearchProxyModel COMMAND BookSearchProxyModelTest)
+
+qt_add_executable(LanguageModelTest
+    models/LanguageModelTest.cpp
+)
+
+target_link_libraries(LanguageModelTest PRIVATE
+    BeeLibraryCore
+    Qt6::Test
+)
+
+add_test(NAME LanguageModel COMMAND LanguageModelTest)

@@ -5,9 +5,10 @@ The app is split into four layers, with strict downward dependencies:
 ```
 QML (Library module)        ← pages, reusable components, theme
    ↑ properties / signals / Q_INVOKABLE
-Controllers                 ← BookController, NavigationController
+Controllers                 ← BookController, NavigationController, SettingsController
    ↑ owns / observes
-Models                      ← BookListModel + proxies + filter strategies
+Models                      ← books/   — BookListModel + proxies + filter strategies
+                              settings/ — LanguageModel
    ↑ uses                            ↘ returns
 Services                    ← BookTable (CRUD over BookDTO)
    ↑ uses                       wraps ↗
@@ -37,11 +38,19 @@ through `QML_ELEMENT`, but only as type registrations (no instances).
    and in debug builds also `:/db/test_data.sql`. Creates `BookTable`.
 2. `initModels()` — creates `BookListModel`, then `BookController` (which
    internally creates the search proxy and the four sort/filter proxies),
-   then `NavigationController`. Wires:
+   then `NavigationController`, then `SettingsController` (which
+   constructs `LanguageModel` as its child). Wires:
    - `BookController::bookSaved` → `BookListModel::refresh`
    - `BookController::bookOpenRequested` → `NavigationController::setCurrentPage(BOOK_DETAIL_PAGE)`
      (so `BookController::openBook(id)` is the single entry to the detail
      page; the controllers don't include each other directly).
+   - `LanguageModel::currentChanged` → `_engine->retranslate()` with
+     `Qt::QueuedConnection` so retranslate runs after the QML setter that
+     triggered the change has unwound. Also calls
+     `_settingsController->languageModel()->applyCurrent()` once at startup
+     so the initial `QTranslator` matches persisted `QSettings` (or the
+     host locale on first launch). See [i18n.md](i18n.md) for the rest of
+     the pipeline.
 3. `registerQmlTypes()` — calls `setInstance()` on each QML-singleton class
    so the `create()` factory the QML engine invokes returns the prepared C++
    instance with `QQmlEngine::CppOwnership`.
@@ -98,9 +107,11 @@ src/
   core/        AppEnvironment, AppInitializer, DatabaseManager, SqlQueryBuilder
   services/    BookTable, BookDTO, CharacterDTO, BookStatus, ReadingPhase, ReadingSessionCache
   qmltypes/    BookDTOObject (Q_GADGET wrapper over BookDTO, exposed by BookController to QML)
-  models/      BookListModel, BookSearchProxyModel, BookSortFilterProxyModel, BookCharactersModel
-    filters/   BookFilterStrategy + 4 concrete strategies
-  controllers/ BookController, NavigationController
+  models/
+    books/     BookListModel, BookSearchProxyModel, BookSortFilterProxyModel, BookCharactersModel
+      filters/ BookFilterStrategy + 4 concrete strategies
+    settings/  LanguageModel
+  controllers/ BookController, NavigationController, SettingsController
   tests/       Qt Test units (BookSearchProxyModelTest, etc.)
 qml/
   Main.qml     Window root, holds page Loader

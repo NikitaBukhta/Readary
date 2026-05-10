@@ -14,6 +14,9 @@ int main(int argc, char *argv[]) {
 
   // Resources from a static library can be stripped by the linker; force init.
   Q_INIT_RESOURCE(db_scripts);
+#ifdef BL_HAS_TRANSLATIONS
+  Q_INIT_RESOURCE(translations);
+#endif
 
   bl::core::AppEnvironment::installFileLogger();
 

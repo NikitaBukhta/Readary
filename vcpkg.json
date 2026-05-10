@@ -9,6 +9,12 @@
     {
       "name": "qtdeclarative",
       "version>=": "6.8.0"
+    },
+    {
+      "name": "qttools",
+      "version>=": "6.8.0",
+      "default-features": false,
+      "features": ["linguist"]
     }
   ],
   "overrides": [
@@ -18,6 +24,10 @@
     },
     {
       "name": "qtdeclarative",
+      "version": "6.8.0"
+    },
+    {
+      "name": "qttools",
       "version": "6.8.0"
     }
   ]

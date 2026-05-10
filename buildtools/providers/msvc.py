@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec B404 — locates and probes the system MSVC toolchain
 import tempfile
 from pathlib import Path
 
@@ -57,7 +57,7 @@ class MsvcProvider:
             f.write(script)
             bat_path = Path(f.name)
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 B607 — cmd /c on a tempfile we just wrote
                 ["cmd", "/c", str(bat_path)],
                 capture_output=True, text=True, check=True,
             )
@@ -102,7 +102,7 @@ class MsvcProvider:
                 f"vswhere.exe not found at {self._VSWHERE}. "
                 "Install Visual Studio 2017+ or the Build Tools."
             )
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 — vswhere.exe is at a fixed system path, args are constants
             [
                 str(self._VSWHERE),
                 "-latest", "-products", "*",

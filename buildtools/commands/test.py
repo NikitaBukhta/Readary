@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec B404 — invokes ctest from PATH
 
 from buildtools.commands.base import Command
 from buildtools.config import ProjectConfig
@@ -24,7 +24,7 @@ class TestCommand(Command):
         env["QT_QPA_PLATFORM"] = "offscreen"
 
         print(f"\n=== Running tests ({self.config.build_type}) ===")
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607 — ctest is part of the CMake install we depend on
             [
                 "ctest",
                 "--test-dir", str(build_root),

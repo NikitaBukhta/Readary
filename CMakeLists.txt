@@ -49,6 +49,11 @@ else()
     message(STATUS "Static analysis disabled (ENABLE_ANALYZE=OFF)")
 endif()
 
+# Always-on basic correctness warnings (independent of ENABLE_ANALYZE).
+if(MSVC)
+    add_compile_options(/we4189 /we4101)
+endif()
+
 # ---------------------------------------------------------------------------
 # Core library (shared between app and tests) + QML module backing target
 # ---------------------------------------------------------------------------
@@ -75,7 +80,14 @@ set_source_files_properties(qml/theme/Theme.qml                PROPERTIES QT_QML
 set_source_files_properties(qml/components/ToastService.qml    PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_library(BeeLibraryCore STATIC ${LIB_SOURCES})
-target_include_directories(BeeLibraryCore PUBLIC src src/models src/controllers src/core src/services src/qmltypes)
+target_include_directories(BeeLibraryCore PUBLIC
+    src
+    src/qmltypes
+    src/services
+    src/controllers
+    src/models/books
+    src/models/settings
+)
 target_link_libraries(BeeLibraryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick)
 
 qt_add_qml_module(BeeLibraryCore
@@ -85,6 +97,30 @@ qt_add_qml_module(BeeLibraryCore
 )
 
 target_sources(BeeLibraryCore PRIVATE db/db_scripts.qrc)
+
+# ---------------------------------------------------------------------------
+# Translations — .qm files are produced by `python bootstrap.py translate`
+# ---------------------------------------------------------------------------
+set(_LIBRARY_QM_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/translations/library_en.qm
+    ${CMAKE_CURRENT_SOURCE_DIR}/translations/library_ru.qm
+    ${CMAKE_CURRENT_SOURCE_DIR}/translations/library_uk.qm
+)
+set(_LIBRARY_QM_ALL_PRESENT TRUE)
+foreach(_qm IN LISTS _LIBRARY_QM_FILES)
+    if(NOT EXISTS "${_qm}")
+        set(_LIBRARY_QM_ALL_PRESENT FALSE)
+        break()
+    endif()
+endforeach()
+if(_LIBRARY_QM_ALL_PRESENT)
+    target_sources(BeeLibraryCore PRIVATE translations/translations.qrc)
+    target_compile_definitions(BeeLibraryCore PUBLIC BL_HAS_TRANSLATIONS)
+    message(STATUS "Translations: bundling translations/translations.qrc")
+else()
+    message(STATUS "Translations: .qm files missing — run "
+        "`python bootstrap.py translate` to enable runtime translations")
+endif()
 
 # ---------------------------------------------------------------------------
 # Executable

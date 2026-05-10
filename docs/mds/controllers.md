@@ -1,9 +1,15 @@
 # Controllers
 
-Two QML singletons live in `src/controllers/`. Both follow the same pattern:
+Three QML singletons live in `src/controllers/`. All follow the same pattern:
 the C++ instance is created by `AppInitializer`, registered via
 `setInstance()`, and the QML factory `create()` returns the prepared instance
 with `QQmlEngine::CppOwnership`.
+
+- `BookController` — book form/list state, character model, reading-timer entry points.
+- `NavigationController` — page stack and routing.
+- `SettingsController` — façade for user preferences. Owns
+  `LanguageModel` (and any future settings models). See
+  [i18n.md](i18n.md) for the language pipeline end-to-end.
 
 ## `BookController`
 
@@ -100,7 +106,7 @@ NOTIFY signal — semantically slightly fuzzy but functionally correct.
 
 ### `charactersModel`
 
-A [`BookCharactersModel`](../../src/models/BookCharactersModel.hpp)
+A [`BookCharactersModel`](../../src/models/books/BookCharactersModel.hpp)
 (`QAbstractListModel`) owned by the controller and auto-synced to
 `currentBookId` via the same `currentBookIdChanged` signal: on every
 emit the model calls `setBookId(currentBookId)` which reloads the full
@@ -189,13 +195,16 @@ CATEGORY_LIST_PAGE = 2   level 2   qrc:/qt/qml/Library/pages/categoryListPage/Ca
 SEARCH_PAGE        = 3   level 1   (placeholder — falls back to MAIN_PAGE)
 GOALS_PAGE         = 4   level 1   (placeholder — falls back to MAIN_PAGE)
 CHALLENGES_PAGE    = 5   level 1   (placeholder — falls back to MAIN_PAGE)
-PROFILE_PAGE       = 6   level 1   (placeholder — falls back to MAIN_PAGE)
+PROFILE_PAGE       = 6   level 1   qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml
 BOOK_DETAIL_PAGE   = 7   level 3   qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml
 ```
 
-The four placeholder pages (Search/Goals/Challenges/Profile) are exposed so
-`BottomNavBar` can drive `currentPage` to them, but their `pageInfo()` entry
-maps to `MAIN_PAGE`'s URL — they'll get real implementations later.
+The three remaining placeholder pages (Search/Goals/Challenges) are exposed
+so `BottomNavBar` can drive `currentPage` to them, but their `pageInfo()`
+entry maps to `MAIN_PAGE`'s URL — they'll get real implementations later.
+`PROFILE_PAGE` already routes to the
+[Settings page](../../qml/pages/settingsPage/SettingsPage.qml) (language picker
++ future preferences).
 
 ### Wiring in QML
 

@@ -36,10 +36,11 @@ NavigationController::PageInfo NavigationController::pageInfo(PageEnum page) {
     return {QUrl{u"qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml"_s}, 2};
   case PageEnum::BOOK_DETAIL_PAGE:
     return {QUrl{u"qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml"_s}, 3};
+  case PageEnum::PROFILE_PAGE:
+    return {QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s}, 1};
   case PageEnum::SEARCH_PAGE:
   case PageEnum::GOALS_PAGE:
   case PageEnum::CHALLENGES_PAGE:
-  case PageEnum::PROFILE_PAGE:
     return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_s}, 1};
   }
   Q_UNREACHABLE_RETURN({});

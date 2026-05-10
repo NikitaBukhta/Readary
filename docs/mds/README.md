@@ -8,6 +8,7 @@
 | [book-search.md](book-search.md) | Search proxy: ranking, cache, tests |
 | [database.md](database.md) | DB layer: `DatabaseManager`, `SqlQueryBuilder`, `BookTable`, `BookDTO`, `BookStatus` |
 | [qml.md](qml.md) | QML structure: pages, components, theme, geometry |
+| [i18n.md](i18n.md) | Languages: `LanguageModel` + `SettingsController`, runtime retranslate, `python bootstrap.py translate` pipeline |
 | [build-and-resources.md](build-and-resources.md) | CMake setup, qrc resources, app env, file logger, **static analysis (clang-tidy + MSVC `/analyze`)** |
 
 ## Conventions

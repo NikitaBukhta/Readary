@@ -33,7 +33,7 @@ clang-tidy directly. The wrapper:
 from __future__ import annotations
 
 import re
-import subprocess
+import subprocess  # nosec B404 — wraps clang-tidy, vendor binary path is verified by caller
 import sys
 
 # ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ def main() -> int:
     else:
         new_args = args
 
-    return subprocess.run([real_tidy, *new_args]).returncode
+    return subprocess.run([real_tidy, *new_args]).returncode  # nosec B603 B607 — real_tidy is the resolved clang-tidy path passed in by CMake
 
 
 if __name__ == "__main__":

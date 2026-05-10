@@ -3,7 +3,9 @@
 #include "DatabaseManager.hpp"
 #include "controllers/BookController.hpp"
 #include "controllers/NavigationController.hpp"
-#include "models/BookListModel.hpp"
+#include "controllers/SettingsController.hpp"
+#include "models/books/BookListModel.hpp"
+#include "models/settings/LanguageModel.hpp"
 
 #include <QLoggingCategory>
 #include <QQmlApplicationEngine>
@@ -18,7 +20,7 @@ namespace bl::core {
 
 AppInitializer::AppInitializer(QGuiApplication &app, QObject *parent)
     : QObject(parent), _app{app}, _engine{std::make_unique<QQmlApplicationEngine>()}, _bookListModel{nullptr},
-      _bookController{nullptr}, _contextModel{nullptr} {}
+      _bookController{nullptr}, _contextModel{nullptr}, _settingsController{nullptr} {}
 
 AppInitializer::~AppInitializer() = default;
 
@@ -66,12 +68,19 @@ void AppInitializer::initModels() {
     _contextModel->setCurrentPage(controllers::NavigationController::PageEnum::BOOK_DETAIL_PAGE);
   });
 
+  _settingsController = new controllers::SettingsController(this);
+  _settingsController->languageModel()->applyCurrent();
+  connect(
+      _settingsController->languageModel(), &models::LanguageModel::currentChanged, this,
+      [this] { _engine->retranslate(); }, Qt::QueuedConnection);
+
   qCInfo(lcInit) << "Models ready";
 }
 
 void AppInitializer::registerQmlTypes() {
   controllers::BookController::setInstance(_bookController);
   controllers::NavigationController::setInstance(_contextModel);
+  controllers::SettingsController::setInstance(_settingsController);
 
   QObject::connect(
       _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app, []() { QCoreApplication::exit(-1); },

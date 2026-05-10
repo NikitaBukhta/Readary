@@ -10,7 +10,8 @@ from buildtools.commands.help import HelpCommand
 from buildtools.commands.package import PackageCommand
 from buildtools.commands.run import RunCommand
 from buildtools.commands.test import TestCommand
+from buildtools.commands.translate import TranslateCommand
 
 __all__ = ["AnalyzeCommand", "Command", "BootstrapCommand", "CleanCommand",
            "CompileCommand", "FormatCommand", "HelpCommand", "PackageCommand",
-           "RunCommand", "TestCommand"]
+           "RunCommand", "TestCommand", "TranslateCommand"]

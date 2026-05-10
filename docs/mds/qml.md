@@ -22,6 +22,8 @@ qml/
       CategoriesSection.qml        Three category rows
     categoryListPage/
       CategoryListPage.qml         Vertical list per category, with search
+    settingsPage/
+      SettingsPage.qml             Language picker (and future user-preference rows) — bound to SettingsController.languageModel
     bookDetailPage/
       BookDetailPage.qml           Detail page bound to BookController.currentBookData
       BookDetailHeader.qml         Back arrow + cover + title/author/meta + inline rating
@@ -163,15 +165,57 @@ button without chrome is needed.
 ```qml
 ApplicationWindow {
     Loader {
+        id: pageLoader
         anchors.fill: parent
         source: NavigationController.currentPagePath
     }
-    footer: BottomNavBar {}
+
+    Component {
+        id: bottomNavBarComponent
+        BottomNavBar { Layout.fillWidth: true }
+    }
+    footer: Loader {
+        id: bottomNavBarLoader
+        sourceComponent: bottomNavBarComponent
+    }
+
+    readonly property var _retranslatableLoaders: [pageLoader, bottomNavBarLoader]
+    Connections {
+        target: SettingsController.languageModel
+        function onCurrentChanged() {
+            for (let i = 0; i < root._retranslatableLoaders.length; ++i) {
+                root._retranslatableLoaders[i].active = false;
+                root._retranslatableLoaders[i].active = true;
+            }
+        }
+    }
 }
 ```
 
-The `Loader` swaps in whichever page corresponds to
-`NavigationController.currentPage`.
+Two things going on here:
+
+- `pageLoader` swaps in whichever page corresponds to
+  `NavigationController.currentPage` — this is the standard router pattern.
+- `bottomNavBarLoader` wraps `BottomNavBar` in its own `Loader`, even though
+  the nav bar is static, so the same `active = false → true` toggle that
+  refreshes the page works for the footer too.
+
+Why the toggle: `QQmlEngine::retranslate()` is called from the C++ side
+whenever `LanguageModel.currentChanged` fires (queued), and it refreshes
+*direct* `text: qsTr("…")` bindings. It does **not** reliably re-evaluate
+`qsTr()` calls nested inside object literals stored in `var` properties
+(e.g. `BottomNavBar._navItems`), and it sometimes leaves the active page
+behind a `Loader` stale until you navigate away and back. Toggling
+`active` releases the loaded item and re-instantiates it from the same
+`source` / `sourceComponent` — every `qsTr()` re-evaluates against the
+*already-installed* new `QTranslator`, so the UI snaps to the new
+language without further plumbing.
+
+To wire a new translatable subtree, add its `Loader` to
+`_retranslatableLoaders` — the handler picks it up automatically.
+
+Full pipeline (Python `translate` command, `LanguageModel`,
+`SettingsController` façade, runtime hooks): see [i18n.md](i18n.md).
 
 ### `MainPage.qml`
 
@@ -217,7 +261,7 @@ at `_visibleCount` (5 by default), so only the buffered rows
 instantiate.
 
 The character model is `BookController.charactersModel`
-([`BookCharactersModel`](../../src/models/BookCharactersModel.hpp)) —
+([`BookCharactersModel`](../../src/models/books/BookCharactersModel.hpp)) —
 a `QAbstractListModel` that pulls all rows for the current book in one
 SQL query and exposes them in pages of 5 via internal `_visibleCount`.
 The `CharactersToggle` buttons are bound to `canHide` / `canLoadMore`
@@ -363,9 +407,10 @@ than untyped `QtObject`).
 
 | File | Purpose |
 |------|---------|
-| [qml/Main.qml](../../qml/Main.qml) | Window + page Loader |
+| [qml/Main.qml](../../qml/Main.qml) | Window + page Loader + footer Loader + language-driven `active` toggle |
 | [qml/pages/mainPage/MainPage.qml](../../qml/pages/mainPage/MainPage.qml) | Home page |
 | [qml/pages/categoryListPage/CategoryListPage.qml](../../qml/pages/categoryListPage/CategoryListPage.qml) | Per-category list |
+| [qml/pages/settingsPage/SettingsPage.qml](../../qml/pages/settingsPage/SettingsPage.qml) | Language picker bound to `SettingsController.languageModel` |
 | [qml/pages/bookDetailPage/BookDetailPage.qml](../../qml/pages/bookDetailPage/BookDetailPage.qml) | Book detail page |
 | [qml/pages/bookDetailPage/ReadingProgressTimer.qml](../../qml/pages/bookDetailPage/ReadingProgressTimer.qml) | Stopwatch + end-session form, persists via `BookController` |
 | [qml/components/](../../qml/components/) | Reusable widgets — base chassis (`SurfaceCard`, `PressableSurface`, `PaddedCard`, `TouchTarget`), buttons (`PrimaryButton`, `SecondaryButton`, `ActionButton`, `IconButton`, `TextButton`), atoms (`StarRating`, `TagPill`, `IconGlyph`, `ProgressBar`, `ProgressRing`) and rows |

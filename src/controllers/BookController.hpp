@@ -1,9 +1,9 @@
 #ifndef BEELIBRARY_CONTROLLERS_BOOKCONTROLLER_HPP
 #define BEELIBRARY_CONTROLLERS_BOOKCONTROLLER_HPP
 
-#include "models/BookCharactersModel.hpp"
-#include "models/BookSearchProxyModel.hpp"
-#include "models/BookSortFilterProxyModel.hpp"
+#include "models/books/BookCharactersModel.hpp"
+#include "models/books/BookSearchProxyModel.hpp"
+#include "models/books/BookSortFilterProxyModel.hpp"
 #include "qmltypes/BookDTOObject.hpp"
 #include "services/BookTable.hpp"
 

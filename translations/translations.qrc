@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/i18n">
+        <file>library_en.qm</file>
+        <file>library_ru.qm</file>
+        <file>library_uk.qm</file>
+    </qresource>
+</RCC>

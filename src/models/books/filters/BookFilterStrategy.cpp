@@ -1,6 +1,6 @@
 #include "BookFilterStrategy.hpp"
-#include "models/BookListModel.hpp"
-#include "models/BookSortFilterProxyModel.hpp"
+#include "models/books/BookListModel.hpp"
+#include "models/books/BookSortFilterProxyModel.hpp"
 #include "services/BookStatus.hpp"
 
 namespace bl::models::filters {

@@ -90,8 +90,12 @@ class HelpCommand(Command):
         vcpkg_path = self.config.vcpkg_executable()
         clang_format_venv = self.config.venv_executable("clang-format")
         clang_tidy_venv = self.config.venv_executable("clang-tidy")
-        qmlformat_exe = "qmlformat.exe" if self.config.is_windows else "qmlformat"
-        qmlformat_path = self.config.qt_tools_dir / qmlformat_exe
+        def qt_tool_exe(name: str) -> str:
+            return f"{name}.exe" if self.config.is_windows else name
+
+        qmlformat_path = self.config.qt_tools_dir / qt_tool_exe("qmlformat")
+        lupdate_path = self.config.qt_tools_dir / qt_tool_exe("lupdate")
+        lrelease_path = self.config.qt_tools_dir / qt_tool_exe("lrelease")
 
         tools: dict[str, list[Path]] = {
             "git":          [],
@@ -100,6 +104,8 @@ class HelpCommand(Command):
             "clang-format": [clang_format_venv],
             "clang-tidy":   [clang_tidy_venv],
             "qmlformat":    [qmlformat_path],
+            "lupdate":      [lupdate_path],
+            "lrelease":     [lrelease_path],
         }
 
         print("\nTools:")

@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec B404 — launches the just-built app binary
 
 from buildtools.commands.base import Command
 from buildtools.config import ProjectConfig
@@ -29,7 +29,7 @@ class RunCommand(Command):
 
         print(f"=== Running ({self.config.build_type}) ===")
         print(f">>> {executable}")
-        subprocess.run([executable], env=env)
+        subprocess.run([executable], env=env)  # nosec B603 — executable is the built BeeLibrary binary, path verified above
 
     def _find_executable(self) -> str:
         build_root = self.config.project_dir / "build" / self.config.cmake_preset
