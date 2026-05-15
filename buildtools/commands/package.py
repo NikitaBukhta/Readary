@@ -27,6 +27,12 @@ class PackageCommand(Command):
         self.staging_dir = config.project_dir / "staging"
 
     def execute(self) -> None:
+        if self.config.is_android:
+            raise BuildError(
+                "`package` builds a Windows installer. The Android equivalent "
+                "is the APK produced by:\n"
+                "  python bootstrap.py compile -d android --release"
+            )
         self._check_release()
         iscc = self._find_iscc()
         self._prepare_staging()

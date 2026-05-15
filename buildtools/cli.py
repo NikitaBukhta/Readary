@@ -16,15 +16,26 @@ from buildtools.commands import (
     TestCommand,
     TranslateCommand,
 )
-from buildtools.config import ProjectConfig
+from buildtools.config import (
+    DEFAULT_ANDROID_ABIS,
+    SUPPORTED_ANDROID_ABIS,
+    SUPPORTED_TARGETS,
+    ProjectConfig,
+    host_target,
+)
 from buildtools.errors import BuildError, ToolNotFoundError
 from buildtools.providers import (
+    AndroidSdkProvider,
+    AqtProvider,
     CMakeProvider,
     ClangFormatProvider,
     ClangTidyProvider,
     GitProvider,
+    JdkProvider,
     LinguistProvider,
     MsvcProvider,
+    NinjaProvider,
+    OpensslAndroidProvider,
     QmlFormatProvider,
     VcpkgProvider,
 )
@@ -49,6 +60,13 @@ class CommandRegistry:
         self._clang_tidy = ClangTidyProvider(self.shell, self._venv_mgr)
         self._qml_format = QmlFormatProvider(self.shell, config)
         self._linguist = LinguistProvider(self.shell, config)
+        self._jdk = JdkProvider(self.shell, config)
+        self._android_sdk = AndroidSdkProvider(self.shell, config, self._jdk)
+        self._aqt = AqtProvider(self.shell, config, self._venv_mgr)
+        self._ninja = NinjaProvider(self.shell, self._venv_mgr)
+        self._openssl_android = OpensslAndroidProvider(
+            self.shell, config, self._git,
+        )
 
     def build(self) -> dict[str, Command]:
         commands: dict[str, Command] = {
@@ -57,11 +75,14 @@ class CommandRegistry:
                 self._venv_mgr, self._cmake, self._vcpkg,
                 self._msvc, self._clang_format, self._clang_tidy,
                 self._qml_format,
+                self._jdk, self._android_sdk, self._aqt, self._ninja,
+                self._openssl_android,
             ),
             "compile": CompileCommand(
                 self.config, self.shell, self._cmake,
                 self._msvc, self._clang_format, self._clang_tidy,
                 self._qml_format,
+                self._jdk, self._android_sdk, self._aqt, self._ninja,
             ),
             "analyze": AnalyzeCommand(
                 self.config, self.shell, self._clang_tidy,
@@ -70,7 +91,9 @@ class CommandRegistry:
                 self.config, self.shell, self._clang_format,
                 self._qml_format,
             ),
-            "run": RunCommand(self.config),
+            "run": RunCommand(
+                self.config, self.shell, self._jdk, self._android_sdk,
+            ),
             "test": TestCommand(self.config),
             "translate": TranslateCommand(
                 self.config, self.shell, self._venv_mgr, self._linguist,
@@ -108,10 +131,28 @@ class CLI:
             help="Use Release mode (default: Debug)",
         )
 
+        target_parser = argparse.ArgumentParser(add_help=False)
+        target_parser.add_argument(
+            "-d", "--device", dest="target", default=None,
+            choices=list(SUPPORTED_TARGETS),
+            help=f"Target device (default: host = {host_target()}). "
+                 f"Choices: {', '.join(SUPPORTED_TARGETS)}",
+        )
+        target_parser.add_argument(
+            "--abi", "--abis", dest="abis", nargs="+", default=None,
+            choices=[*SUPPORTED_ANDROID_ABIS, "all"],
+            metavar="ABI",
+            help=f"Android ABI(s) to build for (only with -d android). "
+                 f"Default: {' '.join(DEFAULT_ANDROID_ABIS)}. "
+                 f"Choices: {', '.join(SUPPORTED_ANDROID_ABIS)}, all. "
+                 f"`all` expands to every supported ABI. "
+                 f"Multi-ABI: --abi arm64-v8a x86_64",
+        )
+
         subs = self.parser.add_subparsers(dest="command")
 
         p_bootstrap = subs.add_parser(
-            "bootstrap", parents=[help_parser, release_parser],
+            "bootstrap", parents=[help_parser, release_parser, target_parser],
             add_help=False,
             help="Install dependencies and configure",
         )
@@ -122,7 +163,7 @@ class CLI:
         )
 
         p_compile = subs.add_parser(
-            "compile", parents=[help_parser, release_parser],
+            "compile", parents=[help_parser, release_parser, target_parser],
             add_help=False,
             help="Build the project (with static analysis by default)",
         )
@@ -142,9 +183,10 @@ class CLI:
         )
 
         subs.add_parser(
-            "run", parents=[help_parser, release_parser],
+            "run", parents=[help_parser, release_parser, target_parser],
             add_help=False,
-            help="Run the built application",
+            help="Run the built application "
+                 "(-d android: install + launch APK on connected device)",
         )
 
         subs.add_parser(
@@ -189,6 +231,25 @@ class CLI:
             "project_dir": project_dir,
             "release": getattr(args, "release", False),
         }
+        target = getattr(args, "target", None)
+        if target:
+            kwargs["target"] = target
+        abis = getattr(args, "abis", None)
+        if abis:
+            # Expand `all`, dedupe preserving user-typed order (first = anchor ABI).
+            expanded: list[str] = []
+            for a in abis:
+                if a == "all":
+                    expanded.extend(SUPPORTED_ANDROID_ABIS)
+                else:
+                    expanded.append(a)
+            seen: set[str] = set()
+            uniq: list[str] = []
+            for a in expanded:
+                if a not in seen:
+                    seen.add(a)
+                    uniq.append(a)
+            kwargs["android_abis"] = tuple(uniq)
         jobs = getattr(args, "jobs", None)
         if jobs is not None:
             kwargs["jobs"] = jobs

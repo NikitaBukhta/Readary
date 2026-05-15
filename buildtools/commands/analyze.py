@@ -24,9 +24,7 @@ class AnalyzeCommand(Command):
         self.clang_tidy = clang_tidy
 
     def execute(self) -> None:
-        build_dir = (
-            self.config.project_dir / "build" / self.config.cmake_preset
-        )
+        build_dir = self.config.cmake_build_dir
         compile_db = build_dir / "compile_commands.json"
         if not compile_db.exists():
             raise BuildError(

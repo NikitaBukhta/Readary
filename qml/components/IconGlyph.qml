@@ -30,7 +30,10 @@ Item {
         text: root.glyph
         color: root.color
         font.pixelSize: Math.round(root.size * 0.9)
-        font.family: "Segoe UI Emoji"
+        // Per-OS emoji family — Qt won't auto-fallback once family is set.
+        font.family: Qt.platform.os === "android" ? "Noto Color Emoji"
+                   : Qt.platform.os === "osx" ? "Apple Color Emoji"
+                   : "Segoe UI Emoji"
         visible: !image.visible
     }
 }

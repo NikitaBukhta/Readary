@@ -67,6 +67,15 @@ class HelpCommand(Command):
         print("\nFlags:")
         print("  --release        Use Release mode (default: Debug)")
         print("                   Applies to: bootstrap, compile, run, analyze")
+        print("  -d, --device T   Target device. T = windows | android")
+        print("                   Default: host platform")
+        print("                   Applies to: bootstrap, compile, run")
+        print("  --abi A [A...]   Android ABI(s) to build for (with -d android)")
+        print("                   Choices: arm64-v8a armeabi-v7a x86_64 x86 all")
+        print("                   Default: arm64-v8a")
+        print("                   `all` -> every supported ABI (universal APK)")
+        print("                   Multi-ABI: --abi arm64-v8a x86_64")
+        print("                   Applies to: bootstrap, compile, run")
         print("  -j, --jobs N     Limit parallel build jobs (default: all cores)")
         print("                   Applies to: compile")
         print("  --skip-analyze   Skip clang-tidy + MSVC /analyze gate")
@@ -79,11 +88,17 @@ class HelpCommand(Command):
             "Venv":         self.config.venv_dir,
             "Dependencies": self.config.deps_dir,
             "vcpkg":        self.config.vcpkg_dir,
+            "Android root": self.config.android_root,
+            "JDK 17":       self.config.jdk_dir,
+            "Android SDK":  self.config.android_sdk_dir,
+            "Android NDK":  self.config.android_ndk_dir,
+            "Host Qt":      self.config.qt_host_dir,
+            "Android Qt":   self.config.qt_android_dir,
         }
         for label, path in dirs.items():
             exists, loc = self.checker.check_dir(path)
             status = "OK" if exists else "MISSING"
-            print(f"  {label:<14} {loc:<50} [{status}]")
+            print(f"  {label:<14} {loc:<60} [{status}]")
 
     def _print_tools(self) -> None:
         cmake_venv = self.config.venv_executable("cmake")

@@ -9,8 +9,13 @@
 #include <QMutexLocker>
 #include <QStandardPaths>
 #include <QTextStream>
+#include <QtGlobal>
 
 #include <iostream>
+
+#ifdef Q_OS_ANDROID
+#include <android/log.h>
+#endif
 
 namespace {
 Q_LOGGING_CATEGORY(lcAppEnv, "bl.core.env")
@@ -85,9 +90,6 @@ void AppEnvironment::cleanupOldLogs(int keepDays) {
 }
 
 void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  if (!g_logFile)
-    return;
-
   const char *level = nullptr;
   switch (type) {
   case QtDebugMsg:
@@ -112,12 +114,37 @@ void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &co
 
   const QString line = QStringLiteral("%1 [%2] %3: %4\n").arg(timestamp, level, category, msg);
 
-  const QMutexLocker locker(&g_logMutex);
-  QTextStream stream(g_logFile);
-  stream << line;
-  stream.flush();
+  if (g_logFile) {
+    const QMutexLocker locker(&g_logMutex);
+    QTextStream stream(g_logFile);
+    stream << line;
+    stream.flush();
+  }
 
-#ifndef QT_NO_DEBUG
+#ifdef Q_OS_ANDROID
+  // stderr is dropped on Android; logcat is the only practical channel.
+  // Single tag "BeeLibrary" simplifies `adb logcat *:S BeeLibrary:V` filtering.
+  android_LogPriority prio = ANDROID_LOG_INFO;
+  switch (type) {
+  case QtDebugMsg:
+    prio = ANDROID_LOG_DEBUG;
+    break;
+  case QtInfoMsg:
+    prio = ANDROID_LOG_INFO;
+    break;
+  case QtWarningMsg:
+    prio = ANDROID_LOG_WARN;
+    break;
+  case QtCriticalMsg:
+    prio = ANDROID_LOG_ERROR;
+    break;
+  case QtFatalMsg:
+    prio = ANDROID_LOG_FATAL;
+    break;
+  }
+  const QString body = QStringLiteral("[%1] %2").arg(category, msg);
+  __android_log_write(prio, "BeeLibrary", body.toUtf8().constData());
+#elif !defined(QT_NO_DEBUG)
   std::cerr << line.toLocal8Bit().constData();
 #endif
 }

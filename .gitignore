@@ -91,3 +91,13 @@ build/
 .clang-format
 CMakeUserPresets.json
 .trunk/
+
+# Android build artifacts (most live under build/, but Gradle/Qt deploy
+# can spill into the project root and signing material must never land
+# in the repo).
+*.apk
+*.aab
+*.keystore
+*.jks
+local.properties
+.gradle/

@@ -37,6 +37,50 @@
       "cacheVariables": {
         "CMAKE_DEFAULT_BUILD_TYPE": "Debug"
       }
+    },
+    {
+      "name": "android",
+      "hidden": true,
+      "displayName": "Android (Qt 6.8)",
+      "description": "Cross-compile for Android using Qt for Android + NDK",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "$env{QT_ANDROID_PATH}/lib/cmake/Qt6/qt.toolchain.cmake"
+        },
+        "QT_HOST_PATH": {
+          "type": "PATH",
+          "value": "$env{QT_HOST_PATH}"
+        },
+        "ANDROID_SDK_ROOT": {
+          "type": "PATH",
+          "value": "$env{ANDROID_SDK_ROOT}"
+        },
+        "ANDROID_NDK_ROOT": {
+          "type": "PATH",
+          "value": "$env{ANDROID_NDK_ROOT}"
+        },
+        "ANDROID_PLATFORM": "android-23",
+        "ENABLE_ANALYZE": "OFF",
+        "BUILD_TESTS": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "android-debug",
+      "inherits": "android",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "android-release",
+      "inherits": "android",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
@@ -49,6 +93,14 @@
       "name": "debug",
       "configurePreset": "debug",
       "configuration": "Debug"
+    },
+    {
+      "name": "android-debug",
+      "configurePreset": "android-debug"
+    },
+    {
+      "name": "android-release",
+      "configurePreset": "android-release"
     }
   ]
 }

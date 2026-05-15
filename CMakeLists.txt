@@ -13,7 +13,11 @@ qt_standard_project_setup(REQUIRES 6.8)
 # ---------------------------------------------------------------------------
 # Static analysis (clang-tidy + MSVC /analyze)
 # Toggle off for one-off builds:  python bootstrap.py compile --skip-analyze
+# Forced off on Android — clang-tidy under cross-compile is too fragile.
 # ---------------------------------------------------------------------------
+if(ANDROID)
+    set(ENABLE_ANALYZE OFF CACHE BOOL "Disabled on Android" FORCE)
+endif()
 option(ENABLE_ANALYZE "Run clang-tidy and MSVC /analyze during compilation" ON)
 
 if(ENABLE_ANALYZE)
@@ -90,6 +94,10 @@ target_include_directories(BeeLibraryCore PUBLIC
 )
 target_link_libraries(BeeLibraryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick)
 
+if(ANDROID)
+    target_link_libraries(BeeLibraryCore PUBLIC log)
+endif()
+
 qt_add_qml_module(BeeLibraryCore
     URI Library
     OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Library
@@ -125,12 +133,16 @@ endif()
 # ---------------------------------------------------------------------------
 # Executable
 # ---------------------------------------------------------------------------
-qt_add_executable(BeeLibrary
+set(_APP_SOURCES
     src/main.cpp
     src/core/AppInitializer.cpp
     src/core/AppInitializer.hpp
-    assets/app.rc
 )
+if(WIN32 AND NOT ANDROID)
+    list(APPEND _APP_SOURCES assets/app.rc)
+endif()
+
+qt_add_executable(BeeLibrary ${_APP_SOURCES})
 target_link_libraries(BeeLibrary PRIVATE BeeLibraryCore)
 
 # ---------------------------------------------------------------------------
@@ -143,21 +155,52 @@ set_target_properties(BeeLibrary PROPERTIES
     WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>
 )
 
+if(ANDROID)
+    set_target_properties(BeeLibrary PROPERTIES
+        QT_ANDROID_TARGET_SDK_VERSION 34
+        QT_ANDROID_MIN_SDK_VERSION 23
+        QT_ANDROID_VERSION_NAME ${PROJECT_VERSION}
+        QT_ANDROID_VERSION_CODE 1
+    )
+    # android/AndroidManifest.xml adds INTERNET permission (Qt doesn't inject it).
+    if(ANDROID_PACKAGE_SOURCE_DIR AND EXISTS "${ANDROID_PACKAGE_SOURCE_DIR}")
+        set_target_properties(BeeLibrary PROPERTIES
+            QT_ANDROID_PACKAGE_SOURCE_DIR "${ANDROID_PACKAGE_SOURCE_DIR}"
+        )
+        message(STATUS "Android package source: ${ANDROID_PACKAGE_SOURCE_DIR}")
+    endif()
+    # Qt's tls_qopensslbackend plugin needs libcrypto/libssl — bundle them
+    # via androiddeployqt since Qt doesn't ship them for Android.
+    if(ANDROID_OPENSSL_EXTRA_LIBS)
+        set_target_properties(BeeLibrary PROPERTIES
+            QT_ANDROID_EXTRA_LIBS "${ANDROID_OPENSSL_EXTRA_LIBS}"
+        )
+        message(STATUS "Android extra libs: ${ANDROID_OPENSSL_EXTRA_LIBS}")
+    endif()
+endif()
+
 # ---------------------------------------------------------------------------
-# Tests
+# Tests — disabled on Android (QtTest needs desktop, no device runner).
 # ---------------------------------------------------------------------------
-option(BUILD_TESTS "Build unit tests" ON)
+if(ANDROID)
+    set(_DEFAULT_BUILD_TESTS OFF)
+else()
+    set(_DEFAULT_BUILD_TESTS ON)
+endif()
+option(BUILD_TESTS "Build unit tests" ${_DEFAULT_BUILD_TESTS})
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(src/tests)
 endif()
 
 # ---------------------------------------------------------------------------
-# Install
+# Install — Android packages via APK, not CMAKE_INSTALL_PREFIX.
 # ---------------------------------------------------------------------------
-include(GNUInstallDirs)
-install(TARGETS BeeLibrary
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+if(NOT ANDROID)
+    include(GNUInstallDirs)
+    install(TARGETS BeeLibrary
+        BUNDLE DESTINATION .
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
