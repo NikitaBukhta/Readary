@@ -11,13 +11,16 @@ namespace bl::controllers {
 SettingsController *SettingsController::s_instance = nullptr;
 
 SettingsController::SettingsController(QObject *parent)
-    : QObject(parent), _languageModel{new bl::models::LanguageModel(this)} {
+    : QObject(parent), _languageModel{new bl::models::LanguageModel(this)},
+      _fontModel{new bl::models::FontModel(this)} {
   qCInfo(lcSettings) << "SettingsController initialized";
 }
 
 SettingsController::~SettingsController() = default;
 
 bl::models::LanguageModel *SettingsController::languageModel() const { return _languageModel; }
+
+bl::models::FontModel *SettingsController::fontModel() const { return _fontModel; }
 
 void SettingsController::setInstance(SettingsController *instance) { s_instance = instance; }
 

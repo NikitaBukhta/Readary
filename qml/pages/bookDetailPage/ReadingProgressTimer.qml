@@ -160,7 +160,7 @@ PaddedCard {
             IconButton {
                 id: resetButton
                 Layout.alignment: Qt.AlignVCenter
-                iconGlyph: "↻"
+                iconGlyph: "🔄"
                 iconColor: Theme.textSecondary
                 restColor: Theme.surfaceVariant
                 onClicked: root.phase = ReadingPhase.Stopped

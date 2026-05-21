@@ -75,4 +75,6 @@ QtObject {
 
     readonly property color starColor: "#F59E0B"
     readonly property color starColorEmpty: "#5AF59E0B" // 35% alpha
+
+    readonly property string fontFamily: SettingsController.fontModel.currentFamily
 }

@@ -10,12 +10,31 @@ ColumnLayout {
 
     spacing: Geometry.spacing.xs
 
-    Text {
+    RowLayout {
+        id: welcomeRow
         Layout.fillWidth: true
-        text: root.userName.length > 0 ? qsTr("Welcome, %1 👋").arg(root.userName) : qsTr("Welcome 👋")
-        color: Theme.textSecondary
-        font.pixelSize: Styles.fontSize.body
-        font.weight: Styles.fontWeight.medium
+        spacing: Geometry.spacing.xs
+
+        Text {
+            id: welcomeText
+            // Emoji is rendered by IconGlyph (next sibling) so this Text only
+            // contains plain text and follows the platform default font.
+            text: root.userName.length > 0 ? qsTr("Welcome, %1").arg(root.userName) : qsTr("Welcome")
+            color: Theme.textSecondary
+            font.pixelSize: Styles.fontSize.body
+            font.weight: Styles.fontWeight.medium
+        }
+
+        IconGlyph {
+            id: welcomeEmoji
+            glyph: "👋"
+            color: Theme.textSecondary
+            size: Styles.fontSize.body
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
     }
 
     Text {

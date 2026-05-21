@@ -21,3 +21,25 @@ target_link_libraries(LanguageModelTest PRIVATE
 )
 
 add_test(NAME LanguageModel COMMAND LanguageModelTest)
+
+qt_add_executable(FontModelTest
+    models/FontModelTest.cpp
+)
+
+target_link_libraries(FontModelTest PRIVATE
+    BeeLibraryCore
+    Qt6::Test
+)
+
+add_test(NAME FontModel COMMAND FontModelTest)
+
+qt_add_executable(EmojiResolverTest
+    services/EmojiResolverTest.cpp
+)
+
+target_link_libraries(EmojiResolverTest PRIVATE
+    BeeLibraryCore
+    Qt6::Test
+)
+
+add_test(NAME EmojiResolver COMMAND EmojiResolverTest)

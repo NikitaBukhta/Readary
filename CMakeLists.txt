@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Sql)
+find_package(Qt6 REQUIRED COMPONENTS Quick Sql Svg)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -92,7 +92,7 @@ target_include_directories(BeeLibraryCore PUBLIC
     src/models/books
     src/models/settings
 )
-target_link_libraries(BeeLibraryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick)
+target_link_libraries(BeeLibraryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg)
 
 if(ANDROID)
     target_link_libraries(BeeLibraryCore PUBLIC log)
@@ -104,7 +104,20 @@ qt_add_qml_module(BeeLibraryCore
     QML_FILES ${QML_FILES}
 )
 
-target_sources(BeeLibraryCore PRIVATE db/db_scripts.qrc)
+target_sources(BeeLibraryCore PRIVATE db/db_scripts.qrc assets/fonts/fonts.qrc)
+
+# ---------------------------------------------------------------------------
+# Twemoji SVG set (vendored under assets/emoji, ~4000 files).
+# Globbed into a Qt big-resource so emoji glyphs render as <Image> rather than
+# relying on platform color-emoji fonts — see EmojiResolver / IconGlyph.
+# CONFIGURE_DEPENDS triggers reconfigure on file additions/removals.
+# ---------------------------------------------------------------------------
+file(GLOB _EMOJI_SVGS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/assets/emoji/*.svg)
+qt_add_resources(BeeLibraryCore "emoji_resources"
+    PREFIX "/emoji"
+    BASE ${CMAKE_CURRENT_SOURCE_DIR}/assets/emoji
+    FILES ${_EMOJI_SVGS}
+)
 
 # ---------------------------------------------------------------------------
 # Translations — .qm files are produced by `python bootstrap.py translate`

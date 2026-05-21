@@ -5,6 +5,7 @@
 #include "controllers/NavigationController.hpp"
 #include "controllers/SettingsController.hpp"
 #include "models/books/BookListModel.hpp"
+#include "models/settings/FontModel.hpp"
 #include "models/settings/LanguageModel.hpp"
 
 #include <QLoggingCategory>
@@ -70,6 +71,7 @@ void AppInitializer::initModels() {
 
   _settingsController = new controllers::SettingsController(this);
   _settingsController->languageModel()->applyCurrent();
+  _settingsController->fontModel()->applyCurrent();
   connect(
       _settingsController->languageModel(), &models::LanguageModel::currentChanged, this,
       [this] { _engine->retranslate(); }, Qt::QueuedConnection);

@@ -14,6 +14,8 @@ int main(int argc, char *argv[]) {
 
   // Resources from a static library can be stripped by the linker; force init.
   Q_INIT_RESOURCE(db_scripts);
+  Q_INIT_RESOURCE(fonts);
+  Q_INIT_RESOURCE(emoji_resources);
 #ifdef BL_HAS_TRANSLATIONS
   Q_INIT_RESOURCE(translations);
 #endif
