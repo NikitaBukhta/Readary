@@ -15,7 +15,7 @@
         },
         "VCPKG_INSTALLED_DIR": {
           "type": "PATH",
-          "value": "$env{USERPROFILE}/BeeLibrary-dependencies"
+          "value": "$env{VCPKG_INSTALLED_DIR}"
         },
         "VCPKG_TARGET_TRIPLET": {
           "type": "STRING",

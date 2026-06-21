@@ -30,7 +30,7 @@ QString AppEnvironment::ensureDataDir() {
   QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   QDir dir(path);
   dir.cdUp();
-  path = dir.absoluteFilePath("BeeLibrary");
+  path = dir.absoluteFilePath("Readary");
 
   QDir().mkpath(path);
   return path;
@@ -41,7 +41,7 @@ QString AppEnvironment::dataPath() {
   return path;
 }
 
-QString AppEnvironment::databasePath() { return dataPath() + "/beelibrary.db"; }
+QString AppEnvironment::databasePath() { return dataPath() + "/readary.db"; }
 
 QString AppEnvironment::logFilePath() {
   const QString timestamp = QDateTime::currentDateTime().toString("dd.MM.yyyy-hh.mm.ss");
@@ -123,7 +123,7 @@ void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &co
 
 #ifdef Q_OS_ANDROID
   // stderr is dropped on Android; logcat is the only practical channel.
-  // Single tag "BeeLibrary" simplifies `adb logcat *:S BeeLibrary:V` filtering.
+  // Single tag "Readary" simplifies `adb logcat *:S Readary:V` filtering.
   android_LogPriority prio = ANDROID_LOG_INFO;
   switch (type) {
   case QtDebugMsg:
@@ -143,7 +143,7 @@ void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &co
     break;
   }
   const QString body = QStringLiteral("[%1] %2").arg(category, msg);
-  __android_log_write(prio, "BeeLibrary", body.toUtf8().constData());
+  __android_log_write(prio, "Readary", body.toUtf8().constData());
 #elif !defined(QT_NO_DEBUG)
   std::cerr << line.toLocal8Bit().constData();
 #endif

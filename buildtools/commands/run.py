@@ -10,8 +10,8 @@ from buildtools.providers.android_sdk import AndroidSdkProvider
 from buildtools.providers.jdk import JdkProvider
 from buildtools.shell import Shell
 
-APP_NAME = "BeeLibrary"
-ANDROID_PACKAGE = "org.qtproject.example.BeeLibrary"
+APP_NAME = "Readary"
+ANDROID_PACKAGE = "org.qtproject.example.Readary"
 ANDROID_ACTIVITY = "org.qtproject.qt.android.bindings.QtActivity"
 LOGCAT_PID_TIMEOUT_S = 8.0
 
@@ -49,7 +49,7 @@ class RunCommand(Command):
 
         print(f"=== Running ({self.config.build_type}) ===")
         print(f">>> {executable}")
-        subprocess.run([executable], env=env)  # nosec B603 — executable is the built BeeLibrary binary, path verified above
+        subprocess.run([executable], env=env)  # nosec B603 — executable is the built Readary binary, path verified above
 
     def _find_executable(self) -> str:
         build_root = self.config.cmake_build_dir
@@ -142,7 +142,7 @@ class RunCommand(Command):
             subprocess.run(  # nosec B603 — adb is from a managed install, args constants
                 [
                     str(adb), *target_args, "logcat",
-                    "*:S", "BeeLibrary:V", "Qt:V", "QtCore:V", "QtQml:V",
+                    "*:S", "Readary:V", "Qt:V", "QtCore:V", "QtQml:V",
                     "AndroidRuntime:E", "DEBUG:V", "libc:E",
                 ], check=False,
             )
@@ -220,7 +220,7 @@ class RunCommand(Command):
         build_dir = self.config.cmake_build_dir
         roots = [
             build_dir / "android-build" / "build" / "outputs" / "apk",
-            build_dir / "android-BeeLibrary" / "build" / "outputs" / "apk",
+            build_dir / "android-Readary" / "build" / "outputs" / "apk",
         ]
         for root in roots:
             if not root.exists():

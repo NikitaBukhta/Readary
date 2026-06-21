@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Sql Svg)
+# Minimum Qt version — not pinned to an exact release, any newer Qt6 works.
+set(QT_MINIMUM_VERSION 6.8)
+find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick Sql Svg)
 
-qt_standard_project_setup(REQUIRES 6.8)
+qt_standard_project_setup(REQUIRES ${QT_MINIMUM_VERSION})
 
 # ---------------------------------------------------------------------------
 # Static analysis (clang-tidy + MSVC /analyze)
@@ -83,8 +85,8 @@ set_source_files_properties(qml/utils/Styles.qml               PROPERTIES QT_QML
 set_source_files_properties(qml/theme/Theme.qml                PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/ToastService.qml    PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
-qt_add_library(BeeLibraryCore STATIC ${LIB_SOURCES})
-target_include_directories(BeeLibraryCore PUBLIC
+qt_add_library(ReadaryCore STATIC ${LIB_SOURCES})
+target_include_directories(ReadaryCore PUBLIC
     src
     src/qmltypes
     src/services
@@ -92,19 +94,19 @@ target_include_directories(BeeLibraryCore PUBLIC
     src/models/books
     src/models/settings
 )
-target_link_libraries(BeeLibraryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg)
+target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg)
 
 if(ANDROID)
-    target_link_libraries(BeeLibraryCore PUBLIC log)
+    target_link_libraries(ReadaryCore PUBLIC log)
 endif()
 
-qt_add_qml_module(BeeLibraryCore
+qt_add_qml_module(ReadaryCore
     URI Library
     OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Library
     QML_FILES ${QML_FILES}
 )
 
-target_sources(BeeLibraryCore PRIVATE db/db_scripts.qrc assets/fonts/fonts.qrc)
+target_sources(ReadaryCore PRIVATE db/db_scripts.qrc assets/fonts/fonts.qrc)
 
 # ---------------------------------------------------------------------------
 # Twemoji SVG set (vendored under assets/emoji, ~4000 files).
@@ -113,7 +115,7 @@ target_sources(BeeLibraryCore PRIVATE db/db_scripts.qrc assets/fonts/fonts.qrc)
 # CONFIGURE_DEPENDS triggers reconfigure on file additions/removals.
 # ---------------------------------------------------------------------------
 file(GLOB _EMOJI_SVGS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/assets/emoji/*.svg)
-qt_add_resources(BeeLibraryCore "emoji_resources"
+qt_add_resources(ReadaryCore "emoji_resources"
     PREFIX "/emoji"
     BASE ${CMAKE_CURRENT_SOURCE_DIR}/assets/emoji
     FILES ${_EMOJI_SVGS}
@@ -135,8 +137,8 @@ foreach(_qm IN LISTS _LIBRARY_QM_FILES)
     endif()
 endforeach()
 if(_LIBRARY_QM_ALL_PRESENT)
-    target_sources(BeeLibraryCore PRIVATE translations/translations.qrc)
-    target_compile_definitions(BeeLibraryCore PUBLIC BL_HAS_TRANSLATIONS)
+    target_sources(ReadaryCore PRIVATE translations/translations.qrc)
+    target_compile_definitions(ReadaryCore PUBLIC BL_HAS_TRANSLATIONS)
     message(STATUS "Translations: bundling translations/translations.qrc")
 else()
     message(STATUS "Translations: .qm files missing — run "
@@ -155,13 +157,13 @@ if(WIN32 AND NOT ANDROID)
     list(APPEND _APP_SOURCES assets/app.rc)
 endif()
 
-qt_add_executable(BeeLibrary ${_APP_SOURCES})
-target_link_libraries(BeeLibrary PRIVATE BeeLibraryCore)
+qt_add_executable(Readary ${_APP_SOURCES})
+target_link_libraries(Readary PRIVATE ReadaryCore)
 
 # ---------------------------------------------------------------------------
 # Target properties
 # ---------------------------------------------------------------------------
-set_target_properties(BeeLibrary PROPERTIES
+set_target_properties(Readary PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
@@ -169,7 +171,7 @@ set_target_properties(BeeLibrary PROPERTIES
 )
 
 if(ANDROID)
-    set_target_properties(BeeLibrary PROPERTIES
+    set_target_properties(Readary PROPERTIES
         QT_ANDROID_TARGET_SDK_VERSION 34
         QT_ANDROID_MIN_SDK_VERSION 23
         QT_ANDROID_VERSION_NAME ${PROJECT_VERSION}
@@ -177,7 +179,7 @@ if(ANDROID)
     )
     # android/AndroidManifest.xml adds INTERNET permission (Qt doesn't inject it).
     if(ANDROID_PACKAGE_SOURCE_DIR AND EXISTS "${ANDROID_PACKAGE_SOURCE_DIR}")
-        set_target_properties(BeeLibrary PROPERTIES
+        set_target_properties(Readary PROPERTIES
             QT_ANDROID_PACKAGE_SOURCE_DIR "${ANDROID_PACKAGE_SOURCE_DIR}"
         )
         message(STATUS "Android package source: ${ANDROID_PACKAGE_SOURCE_DIR}")
@@ -185,7 +187,7 @@ if(ANDROID)
     # Qt's tls_qopensslbackend plugin needs libcrypto/libssl — bundle them
     # via androiddeployqt since Qt doesn't ship them for Android.
     if(ANDROID_OPENSSL_EXTRA_LIBS)
-        set_target_properties(BeeLibrary PROPERTIES
+        set_target_properties(Readary PROPERTIES
             QT_ANDROID_EXTRA_LIBS "${ANDROID_OPENSSL_EXTRA_LIBS}"
         )
         message(STATUS "Android extra libs: ${ANDROID_OPENSSL_EXTRA_LIBS}")
@@ -211,7 +213,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(NOT ANDROID)
     include(GNUInstallDirs)
-    install(TARGETS BeeLibrary
+    install(TARGETS Readary
         BUNDLE DESTINATION .
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

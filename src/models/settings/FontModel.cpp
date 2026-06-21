@@ -112,7 +112,7 @@ QString FontModel::loadFont(Code code) {
     return {};
   }
 
-  const QString family = families.first();
+  const QString &family = families.first();
   _loadedFamilies.insert(code, family);
   qCInfo(lcFont) << "Font loaded:" << path << "as family" << family;
   return family;

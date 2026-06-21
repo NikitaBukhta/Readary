@@ -84,3 +84,7 @@ CheckOptions:
     value: 'true'
   - key: bugprone-unused-local-non-trivial-variable.IncludeTypes
     value: '::Q.*;.*Model.*;.*Controller.*'
+  # RAII scope-guards are "unused" by design — the ::Q.* include above would
+  # otherwise flag them. ExcludeTypes takes precedence over IncludeTypes.
+  - key: bugprone-unused-local-non-trivial-variable.ExcludeTypes
+    value: '.*QMutexLocker.*;.*QReadLocker.*;.*QWriteLocker.*;.*QSignalBlocker.*;.*QScopedValueRollback.*'

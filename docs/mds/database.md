@@ -16,7 +16,7 @@ depend on Qt Quick or QML** — it can run from tests or other non-UI code.
 
 ## `DatabaseManager`
 
-Wraps a `QSqlDatabase` connection (named `"BeeLibrary"`).
+Wraps a `QSqlDatabase` connection (named `"Readary"`).
 
 | Method | Purpose |
 |--------|---------|

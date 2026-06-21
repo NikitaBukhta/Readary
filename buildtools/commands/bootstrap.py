@@ -69,6 +69,8 @@ class BootstrapCommand(Command):
         self.clang_format.ensure_config()
         clang_tidy_path = self.clang_tidy.ensure()
         env = self.msvc.env()
+        # Single source of truth for the vcpkg install tree (see project.json).
+        env["VCPKG_INSTALLED_DIR"] = _fwd(self.config.deps_dir)
 
         wrapper_script = (self.config.project_dir / "buildtools"
                           / "clang_tidy_wrapper.py")

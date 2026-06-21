@@ -1,4 +1,4 @@
-# BeeLibrary
+# Readary
 
 Qt 6.8 QML desktop application for managing a personal book library.
 
@@ -91,7 +91,7 @@ operating system itself is downloaded automatically:
 | Android NDK                        | `sdkmanager`                   | r26b (26.1.10909125) |
 | Qt for Android (host + arm64-v8a)  | `aqtinstall`                   | 6.8.0                |
 
-Everything lands under `~/BeeLibrary-dependencies/android/` so it never
+Everything lands under `~/vcpkg_install_deps/android/` so it never
 mixes with the desktop vcpkg tree.
 
 ### Host requirements
@@ -101,7 +101,7 @@ These cannot be auto-installed and must be present before bootstrap:
 - **Python 3.12+** and **Git** (same as desktop)
 - A working **internet connection** to reach `api.adoptium.net`,
   `dl.google.com`, and Qt's `download.qt.io` mirror
-- ~10 GB of free disk space under `~/BeeLibrary-dependencies/android/`
+- ~10 GB of free disk space under `~/vcpkg_install_deps/android/`
 - (For `run -d android`) **USB debugging enabled** on a connected Android
   device, or an emulator running, so `adb` can reach it. With multiple
   devices visible, set `ANDROID_SERIAL` to the serial from `adb devices`
@@ -153,7 +153,7 @@ one **fat APK** with `lib/<abi>/...` per slice — Android picks the
 right one at install time. The first ABI in the list doubles as Qt's
 toolchain anchor; ordering is otherwise irrelevant. Each ABI adds
 ~200 MB of Qt download under
-`~/BeeLibrary-dependencies/android/qt/6.8.0/android_<abi>/`.
+`~/vcpkg_install_deps/android/qt/6.8.0/android_<abi>/`.
 
 Each ABI combo has its own build directory
 (`build/android-debug-arm64-v8a/`, `build/android-debug-arm64-v8a_x86_64/`,
@@ -166,7 +166,7 @@ must be invoked with the same `--abi` set as the matching `bootstrap`.
 - **ABI**: `arm64-v8a` (override via `--abi`, see above).
 - **Min SDK**: API 23 (Android 6.0) — Qt 6.8's lower bound.
 - **Target SDK**: API 34.
-- **Package**: `org.qtproject.example.BeeLibrary` (Qt's default
+- **Package**: `org.qtproject.example.Readary` (Qt's default
   template). Override via a custom `AndroidManifest.xml` and
   `QT_ANDROID_PACKAGE_SOURCE_DIR` if you need a different application id.
 
@@ -185,6 +185,6 @@ python bootstrap.py clean
 ```
 
 This wipes the Android toolchain (JDK, SDK, NDK, Qt for Android) too — it
-all lives under `~/BeeLibrary-dependencies/`.
+all lives under `~/vcpkg_install_deps/`.
 
 Run `python bootstrap.py help` for full command reference and status.

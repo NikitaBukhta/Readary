@@ -6,7 +6,7 @@ from buildtools.config import ProjectConfig
 from buildtools.errors import BuildError, ToolNotFoundError
 from buildtools.shell import Shell
 
-APP_NAME = "BeeLibrary"
+APP_NAME = "Readary"
 
 # Qt plugins needed at runtime (subdirs of Qt6/plugins/)
 QT_PLUGIN_DIRS = ["platforms", "sqldrivers", "imageformats", "iconengines", "styles", "tls"]
@@ -164,7 +164,7 @@ class PackageCommand(Command):
         print(f"  Staged {file_count} files into {self.staging_dir}")
 
     def _run_iscc(self, iscc: Path) -> None:
-        iss_file = self.config.project_dir / "installer" / "BeeLibrary.iss"
+        iss_file = self.config.project_dir / "installer" / "Readary.iss"
         dist_dir = self.config.project_dir / "dist"
         dist_dir.mkdir(exist_ok=True)
 

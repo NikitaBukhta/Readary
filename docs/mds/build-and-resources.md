@@ -2,9 +2,9 @@
 
 CMake-based, Qt 6.8+. Two top-level targets:
 
-- `BeeLibraryCore` — STATIC library that holds all C++ code, the QML module,
+- `ReadaryCore` — STATIC library that holds all C++ code, the QML module,
   and bundled resources.
-- `BeeLibrary` — executable that links `BeeLibraryCore` and provides
+- `Readary` — executable that links `ReadaryCore` and provides
   `main.cpp` + `AppInitializer`.
 
 Tests live in `src/tests/` as a separate sub-project guarded by
@@ -16,15 +16,15 @@ Key bits in [CMakeLists.txt](../../CMakeLists.txt):
 
 - `set(CMAKE_AUTORCC ON)` — `.qrc` files added to a target are compiled
   automatically. Used for the SQL scripts qrc.
-- `qt_add_library(BeeLibraryCore STATIC ${LIB_SOURCES})` — globs everything
+- `qt_add_library(ReadaryCore STATIC ${LIB_SOURCES})` — globs everything
   under `src/` (excluding `main.cpp`, `AppInitializer.cpp` which belong to
   the exe).
-- `qt_add_qml_module(BeeLibraryCore URI Library QML_FILES ${QML_FILES})` —
+- `qt_add_qml_module(ReadaryCore URI Library QML_FILES ${QML_FILES})` —
   registers the QML module. QML singletons (`Geometry`, `Styles`, `Theme`)
   get `QT_QML_SINGLETON_TYPE TRUE` set per-source.
-- `target_sources(BeeLibraryCore PRIVATE db/db_scripts.qrc)` — adds the SQL
+- `target_sources(ReadaryCore PRIVATE db/db_scripts.qrc)` — adds the SQL
   qrc to the library so AUTORCC compiles it.
-- `qt_add_executable(BeeLibrary src/main.cpp src/core/AppInitializer.cpp ...)`
+- `qt_add_executable(Readary src/main.cpp src/core/AppInitializer.cpp ...)`
   — main exe.
 
 The `src/models/*.cpp src/models/*.hpp` glob is `GLOB_RECURSE`, so adding a
@@ -58,8 +58,8 @@ Three resource sets are bundled:
 
    ```cmake
    if(_LIBRARY_QM_ALL_PRESENT)
-       target_sources(BeeLibraryCore PRIVATE translations/translations.qrc)
-       target_compile_definitions(BeeLibraryCore PUBLIC BL_HAS_TRANSLATIONS)
+       target_sources(ReadaryCore PRIVATE translations/translations.qrc)
+       target_compile_definitions(ReadaryCore PUBLIC BL_HAS_TRANSLATIONS)
    endif()
    ```
 
@@ -97,7 +97,7 @@ logging.
 
 | Function | Purpose |
 |----------|---------|
-| `dataPath()` | App data directory (`%LOCALAPPDATA%/BeeLibrary` on Windows) |
+| `dataPath()` | App data directory (`%LOCALAPPDATA%/Readary` on Windows) |
 | `databasePath()` | `<dataPath>/beelibrary.db` |
 | `logFilePath()` | Time-stamped `<dataPath>/log_DD.MM.YYYY-HH.MM.SS.log` |
 | `installFileLogger()` | Installs a `QtMessageHandler` that writes every message to the log file (and stderr in debug). Cleans up logs older than 7 days. |

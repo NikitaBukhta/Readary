@@ -11,7 +11,7 @@ ApplicationWindow {
     minimumWidth: Geometry.window.minimumWidth
     minimumHeight: Geometry.window.minimumHeight
     visible: true
-    title: "DarisszeBooks"
+    title: "Readary"
     color: Theme.background
 
     readonly property var _retranslatableLoaders: [pageLoader, bottomNavBarLoader]

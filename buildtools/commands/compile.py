@@ -56,6 +56,8 @@ class CompileCommand(Command):
 
         cmake_path = self.cmake.ensure()
         env = self.msvc.env()
+        # Keep the vcpkg install tree consistent with bootstrap on reconfigure.
+        env["VCPKG_INSTALLED_DIR"] = self.config.deps_dir.as_posix()
 
         self._sync_analyze_setting(cmake_path, env)
 
@@ -150,7 +152,7 @@ class CompileCommand(Command):
         build_dir = self.config.cmake_build_dir
         roots = [
             build_dir / "android-build" / "build" / "outputs" / "apk",
-            build_dir / "android-BeeLibrary" / "build" / "outputs" / "apk",
+            build_dir / "android-Readary" / "build" / "outputs" / "apk",
         ]
         for root in roots:
             if not root.exists():

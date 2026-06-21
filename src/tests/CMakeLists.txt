@@ -5,7 +5,7 @@ qt_add_executable(BookSearchProxyModelTest
 )
 
 target_link_libraries(BookSearchProxyModelTest PRIVATE
-    BeeLibraryCore
+    ReadaryCore
     Qt6::Test
 )
 
@@ -16,7 +16,7 @@ qt_add_executable(LanguageModelTest
 )
 
 target_link_libraries(LanguageModelTest PRIVATE
-    BeeLibraryCore
+    ReadaryCore
     Qt6::Test
 )
 
@@ -27,7 +27,7 @@ qt_add_executable(FontModelTest
 )
 
 target_link_libraries(FontModelTest PRIVATE
-    BeeLibraryCore
+    ReadaryCore
     Qt6::Test
 )
 
@@ -38,7 +38,7 @@ qt_add_executable(EmojiResolverTest
 )
 
 target_link_libraries(EmojiResolverTest PRIVATE
-    BeeLibraryCore
+    ReadaryCore
     Qt6::Test
 )
 

@@ -1,3 +1,4 @@
+import json
 import os
 import platform
 from dataclasses import dataclass, field
@@ -26,6 +27,23 @@ def qt_install_dirname_for_abi(abi: str) -> str:
 
 def _is_windows() -> bool:
     return platform.system() == "Windows"
+
+
+def _load_project_settings(project_dir: Path) -> dict:
+    """Read optional project.json overrides (deps_dir, vcpkg_dir)."""
+    settings_file = project_dir / "project.json"
+    if not settings_file.is_file():
+        return {}
+    try:
+        return json.loads(settings_file.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def _resolve_dir(value: str | None, default: Path) -> Path:
+    if not value:
+        return default
+    return Path(os.path.expanduser(value))
 
 
 SUPPORTED_TARGETS = ("windows", "android")
@@ -105,9 +123,18 @@ class ProjectConfig:
     is_windows: bool = field(init=False)
 
     def __post_init__(self):
+        settings = _load_project_settings(self.project_dir)
         object.__setattr__(self, "venv_dir", self.project_dir / "venv")
-        object.__setattr__(self, "deps_dir", Path.home() / "BeeLibrary-dependencies")
-        object.__setattr__(self, "vcpkg_dir", Path.home() / "vcpkg")
+        object.__setattr__(
+            self,
+            "deps_dir",
+            _resolve_dir(settings.get("deps_dir"), Path.home() / "vcpkg_install_deps"),
+        )
+        object.__setattr__(
+            self,
+            "vcpkg_dir",
+            _resolve_dir(settings.get("vcpkg_dir"), Path.home() / "vcpkg"),
+        )
         object.__setattr__(self, "is_windows", _is_windows())
 
     @property

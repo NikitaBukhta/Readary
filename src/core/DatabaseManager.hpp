@@ -30,7 +30,7 @@ private:
   void trimRun(QTextStream &script);
   static QList<QVariantMap> getDataFromQuery(QSqlQuery &query);
 
-  static constexpr const char *kConnectionName = "BeeLibrary";
+  static constexpr const char *kConnectionName = "Readary";
 
   QSqlDatabase _db;
 };
