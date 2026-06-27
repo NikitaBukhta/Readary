@@ -58,6 +58,10 @@ class CompileCommand(Command):
         env = self.msvc.env()
         # Keep the vcpkg install tree consistent with bootstrap on reconfigure.
         env["VCPKG_INSTALLED_DIR"] = self.config.deps_dir.as_posix()
+        # vcpkg builds ports with cmake from PATH; force our stable one so a
+        # pre-release system cmake can't break the qtdeclarative port build.
+        cmake_dir = str(Path(cmake_path).parent)
+        env["PATH"] = f"{cmake_dir}{os.pathsep}{env.get('PATH', '')}"
 
         self._sync_analyze_setting(cmake_path, env)
 
@@ -177,6 +181,8 @@ class CompileCommand(Command):
             "--preset", self.config.cmake_preset,
             "-S", self.config.project_dir,
             f"-DENABLE_ANALYZE={desired}",
+            f"-DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root="
+            f"{self.config.vcpkg_buildtrees_dir.as_posix()}",
         ]
         if desired == "ON":
             # Re-resolve in case venv was wiped since bootstrap.

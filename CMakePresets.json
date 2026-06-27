@@ -39,6 +39,14 @@
       }
     },
     {
+      "name": "relminsize",
+      "inherits": "vcpkg",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel",
+        "CMAKE_DEFAULT_BUILD_TYPE": "MinSizeRel"
+      }
+    },
+    {
       "name": "android",
       "hidden": true,
       "displayName": "Android (Qt 6.8)",
@@ -81,6 +89,13 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "android-relminsize",
+      "inherits": "android",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "MinSizeRel"
+      }
     }
   ],
   "buildPresets": [
@@ -95,12 +110,21 @@
       "configuration": "Debug"
     },
     {
+      "name": "relminsize",
+      "configurePreset": "relminsize",
+      "configuration": "MinSizeRel"
+    },
+    {
       "name": "android-debug",
       "configurePreset": "android-debug"
     },
     {
       "name": "android-release",
       "configurePreset": "android-release"
+    },
+    {
+      "name": "android-relminsize",
+      "configurePreset": "android-relminsize"
     }
   ]
 }

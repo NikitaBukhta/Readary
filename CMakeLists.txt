@@ -170,6 +170,44 @@ set_target_properties(Readary PROPERTIES
     WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>
 )
 
+# ---------------------------------------------------------------------------
+# Desktop: make the build output self-contained so the app launches from
+# anywhere (IDE run config, debugger, double-click) with NO environment set.
+# windeployqt is unusable with vcpkg's split debug/release tree, so we do it
+# directly: a qt.conf pointing at the vcpkg plugin/qml dirs (discovery) plus a
+# copy of the vcpkg runtime DLLs next to the exe (the QML plugins' deps, e.g.
+# Qt6Quick, which vcpkg's applocal does not copy). Per-config via generator
+# expressions: Debug uses the .../debug subtree, Release the top-level one.
+# ---------------------------------------------------------------------------
+if(WIN32 AND NOT ANDROID)
+    if(NOT VCPKG_INSTALLED_DIR)
+        message(WARNING "VCPKG_INSTALLED_DIR not set; skipping Qt runtime "
+                        "deploy — running Readary may need QT_PLUGIN_PATH/PATH.")
+    else()
+        set(_VCPKG_TRIPLET_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+        set(_QT_RUNTIME_BIN
+            "$<IF:$<CONFIG:Debug>,${_VCPKG_TRIPLET_DIR}/debug/bin,${_VCPKG_TRIPLET_DIR}/bin>")
+        set(_QT_PREFIX
+            "$<IF:$<CONFIG:Debug>,${_VCPKG_TRIPLET_DIR}/debug/Qt6,${_VCPKG_TRIPLET_DIR}/Qt6>")
+        # qt.conf next to the exe → Qt finds platform/sql/etc plugins + QML.
+        file(GENERATE
+            OUTPUT "$<TARGET_FILE_DIR:Readary>/qt.conf"
+            CONTENT "[Paths]\nPlugins = ${_QT_PREFIX}/plugins\nQml2Imports = ${_QT_PREFIX}/qml\n")
+        # Copy the Qt + dependency DLLs beside the exe so runtime-loaded
+        # plugins resolve their dependencies without PATH.
+        if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.26)
+            set(_COPY_DIR copy_directory_if_different)
+        else()
+            set(_COPY_DIR copy_directory)
+        endif()
+        add_custom_command(TARGET Readary POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E ${_COPY_DIR}
+                    "${_QT_RUNTIME_BIN}" "$<TARGET_FILE_DIR:Readary>"
+            COMMENT "Bundling Qt runtime DLLs next to Readary.exe"
+            VERBATIM)
+    endif()
+endif()
+
 if(ANDROID)
     set_target_properties(Readary PROPERTIES
         QT_ANDROID_TARGET_SDK_VERSION 34

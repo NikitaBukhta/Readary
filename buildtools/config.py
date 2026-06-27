@@ -16,8 +16,16 @@ SUPPORTED_ANDROID_ABIS = ("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
 DEFAULT_ANDROID_ABIS: tuple[str, ...] = ("arm64-v8a",)
 
 
+# aqt's Qt6 Android arch tokens mostly match the NDK ABI with `-`->`_`, EXCEPT
+# 32-bit ARM: the NDK ABI is `armeabi-v7a` but aqt's token (and install dir) is
+# `android_armv7`. Passing `android_armeabi_v7a` makes aqt's to_folder() return
+# empty -> a broken `qt6_680/qt6_680` repo path -> "Failed to locate XML data".
+_AQT_ARCH_TOKEN_OVERRIDES = {"armeabi-v7a": "armv7"}
+
+
 def aqt_arch_for_abi(abi: str) -> str:
-    return f"android_{abi.replace('-', '_')}"
+    token = _AQT_ARCH_TOKEN_OVERRIDES.get(abi, abi.replace('-', '_'))
+    return f"android_{token}"
 
 
 def qt_install_dirname_for_abi(abi: str) -> str:
@@ -116,6 +124,9 @@ class ProjectConfig:
     jobs: int = field(default_factory=lambda: os.cpu_count() or 1)
     cmake_defs: list[str] = field(default_factory=list)
     skip_analyze: bool = False
+    # Explicit build type (e.g. "MinSizeRel") that supersedes the Debug/Release
+    # derived from `release`. Set by the `--all` matrix; None for normal runs.
+    build_type_override: str | None = None
 
     venv_dir: Path = field(init=False)
     deps_dir: Path = field(init=False)
@@ -143,14 +154,22 @@ class ProjectConfig:
 
     @property
     def build_type(self) -> str:
+        if self.build_type_override:
+            return self.build_type_override
         return "Release" if self.release else "Debug"
 
     @property
     def cmake_preset(self) -> str:
-        suffix = self.build_type.lower()
+        # Preset slugs are not always the lowercased build type (MinSizeRel ->
+        # relminsize), so map explicitly and fall back to the lowercased name.
+        slug = {
+            "Debug": "debug",
+            "Release": "release",
+            "MinSizeRel": "relminsize",
+        }.get(self.build_type, self.build_type.lower())
         if self.is_android:
-            return f"android-{suffix}"
-        return suffix
+            return f"android-{slug}"
+        return slug
 
     @property
     def cmake_build_dir(self) -> Path:
@@ -204,6 +223,13 @@ class ProjectConfig:
     def vcpkg_executable(self) -> Path:
         exe = "vcpkg.exe" if self.is_windows else "vcpkg"
         return self.vcpkg_dir / exe
+
+    @property
+    def vcpkg_buildtrees_dir(self) -> Path:
+        # Short path on the deps drive: Qt's deeply-nested object-file names
+        # blow past Windows' 250-char limit under the default buildtrees
+        # location, failing the qtdeclarative port build. Kept short here.
+        return Path(self.deps_dir.anchor or "C:/") / "vcpkgbt"
 
     # ---- Android paths ----------------------------------------------------
 

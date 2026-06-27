@@ -80,6 +80,11 @@ class HelpCommand(Command):
         print("                   Applies to: compile")
         print("  --skip-analyze   Skip clang-tidy + MSVC /analyze gate")
         print("                   Applies to: compile")
+        print("  --all            Run every configuration: Debug/Release/")
+        print("                   MinSizeRel on desktop, plus each Android ABI")
+        print("                   (arm64-v8a, x86_64, ...) per build type.")
+        print("                   Overrides -d/--release.")
+        print("                   Applies to: bootstrap, compile")
 
     def _print_paths(self) -> None:
         print("\nPaths:")

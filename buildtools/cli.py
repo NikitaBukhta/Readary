@@ -161,6 +161,12 @@ class CLI:
             metavar="VAR=VALUE",
             help="Pass CMake cache variable (e.g. -DBUILD_TESTS=OFF)",
         )
+        p_bootstrap.add_argument(
+            "--all", dest="all_configs", action="store_true",
+            help="Run for every configuration: Debug/Release/MinSizeRel on "
+                 "desktop, plus each Android ABI per build type. "
+                 "Overrides -d/--release.",
+        )
 
         p_compile = subs.add_parser(
             "compile", parents=[help_parser, release_parser, target_parser],
@@ -174,6 +180,12 @@ class CLI:
         p_compile.add_argument(
             "--skip-analyze", action="store_true",
             help="Skip clang-tidy + MSVC /analyze gate (faster, less safe)",
+        )
+        p_compile.add_argument(
+            "--all", dest="all_configs", action="store_true",
+            help="Build every configuration: Debug/Release/MinSizeRel on "
+                 "desktop, plus each Android ABI per build type. "
+                 "Overrides -d/--release.",
         )
 
         subs.add_parser(
@@ -258,16 +270,95 @@ class CLI:
             kwargs["cmake_defs"] = cmake_defs
         if getattr(args, "skip_analyze", False):
             kwargs["skip_analyze"] = True
-        config = ProjectConfig(**kwargs)
+
         command_name = args.command or "help"
+
+        if getattr(args, "all_configs", False) and not args.help:
+            self._run_all(command_name, kwargs)
+            return
+
+        self._run_one(command_name, ProjectConfig(**kwargs))
+
+    # Every configuration the `--all` matrix expands to: each build type, on
+    # desktop (the host) and on Android. Desktop is a single config per build
+    # type; Android fans out one config per supported ABI (each built on its
+    # own) so `--all` covers every architecture. An explicit --abi narrows the
+    # Android ABIs to that set.
+    _ALL_BUILD_TYPES = ("Debug", "Release", "MinSizeRel")
+
+    def _run_all(self, command_name: str, base_kwargs: dict) -> None:
+        variants: list[ProjectConfig] = []
+        # Android ABIs: honor an explicit --abi, else every supported ABI.
+        android_abis = base_kwargs.get("android_abis") or SUPPORTED_ANDROID_ABIS
+        for build_type in self._ALL_BUILD_TYPES:
+            kwargs = dict(base_kwargs)
+            kwargs["target"] = host_target()
+            kwargs.pop("android_abis", None)
+            kwargs["build_type_override"] = build_type
+            # Debug links the debug vcpkg triplet; Release/MinSizeRel use the
+            # release tree (vcpkg maps MinSizeRel imports to Release).
+            kwargs["release"] = build_type != "Debug"
+            variants.append(ProjectConfig(**kwargs))
+        for build_type in self._ALL_BUILD_TYPES:
+            for abi in android_abis:
+                kwargs = dict(base_kwargs)
+                kwargs["target"] = "android"
+                kwargs["android_abis"] = (abi,)
+                kwargs["build_type_override"] = build_type
+                kwargs["release"] = build_type != "Debug"
+                variants.append(ProjectConfig(**kwargs))
+
+        print(f"\n=== `{command_name} --all`: {len(variants)} configurations ===")
+        for cfg in variants:
+            label = (cfg.cmake_preset
+                     + (f" [{', '.join(cfg.android_abis)}]"
+                        if cfg.is_android else ""))
+            print(f"  - {label}")
+
+        # Run every variant; one config's failure must not abort the rest of
+        # the matrix (e.g. a transient aqt download failure for a single ABI).
+        # Collect outcomes and report a summary, exiting non-zero if any failed.
+        failures: list[str] = []
+        for cfg in variants:
+            label = cfg.cmake_preset
+            if cfg.is_android:
+                label += f" ({', '.join(cfg.android_abis)})"
+            print(f"\n########## {command_name}: {label} ##########")
+            err = self._run_one(command_name, cfg, abort_on_error=False)
+            if err is not None:
+                failures.append(f"{label}: {err}")
+
+        ok = len(variants) - len(failures)
+        print(f"\n=== `{command_name} --all` summary: "
+              f"{ok}/{len(variants)} succeeded ===")
+        for f in failures:
+            print(f"  FAILED  {f}")
+        if failures:
+            sys.exit(1)
+
+    @staticmethod
+    def _run_one(command_name: str, config: ProjectConfig,
+                 abort_on_error: bool = True) -> str | None:
+        """Run one command for one config.
+
+        Returns None on success. With abort_on_error (default, single-config
+        runs) a failure prints and exits the process; with it off (the --all
+        matrix) the error message is returned so the caller can continue.
+        """
         registry = CommandRegistry(config)
         commands = registry.build()
-
         try:
             commands[command_name].execute()
+            return None
         except (ToolNotFoundError, BuildError) as e:
-            print(f"\nERROR: {e}")
-            sys.exit(1)
+            msg = str(e)
+            print(f"\nERROR: {msg}")
+            if abort_on_error:
+                sys.exit(1)
+            return msg
         except subprocess.CalledProcessError as e:
-            print(f"\nERROR: Command failed with exit code {e.returncode}")
-            sys.exit(e.returncode)
+            msg = f"Command failed with exit code {e.returncode}"
+            print(f"\nERROR: {msg}")
+            if abort_on_error:
+                sys.exit(e.returncode)
+            return msg
