@@ -1,21 +1,5 @@
 PRAGMA foreign_keys = ON;
 
-CREATE TABLE IF NOT EXISTS publishers (
-  id   INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT    NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS authors (
-  id   INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT    NOT NULL
-);
-
--- basic, delux, limited, etc
-CREATE TABLE IF NOT EXISTS book_types (
-  id   INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT    NOT NULL UNIQUE
-);
-
 CREATE TABLE IF NOT EXISTS genres (
   id   INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT    NOT NULL UNIQUE
@@ -23,15 +7,15 @@ CREATE TABLE IF NOT EXISTS genres (
 
 -- status: 0 = NONE, 1 = WantToRead, 2 = InProgress, 3 = Finished
 CREATE TABLE IF NOT EXISTS books (
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  isbn         INTEGER PRIMARY KEY,
   name         TEXT    NOT NULL,
-  author       INTEGER NOT NULL REFERENCES authors(id)     ON UPDATE CASCADE ON DELETE RESTRICT,
+  author       TEXT    NOT NULL,
   year         INTEGER DEFAULT NULL,
-  publisher    INTEGER          REFERENCES publishers(id)  ON UPDATE CASCADE ON DELETE SET NULL,
+  publisher    TEXT    DEFAULT NULL,
   description  TEXT    DEFAULT NULL,
   coverUrl     TEXT    DEFAULT NULL,
   isHardcover  INTEGER NOT NULL DEFAULT 0 CHECK (isHardcover IN (0, 1)),
-  type         INTEGER          REFERENCES book_types(id)  ON UPDATE CASCADE ON DELETE SET NULL,
+  type         TEXT    DEFAULT NULL,
   totalPages   INTEGER DEFAULT NULL CHECK (totalPages IS NULL OR totalPages > 0),
   pagesRead    INTEGER NOT NULL DEFAULT 0 CHECK (pagesRead >= 0),
   globalRating REAL    DEFAULT NULL CHECK (globalRating IS NULL OR (globalRating >= 0 AND globalRating <= 10)),
@@ -42,16 +26,16 @@ CREATE TABLE IF NOT EXISTS books (
 );
 
 CREATE TABLE IF NOT EXISTS book_genres (
-  book_id  INTEGER NOT NULL REFERENCES books(id)  ON UPDATE CASCADE ON DELETE CASCADE,
-  genre_id INTEGER NOT NULL REFERENCES genres(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  PRIMARY KEY (book_id, genre_id)
+  book_isbn INTEGER NOT NULL REFERENCES books(isbn) ON UPDATE CASCADE ON DELETE CASCADE,
+  genre_id  INTEGER NOT NULL REFERENCES genres(id)  ON UPDATE CASCADE ON DELETE CASCADE,
+  PRIMARY KEY (book_isbn, genre_id)
 );
 
 CREATE TABLE IF NOT EXISTS book_characters (
-  id      INTEGER PRIMARY KEY AUTOINCREMENT,
-  book_id INTEGER NOT NULL REFERENCES books(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  name    TEXT    NOT NULL,
-  role    TEXT    DEFAULT NULL
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  book_isbn INTEGER NOT NULL REFERENCES books(isbn) ON UPDATE CASCADE ON DELETE CASCADE,
+  name      TEXT    NOT NULL,
+  role      TEXT    DEFAULT NULL
 );
 
 -- Reading session log. Per-book activity entries:
@@ -61,15 +45,15 @@ CREATE TABLE IF NOT EXISTS book_characters (
 --   books.pagesRead is THE current reading position (updated by the application).
 --   reading_sessions is a journal — overlapping ranges (re-reading) are allowed,
 --   so SUM(pages_to - pages_from) is "total pages read incl. re-reads", not the position.
---   To find the current position from the log only: MAX(pages_to) WHERE book_id = ?.
+--   To find the current position from the log only: MAX(pages_to) WHERE book_isbn = ?.
 -- Derived metrics (do NOT denormalize):
 --   pages read in session     = pages_to - pages_from
 --   duration of session       = julianday(ended_at) - julianday(started_at)  (in days; * 86400 for seconds)
---   when book first started   = MIN(started_at) WHERE book_id = ?
---   when book finished        = MAX(ended_at)   WHERE book_id = ? AND books.status = 3
+--   when book first started   = MIN(started_at) WHERE book_isbn = ?
+--   when book finished        = MAX(ended_at)   WHERE book_isbn = ? AND books.status = 3
 CREATE TABLE IF NOT EXISTS reading_sessions (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  book_id    INTEGER NOT NULL REFERENCES books(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  book_isbn  INTEGER NOT NULL REFERENCES books(isbn) ON UPDATE CASCADE ON DELETE CASCADE,
   started_at TEXT    NOT NULL,
   ended_at   TEXT    DEFAULT NULL,
   pages_from INTEGER NOT NULL CHECK (pages_from >= 0),
@@ -83,8 +67,8 @@ CREATE INDEX IF NOT EXISTS ix_books_author            ON books(author);
 CREATE INDEX IF NOT EXISTS ix_books_publisher         ON books(publisher);
 CREATE INDEX IF NOT EXISTS ix_books_type              ON books(type);
 CREATE INDEX IF NOT EXISTS ix_books_status            ON books(status);
-CREATE INDEX IF NOT EXISTS ix_book_genres_book_id        ON book_genres(book_id);
+CREATE INDEX IF NOT EXISTS ix_book_genres_book_isbn      ON book_genres(book_isbn);
 CREATE INDEX IF NOT EXISTS ix_book_genres_genre_id       ON book_genres(genre_id);
-CREATE INDEX IF NOT EXISTS ix_book_characters_book_id    ON book_characters(book_id);
-CREATE INDEX IF NOT EXISTS ix_reading_sessions_book_id   ON reading_sessions(book_id);
+CREATE INDEX IF NOT EXISTS ix_book_characters_book_isbn  ON book_characters(book_isbn);
+CREATE INDEX IF NOT EXISTS ix_reading_sessions_book_isbn ON reading_sessions(book_isbn);
 CREATE INDEX IF NOT EXISTS ix_reading_sessions_started   ON reading_sessions(started_at);

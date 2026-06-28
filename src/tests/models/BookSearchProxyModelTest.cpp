@@ -18,7 +18,7 @@ struct StubRow {
 
 class StubBookModel : public QAbstractListModel {
 public:
-  using Roles = bl::models::BookListModel::Roles;
+  using Roles = readary::models::BookListModel::RolesEnum;
 
   explicit StubBookModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
 
@@ -45,7 +45,7 @@ public:
       return {};
     const auto &r = _rows.at(index.row());
     switch (role) {
-    case Roles::IdRole:
+    case Roles::IsbnRole:
       return r.id;
     case Roles::NameRole:
       return r.name;
@@ -66,7 +66,7 @@ QList<int> idsOf(const QAbstractItemModel &model) {
   QList<int> ids;
   ids.reserve(model.rowCount());
   for (int i = 0; i < model.rowCount(); ++i)
-    ids << model.data(model.index(i, 0), bl::models::BookListModel::IdRole).toInt();
+    ids << model.data(model.index(i, 0), readary::models::BookListModel::IsbnRole).toInt();
   return ids;
 }
 
@@ -99,7 +99,7 @@ void BookSearchProxyModelTest::emptyQuery_passesAllRowsInSourceOrder() {
       {3, "Gamma", "C", "z"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
 
   QCOMPARE(proxy.rowCount(), 3);
@@ -114,7 +114,7 @@ void BookSearchProxyModelTest::filterDropsNonMatchingRows() {
       {3, "Algebra", "Lang", "Math foundations"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("alg");
 
@@ -131,7 +131,7 @@ void BookSearchProxyModelTest::matchIsCaseInsensitive() {
       {1, "Foo Bar", "X", "Y"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("FOO");
 
@@ -146,7 +146,7 @@ void BookSearchProxyModelTest::searchesAcrossNameAuthorAndDescription() {
       {3, "Crime and Punishment", "Fyodor Dostoevsky", "Philosophical fiction"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
 
   proxy.setSearchQuery("anna"); // matches name
@@ -168,7 +168,7 @@ void BookSearchProxyModelTest::nameMatchOutranksDescriptionMatch() {
       {2, "Novel Approach", "Author Y", "Y"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("novel");
 
@@ -185,7 +185,7 @@ void BookSearchProxyModelTest::nameMatchOutranksAuthorMatch() {
       {2, "Leonardo", "Other", "Y"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("leo");
 
@@ -201,7 +201,7 @@ void BookSearchProxyModelTest::earlierMatchPositionRanksHigher() {
       {2, "cat lived once long ago a", "X", "Y"}, // matchIdx = 0
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("cat");
 
@@ -217,7 +217,7 @@ void BookSearchProxyModelTest::higherCoverageRanksHigher() {
       {2, "Java", "X", "Y"},               // coverage = 4/4 (exact field)
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("java");
 
@@ -233,7 +233,7 @@ void BookSearchProxyModelTest::exactNameMatchTopsList() {
       {3, "Foo", "X", "Y"},                      // exact field match
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("foo");
 
@@ -248,7 +248,7 @@ void BookSearchProxyModelTest::changingQueryUpdatesRanking() {
       {2, "Bananas", "X", "Y"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
 
   proxy.setSearchQuery("apple");
@@ -266,7 +266,7 @@ void BookSearchProxyModelTest::clearingQueryRestoresAllRows() {
       {3, "Cherries", "X", "Y"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
 
   proxy.setSearchQuery("apple");
@@ -284,7 +284,7 @@ void BookSearchProxyModelTest::dataChangedRefreshesFilterForUpdatedRow() {
       {2, "Cooking", "X", "Y"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("java");
 
@@ -306,7 +306,7 @@ void BookSearchProxyModelTest::modelResetRecomputesEverything() {
       {1, "Java book", "X", "Y"},
   });
 
-  bl::models::BookSearchProxyModel proxy;
+  readary::models::BookSearchProxyModel proxy;
   proxy.setSourceModel(&src);
   proxy.setSearchQuery("python");
 

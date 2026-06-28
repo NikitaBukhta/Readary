@@ -9,7 +9,7 @@ Page {
 
     property string currentNavId: "library"
 
-    signal bookOpened(int bookId)
+    signal bookOpened(real isbn)
 
     function _title() {
         switch (BookController.activeKind) {
@@ -121,7 +121,7 @@ Page {
                 type: model.type ?? ""
                 year: model.year ?? 0
                 coverSource: model.coverUrl ?? ""
-                onClicked: BookController.openBook(model.bookId)
+                onClicked: BookController.openBook(model.isbn)
             }
         }
     }

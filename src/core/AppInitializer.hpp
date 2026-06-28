@@ -7,21 +7,21 @@
 
 class QQmlApplicationEngine;
 
-namespace bl::services {
+namespace readary::services {
 class BookTable;
 }
 
-namespace bl::models {
+namespace readary::models {
 class BookListModel;
-} // namespace bl::models
+} // namespace readary::models
 
-namespace bl::controllers {
+namespace readary::controllers {
 class BookController;
 class NavigationController;
 class SettingsController;
-} // namespace bl::controllers
+} // namespace readary::controllers
 
-namespace bl::core {
+namespace readary::core {
 
 class DatabaseManager;
 
@@ -51,6 +51,6 @@ private:
   controllers::SettingsController *_settingsController;
 };
 
-} // namespace bl::core
+} // namespace readary::core
 
 #endif // BEELIBRARY_CORE_APPINITIALIZER_HPP

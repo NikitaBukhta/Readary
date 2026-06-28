@@ -6,7 +6,7 @@
 #include <QString>
 #include <QtSql/QSqlDatabase>
 
-namespace bl::core {
+namespace readary::core {
 
 class DatabaseManager {
 public:
@@ -19,7 +19,7 @@ public:
   bool open();
   void close();
   bool runScript(const QString &scriptFileName);
-
+  bool clear(QString *error = nullptr);
   bool exec(const QString &sql, QString *error = nullptr);
   QList<QVariantMap> select(const SqlQueryBuilder &builder, QString *error = nullptr);
   int execute(const SqlQueryBuilder &builder, QString *error = nullptr);
@@ -35,6 +35,6 @@ private:
   QSqlDatabase _db;
 };
 
-} // namespace bl::core
+} // namespace readary::core
 
 #endif // BEELIBRARY_CORE_DATABASEMANAGER_HPP

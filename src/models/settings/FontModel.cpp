@@ -9,7 +9,7 @@
 using namespace Qt::StringLiterals;
 
 namespace {
-Q_LOGGING_CATEGORY(lcFont, "bl.models.font")
+Q_LOGGING_CATEGORY(lcFont, "readary.models.font")
 
 struct FontInfo {
   QString label;
@@ -17,19 +17,19 @@ struct FontInfo {
 };
 
 constexpr auto g_kSettingsKey = "ui/font";
-const std::map<bl::models::FontModel::Code, FontInfo> g_kFontInfoMap{
-    {bl::models::FontModel::Code::NotoColorEmoji,
+const std::map<readary::models::FontModel::Code, FontInfo> g_kFontInfoMap{
+    {readary::models::FontModel::Code::NotoColorEmoji,
      {u"Noto Color Emoji"_s, u":/fonts/NotoColorEmoji_WindowsCompatible.ttf"_s}},
 };
 
-QString labelFor(bl::models::FontModel::Code code) {
+QString labelFor(readary::models::FontModel::Code code) {
   static const QString defaultReturnValue = u"Noto Color Emoji"_s;
 
   const auto it = g_kFontInfoMap.find(code);
   return it != g_kFontInfoMap.end() ? it->second.label : defaultReturnValue;
 }
 
-QString resourcePathFor(bl::models::FontModel::Code code) {
+QString resourcePathFor(readary::models::FontModel::Code code) {
   static const QString defaultReturnValue;
 
   const auto it = g_kFontInfoMap.find(code);
@@ -38,7 +38,7 @@ QString resourcePathFor(bl::models::FontModel::Code code) {
 
 } // namespace
 
-namespace bl::models {
+namespace readary::models {
 
 FontModel::FontModel(QObject *parent) : QObject(parent), _current{defaultCode()} {
   const QSettings settings;
@@ -125,4 +125,4 @@ FontModel::Code FontModel::clamp(int raw) {
   return static_cast<Code>(convertedCode);
 }
 
-} // namespace bl::models
+} // namespace readary::models

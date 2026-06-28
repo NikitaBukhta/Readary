@@ -9,7 +9,7 @@
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
-namespace bl::models {
+namespace readary::models {
 
 class BookCharactersModel : public QAbstractListModel {
   Q_OBJECT
@@ -35,7 +35,7 @@ public:
   bool canLoadMore() const;
   bool canHide() const;
 
-  void setBookId(qint64 id);
+  void setBookIsbn(qint64 isbn);
 
   Q_INVOKABLE void loadMore();
   Q_INVOKABLE void hide();
@@ -48,11 +48,11 @@ private:
   static constexpr int kPageSize = 5;
 
   std::shared_ptr<services::BookTable> _bookTable;
-  qint64 _bookId = 0;
+  qint64 _bookIsbn = 0;
   QList<services::CharacterDTO> _allItems;
   int _visibleCount = 0;
 };
 
-} // namespace bl::models
+} // namespace readary::models
 
 #endif // BEELIBRARY_MODELS_BOOKCHARACTERSMODEL_HPP

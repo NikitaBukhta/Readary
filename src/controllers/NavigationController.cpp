@@ -6,10 +6,10 @@
 using namespace Qt::StringLiterals;
 
 namespace {
-Q_LOGGING_CATEGORY(lcNavigation, "bl.controllers.navigation")
+Q_LOGGING_CATEGORY(lcNavigation, "readary.controllers.navigation")
 }
 
-namespace bl::controllers {
+namespace readary::controllers {
 
 NavigationController *NavigationController::s_instance = nullptr;
 
@@ -83,4 +83,4 @@ void NavigationController::goBack() {
   emit currentPageChanged();
 }
 
-} // namespace bl::controllers
+} // namespace readary::controllers

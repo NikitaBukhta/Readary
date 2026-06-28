@@ -5,7 +5,7 @@
 #include <QStringList>
 #include <QVariantList>
 
-namespace bl::core {
+namespace readary::core {
 
 class SqlQueryBuilder {
 public:
@@ -32,6 +32,6 @@ private:
   QVariantList _values;
 };
 
-} // namespace bl::core
+} // namespace readary::core
 
 #endif // BEELIBRARY_CORE_SQLQUERYBUILDER_HPP

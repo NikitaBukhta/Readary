@@ -8,7 +8,7 @@
 
 class QTranslator;
 
-namespace bl::models {
+namespace readary::models {
 
 class LanguageModel : public QObject {
   Q_OBJECT
@@ -45,6 +45,6 @@ private:
   QTranslator *_translator;
 };
 
-} // namespace bl::models
+} // namespace readary::models
 
 #endif // BEELIBRARY_MODELS_LANGUAGEMODEL_HPP

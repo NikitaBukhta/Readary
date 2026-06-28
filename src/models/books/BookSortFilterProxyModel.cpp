@@ -1,7 +1,7 @@
 #include "BookSortFilterProxyModel.hpp"
 #include "BookListModel.hpp"
 
-namespace bl::models {
+namespace readary::models {
 
 BookSortFilterProxyModel::BookSortFilterProxyModel(QObject *parent) : QSortFilterProxyModel(parent) {
   setSortRole(BookListModel::NameRole);
@@ -128,4 +128,4 @@ bool BookSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelInd
   }
 }
 
-} // namespace bl::models
+} // namespace readary::models

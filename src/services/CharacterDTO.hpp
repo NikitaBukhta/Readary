@@ -5,7 +5,7 @@
 #include <QVariantMap>
 #include <QtTypes>
 
-namespace bl::services {
+namespace readary::services {
 
 struct CharacterDTO {
   qint64 id = 0;
@@ -15,6 +15,6 @@ struct CharacterDTO {
   static CharacterDTO fromMap(const QVariantMap &data);
 };
 
-} // namespace bl::services
+} // namespace readary::services
 
 #endif // BEELIBRARY_SERVICES_CHARACTERDTO_HPP

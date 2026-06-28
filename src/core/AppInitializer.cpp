@@ -14,10 +14,10 @@
 #include <QtQml>
 
 namespace {
-Q_LOGGING_CATEGORY(lcInit, "bl.core.init")
+Q_LOGGING_CATEGORY(lcInit, "readary.core.init")
 }
 
-namespace bl::core {
+namespace readary::core {
 
 AppInitializer::AppInitializer(QGuiApplication &app, QObject *parent)
     : QObject(parent), _app{app}, _engine{std::make_unique<QQmlApplicationEngine>()}, _bookListModel{nullptr},
@@ -46,6 +46,11 @@ void AppInitializer::init() {
 void AppInitializer::initDatabase() {
   _db = std::make_shared<DatabaseManager>(AppEnvironment::databasePath());
   _db->open();
+
+#ifndef QT_NO_DEBUG
+  _db->clear();
+#endif
+
   _db->runScript(":/db/init.sql");
 
 #ifndef QT_NO_DEBUG
@@ -93,4 +98,4 @@ void AppInitializer::registerQmlTypes() {
   qCInfo(lcInit) << "QML types registered";
 }
 
-} // namespace bl::core
+} // namespace readary::core

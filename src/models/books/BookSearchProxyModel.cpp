@@ -8,13 +8,13 @@ struct SearchRoles {
   qint32 weight;
 };
 
-constexpr std::array<SearchRoles, 3> g_searchRoles = {{{bl::models::BookListModel::NameRole, 100},
-                                                       {bl::models::BookListModel::AuthorRole, 60},
-                                                       {bl::models::BookListModel::DescriptionRole, 20}}};
+constexpr std::array<SearchRoles, 3> g_searchRoles = {{{readary::models::BookListModel::NameRole, 100},
+                                                       {readary::models::BookListModel::AuthorRole, 60},
+                                                       {readary::models::BookListModel::DescriptionRole, 20}}};
 
 } // namespace
 
-namespace bl::models {
+namespace readary::models {
 
 BookSearchProxyModel::BookSearchProxyModel(QObject *parent) : QSortFilterProxyModel(parent) {
   setDynamicSortFilter(true);
@@ -98,4 +98,4 @@ qint8 BookSearchProxyModel::cachedScore(int sourceRow) const {
   return _searchCache.at(sourceRow);
 }
 
-} // namespace bl::models
+} // namespace readary::models

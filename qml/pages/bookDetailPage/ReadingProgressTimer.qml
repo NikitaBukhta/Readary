@@ -18,7 +18,7 @@ PaddedCard {
     property bool _confirming: false
     property int _pageInput: 0
     property int _phaseBeforeConfirm: ReadingPhase.Stopped
-    property int _bookIdAtCreation: 0
+    property real _bookIsbnAtCreation: 0
 
     signal endSessionConfirmed(int pageNumber, int durationSeconds)
 
@@ -66,11 +66,11 @@ PaddedCard {
     }
 
     Component.onCompleted: {
-        _bookIdAtCreation = BookController.currentBookId;
-        if (_bookIdAtCreation <= 0)
+        _bookIsbnAtCreation = BookController.currentBookIsbn;
+        if (_bookIsbnAtCreation <= 0)
             return;
 
-        const cached = BookController.takeReadingSession(_bookIdAtCreation);
+        const cached = BookController.takeReadingSession(_bookIsbnAtCreation);
         if (cached.seconds !== undefined) {
             seconds = cached.seconds;
             phase = cached.phase;
@@ -78,12 +78,12 @@ PaddedCard {
     }
 
     Component.onDestruction: {
-        if (_bookIdAtCreation <= 0)
+        if (_bookIsbnAtCreation <= 0)
             return;
         if (phase !== ReadingPhase.Stopped) {
-            BookController.saveReadingSession(_bookIdAtCreation, seconds, phase);
+            BookController.saveReadingSession(_bookIsbnAtCreation, seconds, phase);
         } else {
-            BookController.clearReadingSession(_bookIdAtCreation);
+            BookController.clearReadingSession(_bookIsbnAtCreation);
         }
     }
 
@@ -100,8 +100,8 @@ PaddedCard {
         id: persistTick
         interval: 5000
         repeat: true
-        running: root.phase === ReadingPhase.Running && root._bookIdAtCreation > 0
-        onTriggered: BookController.saveReadingSession(root._bookIdAtCreation, root.seconds, root.phase)
+        running: root.phase === ReadingPhase.Running && root._bookIsbnAtCreation > 0
+        onTriggered: BookController.saveReadingSession(root._bookIsbnAtCreation, root.seconds, root.phase)
     }
 
     ColumnLayout {

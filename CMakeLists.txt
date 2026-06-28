@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 # Minimum Qt version — not pinned to an exact release, any newer Qt6 works.
 set(QT_MINIMUM_VERSION 6.8)
-find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick Sql Svg)
+find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick Sql Svg Network)
 
 qt_standard_project_setup(REQUIRES ${QT_MINIMUM_VERSION})
 
@@ -69,6 +69,7 @@ file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS
     src/core/SqlQueryBuilder.cpp src/core/SqlQueryBuilder.hpp
     src/services/*.cpp src/services/*.hpp
     src/qmltypes/*.cpp src/qmltypes/*.hpp
+    src/api/*.cpp src/api/*.hpp
     src/models/*.cpp src/models/*.hpp
     src/controllers/*.cpp src/controllers/*.hpp
 )
@@ -94,7 +95,7 @@ target_include_directories(ReadaryCore PUBLIC
     src/models/books
     src/models/settings
 )
-target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg)
+target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg Qt6::Network)
 
 if(ANDROID)
     target_link_libraries(ReadaryCore PUBLIC log)
@@ -153,6 +154,7 @@ set(_APP_SOURCES
     src/core/AppInitializer.cpp
     src/core/AppInitializer.hpp
 )
+
 if(WIN32 AND NOT ANDROID)
     list(APPEND _APP_SOURCES assets/app.rc)
 endif()

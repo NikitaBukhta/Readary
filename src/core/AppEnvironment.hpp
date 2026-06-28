@@ -3,7 +3,7 @@
 
 #include <QString>
 
-namespace bl::core {
+namespace readary::core {
 
 class AppEnvironment {
 public:
@@ -21,6 +21,6 @@ private:
   static void cleanupOldLogs(int keepDays = 7);
 };
 
-} // namespace bl::core
+} // namespace readary::core
 
 #endif // BEELIBRARY_CORE_APPENVIRONMENT_HPP

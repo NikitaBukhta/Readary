@@ -15,27 +15,27 @@
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
-namespace bl::models {
+namespace readary::models {
 class BookListModel;
 namespace filters {
 class BookFilterStrategy;
 }
-} // namespace bl::models
+} // namespace readary::models
 
-namespace bl::controllers {
+namespace readary::controllers {
 
 class BookController : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
 
-  Q_PROPERTY(qint64 currentBookId READ currentBookId WRITE setCurrentBookId NOTIFY currentBookIdChanged)
-  Q_PROPERTY(bl::qmltypes::BookDTOObject currentBookData READ currentBookData NOTIFY currentBookIdChanged)
+  Q_PROPERTY(qint64 currentBookIsbn READ currentBookIsbn WRITE setCurrentBookIsbn NOTIFY currentBookIsbnChanged)
+  Q_PROPERTY(readary::qmltypes::BookDTOObject currentBookData READ currentBookData NOTIFY currentBookIsbnChanged)
   Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
   Q_PROPERTY(ListKind activeKind READ activeKind WRITE setActiveKind NOTIFY activeKindChanged)
-  Q_PROPERTY(bl::models::BookSearchProxyModel *searchModel READ searchModel CONSTANT)
-  Q_PROPERTY(bl::models::BookCharactersModel *charactersModel READ charactersModel CONSTANT)
+  Q_PROPERTY(readary::models::BookSearchProxyModel *searchModel READ searchModel CONSTANT)
+  Q_PROPERTY(readary::models::BookCharactersModel *charactersModel READ charactersModel CONSTANT)
 
 public:
   enum class ListKind {
@@ -46,64 +46,64 @@ public:
   };
   Q_ENUM(ListKind)
 
-  explicit BookController(std::shared_ptr<services::BookTable> bookTable, bl::models::BookListModel *listModel,
+  explicit BookController(std::shared_ptr<services::BookTable> bookTable, readary::models::BookListModel *listModel,
                           QObject *parent);
   ~BookController() override;
 
-  qint64 currentBookId() const;
-  void setCurrentBookId(qint64 id);
-  bl::qmltypes::BookDTOObject currentBookData() const;
+  qint64 currentBookIsbn() const;
+  void setCurrentBookIsbn(qint64 isbn);
+  readary::qmltypes::BookDTOObject currentBookData() const;
   QString errorMessage() const;
 
   ListKind activeKind() const;
   void setActiveKind(ListKind kind);
-  Q_INVOKABLE bl::models::BookSortFilterProxyModel *getSortFilterProxyForKind(ListKind kind) const;
+  Q_INVOKABLE readary::models::BookSortFilterProxyModel *getSortFilterProxyForKind(ListKind kind) const;
 
-  Q_INVOKABLE void openBook(qint64 id);
+  Q_INVOKABLE void openBook(qint64 isbn);
 
-  static Q_INVOKABLE void saveReadingSession(qint64 bookId, int seconds, int phase);
-  static Q_INVOKABLE QVariantMap takeReadingSession(qint64 bookId);
-  static Q_INVOKABLE void clearReadingSession(qint64 bookId);
+  static Q_INVOKABLE void saveReadingSession(qint64 bookIsbn, int seconds, int phase);
+  static Q_INVOKABLE QVariantMap takeReadingSession(qint64 bookIsbn);
+  static Q_INVOKABLE void clearReadingSession(qint64 bookIsbn);
   Q_INVOKABLE void setBookStatus(int status);
   Q_INVOKABLE void updateReadingProgress(int pageNumber, int durationSeconds);
 
-  bl::models::BookSearchProxyModel *searchModel() const;
-  bl::models::BookCharactersModel *charactersModel() const;
+  readary::models::BookSearchProxyModel *searchModel() const;
+  readary::models::BookCharactersModel *charactersModel() const;
 
   static BookController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
   static void setInstance(BookController *instance);
 
 signals:
-  void currentBookIdChanged();
+  void currentBookIsbnChanged();
   void errorMessageChanged();
   void bookSaved();
   void activeKindChanged();
-  void bookOpenRequested(qint64 id);
+  void bookOpenRequested(qint64 isbn);
 
 private:
   void setErrorMessage(const QString &message);
 
-  bl::models::BookSortFilterProxyModel *buildProxy(bl::models::BookListModel *source,
-                                                   const bl::models::filters::BookFilterStrategy &strategy);
+  readary::models::BookSortFilterProxyModel *buildProxy(readary::models::BookListModel *source,
+                                                   const readary::models::filters::BookFilterStrategy &strategy);
   void applyActiveSourceToSearchProxy();
 
   static BookController *s_instance;
 
   std::shared_ptr<services::BookTable> _bookTable;
-  bl::models::BookListModel *_listModel;
-  bl::models::BookSearchProxyModel *_searchProxy;
-  bl::models::BookCharactersModel *_charactersModel;
+  readary::models::BookListModel *_listModel;
+  readary::models::BookSearchProxyModel *_searchProxy;
+  readary::models::BookCharactersModel *_charactersModel;
 
-  QHash<ListKind, bl::models::BookSortFilterProxyModel *> _proxies;
+  QHash<ListKind, readary::models::BookSortFilterProxyModel *> _proxies;
   ListKind _activeKind = ListKind::WantToRead;
 
   QString _errorMessage;
-  qint64 _currentBookId = 0;
+  qint64 _currentBookIsbn = 0;
 
-  mutable bl::qmltypes::BookDTOObject _cachedBookData;
+  mutable readary::qmltypes::BookDTOObject _cachedBookData;
   mutable bool _cacheValid = false;
 };
 
-} // namespace bl::controllers
+} // namespace readary::controllers
 
 #endif // BEELIBRARY_CONTROLLERS_BOOKCONTROLLER_HPP

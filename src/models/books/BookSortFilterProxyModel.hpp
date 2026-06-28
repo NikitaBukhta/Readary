@@ -6,7 +6,7 @@
 #include <QVariant>
 #include <QtQml/qqmlregistration.h>
 
-namespace bl::models {
+namespace readary::models {
 
 class BookSortFilterProxyModel : public QSortFilterProxyModel {
   Q_OBJECT
@@ -59,6 +59,6 @@ private:
   QMultiHash<int, Filter> _filters;
 };
 
-} // namespace bl::models
+} // namespace readary::models
 
 #endif // BEELIBRARY_MODELS_BOOKSORTFILTERPROXYMODEL_HPP

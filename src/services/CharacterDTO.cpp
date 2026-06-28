@@ -1,6 +1,6 @@
 #include "CharacterDTO.hpp"
 
-namespace bl::services {
+namespace readary::services {
 
 CharacterDTO CharacterDTO::fromMap(const QVariantMap &data) {
   CharacterDTO dto;
@@ -10,4 +10,4 @@ CharacterDTO CharacterDTO::fromMap(const QVariantMap &data) {
   return dto;
 }
 
-} // namespace bl::services
+} // namespace readary::services
