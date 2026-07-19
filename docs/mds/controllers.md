@@ -33,6 +33,13 @@ responsibilities deliberately, since both are book-scoped and small:
 | `getSortFilterProxyForKind(kind)` | `Q_INVOKABLE` | proxy for a specific kind |
 | `openBook(id)` | `Q_INVOKABLE` | sets `currentBookId` and emits `bookOpenRequested(id)` for the router to pick up |
 | `updateReadingProgress(pageNumber, durationSeconds)` | `Q_INVOKABLE` | persists current reading position in `books.pagesRead` and logs a row in `reading_sessions`; emits `bookSaved` so the list refreshes |
+| `setBookStatus(status)` | `Q_INVOKABLE` | writes `books.status` for the current book (values from `BookStatus`); emits `bookSaved` |
+| `toggleWantToRead()` | `Q_INVOKABLE` | flips the current book's status between `WantToRead` and `None`. Not meant for an in-progress book — QML routes that case through the move-warning dialog to `moveInProgressToWantToRead()` |
+| `toggleWishList()` | `Q_INVOKABLE` | flips `books.inWishList` (the "want to buy" flag); independent of `status` |
+| `moveInProgressToWantToRead()` | `Q_INVOKABLE` | for an in-progress book: snapshots `pagesRead` into `ReadingProgressCache` (only when > 0), clears the reading-timer cache, then resets `pagesRead` to 0 and sets status `WantToRead`. Confirmed via a warning dialog because it discards visible progress |
+| `hasCachedProgress()` | `Q_INVOKABLE` (const) | true if the current book has a cached progress snapshot (i.e. it was moved out of in-progress). Drives the "restore progress?" prompt shown when reading is (re)started |
+| `restoreCachedProgress()` | `Q_INVOKABLE` | takes-and-clears the cached snapshot, writing it back to `books.pagesRead` and setting status `InProgress`; emits `bookSaved` |
+| `discardCachedProgress()` | `Q_INVOKABLE` (const) | drops the cached snapshot without restoring (the "start over" choice) |
 | `saveReadingSession(bookId, seconds, phase)` | `Q_INVOKABLE static` | per-book timer-state writer; thin wrapper over `services::ReadingSessionCache::save`. Static because there's no instance state — the bookId is explicit |
 | `takeReadingSession(bookId)` | `Q_INVOKABLE static` | reads-and-clears the timer-state group via `ReadingSessionCache::takeState`. Returns `{}` if nothing saved |
 | `clearReadingSession(bookId)` | `Q_INVOKABLE static` | drops the timer-state group |

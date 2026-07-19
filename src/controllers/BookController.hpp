@@ -64,6 +64,12 @@ public:
   static Q_INVOKABLE QVariantMap takeReadingSession(qint64 bookIsbn);
   static Q_INVOKABLE void clearReadingSession(qint64 bookIsbn);
   Q_INVOKABLE void setBookStatus(int status);
+  Q_INVOKABLE void toggleWantToRead();
+  Q_INVOKABLE void toggleWishList();
+  Q_INVOKABLE void moveInProgressToWantToRead();
+  Q_INVOKABLE bool hasCachedProgress() const;
+  Q_INVOKABLE void restoreCachedProgress();
+  Q_INVOKABLE void discardCachedProgress() const;
   Q_INVOKABLE void updateReadingProgress(int pageNumber, int durationSeconds);
 
   readary::models::BookSearchProxyModel *searchModel() const;

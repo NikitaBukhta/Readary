@@ -12,6 +12,16 @@ PaddedCard {
     readonly property real progress: pagesTotal > 0 ? Math.min(1, pagesRead / pagesTotal) : 0
     readonly property bool _hasPages: root.pagesTotal > 0
 
+    signal startReadingRequested
+
+    function beginReading() {
+        progressTimer.phase = ReadingPhase.Running;
+    }
+
+    function stopReading() {
+        progressTimer.phase = ReadingPhase.Stopped;
+    }
+
     ColumnLayout {
         id: layout
         anchors.fill: parent
@@ -70,7 +80,7 @@ PaddedCard {
             Layout.topMargin: root._hasPages ? Geometry.spacing.sm : 0
             label: root.actionLabel
             iconGlyph: "▶"
-            onClicked: progressTimer.phase = ReadingPhase.Running
+            onClicked: root.startReadingRequested()
         }
 
         ReadingProgressTimer {

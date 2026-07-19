@@ -43,10 +43,25 @@ Page {
                 description: root._book.description
                 coverSource: root._book.coverUrl
                 status: root._book.status
+                inWishList: root._book.inWishList
                 onBackRequested: NavigationController.goBack()
                 onPdfRequested: console.log(root._logTag, "Open PDF")
                 onStatsRequested: console.log(root._logTag, "Open statistics")
-                onFavoriteRequested: console.log(root._logTag, "Toggle favorite")
+                onWantToReadRequested: {
+                    if (root._book.status === BookStatus.InProgress)
+                        moveWarningDialog.open();
+                    else
+                        BookController.toggleWantToRead();
+                }
+                onWantToBuyRequested: BookController.toggleWishList()
+                onStartReadingRequested: {
+                    if (root._book.status === BookStatus.WantToRead && BookController.hasCachedProgress()) {
+                        restoreProgressDialog.open();
+                    } else {
+                        BookController.discardCachedProgress();
+                        summary.beginReading();
+                    }
+                }
             }
 
             ListView {
@@ -92,6 +107,34 @@ Page {
                 Layout.bottomMargin: Geometry.spacing.xxl
                 tags: root._book.genres
             }
+        }
+    }
+
+    ConfirmDialog {
+        id: moveWarningDialog
+        title: qsTr("Move to Want to Read?")
+        message: qsTr("You are currently reading this book. Moving it to Want to Read resets your reading progress. Your current progress is saved and can be restored the next time you start reading.")
+        confirmLabel: qsTr("Move anyway")
+        cancelLabel: qsTr("Keep reading")
+        onConfirmed: {
+            summary.stopReading();
+            BookController.moveInProgressToWantToRead();
+        }
+    }
+
+    ConfirmDialog {
+        id: restoreProgressDialog
+        title: qsTr("Restore previous progress?")
+        message: qsTr("It looks like you were reading this book before. Restore your saved progress, or start over from the beginning?")
+        confirmLabel: qsTr("Restore")
+        cancelLabel: qsTr("Start over")
+        onConfirmed: {
+            BookController.restoreCachedProgress();
+            summary.beginReading();
+        }
+        onCancelled: {
+            BookController.discardCachedProgress();
+            summary.beginReading();
         }
     }
 }

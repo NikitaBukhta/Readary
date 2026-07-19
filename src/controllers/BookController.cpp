@@ -4,6 +4,7 @@
 #include "models/books/BookSortFilterProxyModel.hpp"
 #include "models/books/filters/BookFilterStrategy.hpp"
 #include "services/BookStatus.hpp"
+#include "services/ReadingProgressCache.hpp"
 #include "services/ReadingSessionCache.hpp"
 
 #include <QLoggingCategory>
@@ -157,6 +158,73 @@ void BookController::setBookStatus(int status) {
   qCInfo(lcBook) << "Set status — book isbn:" << _currentBookIsbn << "status:" << status;
   emit bookSaved();
 }
+
+void BookController::toggleWantToRead() {
+  if (_currentBookIsbn <= 0)
+    return;
+
+  const int current = currentBookData().status;
+  setBookStatus(current == services::BookStatus::WantToRead ? services::BookStatus::None
+                                                            : services::BookStatus::WantToRead);
+}
+
+void BookController::toggleWishList() {
+  if (_currentBookIsbn <= 0)
+    return;
+
+  qmltypes::BookDTOObject book = currentBookData();
+  book.inWishList = !book.inWishList;
+  if (!_bookTable->updateBook(book)) {
+    setErrorMessage(tr("Failed to update wishlist."));
+    return;
+  }
+
+  qCInfo(lcBook) << "Toggled wishlist — book isbn:" << _currentBookIsbn << "inWishList:" << book.inWishList;
+  emit bookSaved();
+}
+
+void BookController::moveInProgressToWantToRead() {
+  if (_currentBookIsbn <= 0)
+    return;
+
+  qmltypes::BookDTOObject book = currentBookData();
+  if (book.status != services::BookStatus::InProgress)
+    return;
+
+  if (book.pagesRead > 0)
+    services::ReadingProgressCache::save(_currentBookIsbn, book.pagesRead);
+  services::ReadingSessionCache::clear(_currentBookIsbn);
+
+  book.status = services::BookStatus::WantToRead;
+  book.pagesRead = 0;
+  if (!_bookTable->updateBook(book)) {
+    setErrorMessage(tr("Failed to update book status."));
+    return;
+  }
+
+  qCInfo(lcBook) << "Moved in-progress book to want-to-read — book isbn:" << _currentBookIsbn;
+  emit bookSaved();
+}
+
+bool BookController::hasCachedProgress() const { return services::ReadingProgressCache::has(_currentBookIsbn); }
+
+void BookController::restoreCachedProgress() {
+  if (_currentBookIsbn <= 0 || !services::ReadingProgressCache::has(_currentBookIsbn))
+    return;
+
+  qmltypes::BookDTOObject book = currentBookData();
+  book.pagesRead = services::ReadingProgressCache::takePagesRead(_currentBookIsbn);
+  book.status = services::BookStatus::InProgress;
+  if (!_bookTable->updateBook(book)) {
+    setErrorMessage(tr("Failed to restore reading progress."));
+    return;
+  }
+
+  qCInfo(lcBook) << "Restored cached progress — book isbn:" << _currentBookIsbn << "pagesRead:" << book.pagesRead;
+  emit bookSaved();
+}
+
+void BookController::discardCachedProgress() const { services::ReadingProgressCache::clear(_currentBookIsbn); }
 
 void BookController::updateReadingProgress(int pageNumber, int durationSeconds) {
   if (_currentBookIsbn <= 0)
