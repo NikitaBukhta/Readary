@@ -132,6 +132,11 @@ set(_LIBRARY_QM_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/translations/library_ru.qm
     ${CMAKE_CURRENT_SOURCE_DIR}/translations/library_uk.qm
 )
+# Re-run configure whenever the .qm files are (re)generated. Without this, an IDE
+# (e.g. CLion) that configured before `bootstrap.py translate` keeps a stale cache
+# with BL_HAS_TRANSLATIONS undefined and silently ships no translations until a
+# manual cache reload. Listing them as configure deps makes the next build pick them up.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_LIBRARY_QM_FILES})
 set(_LIBRARY_QM_ALL_PRESENT TRUE)
 foreach(_qm IN LISTS _LIBRARY_QM_FILES)
     if(NOT EXISTS "${_qm}")
