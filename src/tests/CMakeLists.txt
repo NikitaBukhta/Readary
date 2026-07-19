@@ -43,3 +43,14 @@ target_link_libraries(EmojiResolverTest PRIVATE
 )
 
 add_test(NAME EmojiResolver COMMAND EmojiResolverTest)
+
+qt_add_executable(IsbnValidatorTest
+    utils/IsbnValidatorTest.cpp
+)
+
+target_link_libraries(IsbnValidatorTest PRIVATE
+    ReadaryCore
+    Qt6::Test
+)
+
+add_test(NAME IsbnValidator COMMAND IsbnValidatorTest)

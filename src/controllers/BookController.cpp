@@ -4,24 +4,26 @@
 #include "models/books/BookSortFilterProxyModel.hpp"
 #include "models/books/filters/BookFilterStrategy.hpp"
 #include "services/BookStatus.hpp"
+#include "services/ReadingProgressCache.hpp"
 #include "services/ReadingSessionCache.hpp"
 
 #include <QLoggingCategory>
 
 namespace {
-Q_LOGGING_CATEGORY(lcBook, "bl.controllers.book")
+Q_LOGGING_CATEGORY(lcBook, "readary.controllers.book")
 }
 
-namespace bl::controllers {
+namespace readary::controllers {
 
 BookController *BookController::s_instance = nullptr;
 
-BookController::BookController(std::shared_ptr<services::BookTable> bookTable, bl::models::BookListModel *listModel,
-                               QObject *parent)
-    : QObject(parent), _bookTable{std::move(bookTable)}, _listModel{listModel},
-      _searchProxy{new bl::models::BookSearchProxyModel(this)},
-      _charactersModel{new bl::models::BookCharactersModel(_bookTable, this)} {
-  using namespace bl::models::filters;
+BookController::BookController(std::shared_ptr<services::BookTable> bookTable,
+                               readary::models::BookListModel *listModel, QObject *parent)
+    : QObject{parent}, _bookTable{std::move(bookTable)}, _listModel{listModel},
+      _searchProxy{new readary::models::BookSearchProxyModel{this}},
+      _charactersModel{new readary::models::BookCharactersModel{_bookTable, this}} {
+  using namespace readary::models::filters;
+  _listModel->refresh();
 
   _proxies.insert(ListKind::WantToRead, buildProxy(_listModel, WantToReadFilterStrategy{}));
   _proxies.insert(ListKind::WantToBuy, buildProxy(_listModel, WantToBuyFilterStrategy{}));
@@ -30,14 +32,14 @@ BookController::BookController(std::shared_ptr<services::BookTable> bookTable, b
 
   applyActiveSourceToSearchProxy();
 
-  QObject::connect(this, &BookController::currentBookIdChanged, this,
-                   [this] { _charactersModel->setBookId(_currentBookId); });
+  QObject::connect(this, &BookController::currentBookIsbnChanged, this,
+                   [this] { _charactersModel->setBookIsbn(_currentBookIsbn); });
 
   QObject::connect(_listModel, &QAbstractItemModel::modelReset, this, [this] {
     if (!_cacheValid)
       return;
     _cacheValid = false;
-    emit currentBookIdChanged();
+    emit currentBookIsbnChanged();
   });
 }
 
@@ -53,29 +55,29 @@ BookController *BookController::create(QQmlEngine *engine, QJSEngine *scriptEngi
   return s_instance;
 }
 
-qint64 BookController::currentBookId() const { return _currentBookId; }
+qint64 BookController::currentBookIsbn() const { return _currentBookIsbn; }
 
-void BookController::setCurrentBookId(qint64 id) {
-  if (_currentBookId == id)
+void BookController::setCurrentBookIsbn(qint64 isbn) {
+  if (_currentBookIsbn == isbn)
     return;
-  _currentBookId = id;
+  _currentBookIsbn = isbn;
   _cacheValid = false;
-  emit currentBookIdChanged();
+  emit currentBookIsbnChanged();
 }
 
-bl::qmltypes::BookDTOObject BookController::currentBookData() const {
-  if (_currentBookId <= 0)
+readary::qmltypes::BookDTOObject BookController::currentBookData() const {
+  if (_currentBookIsbn <= 0)
     return {};
 
   if (_cacheValid)
     return _cachedBookData;
 
-  auto base = _listModel->getBook(_currentBookId);
-  if (base.id == 0)
+  auto base = _listModel->getBook(_currentBookIsbn);
+  if (base.isbn == 0)
     return {};
 
-  bl::qmltypes::BookDTOObject result(std::move(base));
-  result.genres = _bookTable->getGenres(_currentBookId);
+  readary::qmltypes::BookDTOObject result(std::move(base));
+  result.genres = _bookTable->getGenres(_currentBookIsbn);
   _cachedBookData = std::move(result);
   _cacheValid = true;
   return _cachedBookData;
@@ -93,37 +95,54 @@ void BookController::setActiveKind(ListKind kind) {
   emit activeKindChanged();
 }
 
-bl::models::BookSortFilterProxyModel *BookController::getSortFilterProxyForKind(ListKind kind) const {
+readary::models::BookSortFilterProxyModel *BookController::getSortFilterProxyForKind(ListKind kind) const {
   return _proxies.value(kind, nullptr);
 }
 
-void BookController::openBook(qint64 id) {
-  if (id <= 0)
+void BookController::openBook(qint64 isbn) {
+  if (isbn <= 0)
     return;
-  setCurrentBookId(id);
-  emit bookOpenRequested(id);
+  setCurrentBookIsbn(isbn);
+  emit bookOpenRequested(isbn);
 }
 
-void BookController::saveReadingSession(qint64 bookId, int seconds, int phase) {
-  if (bookId <= 0)
+void BookController::importAndOpenBook(const services::BookDTO &book) {
+  if (book.isbn <= 0) {
+    qCWarning(lcBook) << "Cannot import book without ISBN — name:" << book.name;
     return;
-  services::ReadingSessionCache::save(bookId, seconds, phase);
+  }
+
+  if (!_listModel->contains(book.isbn)) {
+    if (_bookTable->addBook(book) == 0) {
+      setErrorMessage(tr("Failed to import book."));
+      return;
+    }
+    emit bookSaved();
+  }
+
+  openBook(book.isbn);
 }
 
-QVariantMap BookController::takeReadingSession(qint64 bookId) {
-  if (bookId <= 0)
+void BookController::saveReadingSession(qint64 bookIsbn, int seconds, int phase) {
+  if (bookIsbn <= 0)
+    return;
+  services::ReadingSessionCache::save(bookIsbn, seconds, phase);
+}
+
+QVariantMap BookController::takeReadingSession(qint64 bookIsbn) {
+  if (bookIsbn <= 0)
     return {};
-  return services::ReadingSessionCache::takeState(bookId);
+  return services::ReadingSessionCache::takeState(bookIsbn);
 }
 
-void BookController::clearReadingSession(qint64 bookId) {
-  if (bookId <= 0)
+void BookController::clearReadingSession(qint64 bookIsbn) {
+  if (bookIsbn <= 0)
     return;
-  services::ReadingSessionCache::clear(bookId);
+  services::ReadingSessionCache::clear(bookIsbn);
 }
 
 void BookController::setBookStatus(int status) {
-  if (_currentBookId <= 0)
+  if (_currentBookIsbn <= 0)
     return;
 
   qmltypes::BookDTOObject book = currentBookData();
@@ -136,12 +155,79 @@ void BookController::setBookStatus(int status) {
     return;
   }
 
-  qCInfo(lcBook) << "Set status — book id:" << _currentBookId << "status:" << status;
+  qCInfo(lcBook) << "Set status — book isbn:" << _currentBookIsbn << "status:" << status;
   emit bookSaved();
 }
 
+void BookController::toggleWantToRead() {
+  if (_currentBookIsbn <= 0)
+    return;
+
+  const int current = currentBookData().status;
+  setBookStatus(current == services::BookStatus::WantToRead ? services::BookStatus::None
+                                                            : services::BookStatus::WantToRead);
+}
+
+void BookController::toggleWishList() {
+  if (_currentBookIsbn <= 0)
+    return;
+
+  qmltypes::BookDTOObject book = currentBookData();
+  book.inWishList = !book.inWishList;
+  if (!_bookTable->updateBook(book)) {
+    setErrorMessage(tr("Failed to update wishlist."));
+    return;
+  }
+
+  qCInfo(lcBook) << "Toggled wishlist — book isbn:" << _currentBookIsbn << "inWishList:" << book.inWishList;
+  emit bookSaved();
+}
+
+void BookController::moveInProgressToWantToRead() {
+  if (_currentBookIsbn <= 0)
+    return;
+
+  qmltypes::BookDTOObject book = currentBookData();
+  if (book.status != services::BookStatus::InProgress)
+    return;
+
+  if (book.pagesRead > 0)
+    services::ReadingProgressCache::save(_currentBookIsbn, book.pagesRead);
+  services::ReadingSessionCache::clear(_currentBookIsbn);
+
+  book.status = services::BookStatus::WantToRead;
+  book.pagesRead = 0;
+  if (!_bookTable->updateBook(book)) {
+    setErrorMessage(tr("Failed to update book status."));
+    return;
+  }
+
+  qCInfo(lcBook) << "Moved in-progress book to want-to-read — book isbn:" << _currentBookIsbn;
+  emit bookSaved();
+}
+
+bool BookController::hasCachedProgress() const { return services::ReadingProgressCache::has(_currentBookIsbn); }
+
+void BookController::restoreCachedProgress() {
+  if (_currentBookIsbn <= 0 || !services::ReadingProgressCache::has(_currentBookIsbn))
+    return;
+
+  qmltypes::BookDTOObject book = currentBookData();
+  book.pagesRead = services::ReadingProgressCache::takePagesRead(_currentBookIsbn);
+  book.status = services::BookStatus::InProgress;
+  if (!_bookTable->updateBook(book)) {
+    setErrorMessage(tr("Failed to restore reading progress."));
+    return;
+  }
+
+  qCInfo(lcBook) << "Restored cached progress — book isbn:" << _currentBookIsbn << "pagesRead:" << book.pagesRead;
+  emit bookSaved();
+}
+
+void BookController::discardCachedProgress() const { services::ReadingProgressCache::clear(_currentBookIsbn); }
+
 void BookController::updateReadingProgress(int pageNumber, int durationSeconds) {
-  if (_currentBookId <= 0)
+  if (_currentBookIsbn <= 0)
     return;
 
   qmltypes::BookDTOObject book = currentBookData();
@@ -160,20 +246,21 @@ void BookController::updateReadingProgress(int pageNumber, int durationSeconds) 
   }
 
   if (durationSeconds > 0 &&
-      _bookTable->insertReadingSession(_currentBookId, pagesFrom, pageNumber, durationSeconds) <= 0) {
-    qCWarning(lcBook) << "Reading progress saved, but session log insert failed for book id:" << _currentBookId;
+      _bookTable->insertReadingSession(_currentBookIsbn, pagesFrom, pageNumber, durationSeconds) <= 0) {
+    qCWarning(lcBook) << "Reading progress saved, but session log insert failed for book isbn:" << _currentBookIsbn;
   }
 
   emit bookSaved();
 }
 
-bl::models::BookSearchProxyModel *BookController::searchModel() const { return _searchProxy; }
+readary::models::BookSearchProxyModel *BookController::searchModel() const { return _searchProxy; }
 
-bl::models::BookCharactersModel *BookController::charactersModel() const { return _charactersModel; }
+readary::models::BookCharactersModel *BookController::charactersModel() const { return _charactersModel; }
 
-bl::models::BookSortFilterProxyModel *
-BookController::buildProxy(bl::models::BookListModel *source, const bl::models::filters::BookFilterStrategy &strategy) {
-  auto *proxy = new bl::models::BookSortFilterProxyModel(this);
+readary::models::BookSortFilterProxyModel *
+BookController::buildProxy(readary::models::BookListModel *source,
+                           const readary::models::filters::BookFilterStrategy &strategy) {
+  auto *proxy = new readary::models::BookSortFilterProxyModel{this};
   proxy->setSourceModel(source);
   strategy.apply(proxy);
   return proxy;
@@ -192,4 +279,4 @@ void BookController::setErrorMessage(const QString &message) {
   emit errorMessageChanged();
 }
 
-} // namespace bl::controllers
+} // namespace readary::controllers

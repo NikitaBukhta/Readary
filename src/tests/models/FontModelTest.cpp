@@ -8,7 +8,7 @@
 #include <QTest>
 #include <QVariant>
 
-using bl::models::FontModel;
+using readary::models::FontModel;
 using Code = FontModel::Code;
 
 namespace {

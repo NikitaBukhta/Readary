@@ -1,6 +1,6 @@
 #include "SqlQueryBuilder.hpp"
 
-namespace bl::core {
+namespace readary::core {
 
 SqlQueryBuilder &SqlQueryBuilder::select(const QStringList &columns) {
   if (columns.isEmpty() || (columns.size() == 1 && columns.first().trimmed() == "*")) {
@@ -81,4 +81,4 @@ const QVariantList &SqlQueryBuilder::getValues() const { return _values; }
 
 QString SqlQueryBuilder::build() const { return _query; }
 
-} // namespace bl::core
+} // namespace readary::core

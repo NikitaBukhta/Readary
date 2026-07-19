@@ -9,7 +9,7 @@
 class QJSEngine;
 class QQmlEngine;
 
-namespace bl::services {
+namespace readary::services {
 
 // Maps emoji glyph strings (one Unicode codepoint or a ZWJ-joined sequence) to
 // a qrc:/emoji/<codepoints>.svg URL pointing at the vendored Twemoji SVG.
@@ -40,6 +40,6 @@ private:
   QSet<QString> _availableStems;
 };
 
-} // namespace bl::services
+} // namespace readary::services
 
 #endif // BEELIBRARY_SERVICES_EMOJIRESOLVER_HPP

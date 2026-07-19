@@ -7,7 +7,7 @@
 using namespace Qt::StringLiterals;
 
 namespace {
-Q_LOGGING_CATEGORY(lcEmoji, "bl.services.emoji")
+Q_LOGGING_CATEGORY(lcEmoji, "readary.services.emoji")
 
 constexpr uint g_kVariationSelector16 = 0xFE0F;
 constexpr auto g_kResourceRoot = ":/emoji";
@@ -15,12 +15,12 @@ constexpr auto g_kUrlPrefix = "qrc:/emoji/";
 
 } // namespace
 
-namespace bl::services {
+namespace readary::services {
 
-EmojiResolver::EmojiResolver(QObject *parent) : QObject(parent) { loadAvailableStems(); }
+EmojiResolver::EmojiResolver(QObject *parent) : QObject{parent} { loadAvailableStems(); }
 
 EmojiResolver *EmojiResolver::create(QQmlEngine * /*engine*/, QJSEngine * /*scriptEngine*/) {
-  return new EmojiResolver();
+  return new EmojiResolver{};
 }
 
 QString EmojiResolver::iconUrl(const QString &emoji) const {
@@ -77,4 +77,4 @@ void EmojiResolver::loadAvailableStems() {
   qCInfo(lcEmoji) << "EmojiResolver indexed" << _availableStems.size() << "Twemoji stems";
 }
 
-} // namespace bl::services
+} // namespace readary::services

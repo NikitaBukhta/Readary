@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
-namespace bl::services {
+namespace readary::services {
 
 // Reading-timer phase shared between C++ (ReadingSessionCache) and QML
 // (ReadingProgressTimer). A single source of truth keeps the integer values
@@ -23,6 +23,6 @@ public:
   Q_ENUM(Value)
 };
 
-} // namespace bl::services
+} // namespace readary::services
 
 #endif // BEELIBRARY_SERVICES_READINGPHASE_HPP

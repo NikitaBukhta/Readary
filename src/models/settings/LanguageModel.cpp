@@ -11,7 +11,7 @@
 using namespace Qt::StringLiterals;
 
 namespace {
-Q_LOGGING_CATEGORY(lcLang, "bl.models.language")
+Q_LOGGING_CATEGORY(lcLang, "readary.models.language")
 
 struct LanguageInfo {
   QString label;
@@ -19,20 +19,20 @@ struct LanguageInfo {
 };
 
 constexpr auto g_kSettingsKey = "ui/language";
-const std::map<bl::models::LanguageModel::Code, LanguageInfo> g_kLanguageInfoMap{
-    {bl::models::LanguageModel::Code::English, {u"English"_s, u"en"_s}},
-    {bl::models::LanguageModel::Code::Russian, {u"Русский"_s, u"ru"_s}},
-    {bl::models::LanguageModel::Code::Ukrainian, {u"Українська"_s, u"uk"_s}},
+const std::map<readary::models::LanguageModel::Code, LanguageInfo> g_kLanguageInfoMap{
+    {readary::models::LanguageModel::Code::English, {.label = u"English"_s, .localeCode = u"en"_s}},
+    {readary::models::LanguageModel::Code::Russian, {.label = u"Русский"_s, .localeCode = u"ru"_s}},
+    {readary::models::LanguageModel::Code::Ukrainian, {.label = u"Українська"_s, .localeCode = u"uk"_s}},
 };
 
-QString localeCodeFor(bl::models::LanguageModel::Code code) {
+QString localeCodeFor(readary::models::LanguageModel::Code code) {
   static const QString defaultReturnValue = u"en"_s;
 
   const auto it = g_kLanguageInfoMap.find(code);
   return it != g_kLanguageInfoMap.end() ? it->second.localeCode : defaultReturnValue;
 }
 
-QString labelFor(bl::models::LanguageModel::Code code) {
+QString labelFor(readary::models::LanguageModel::Code code) {
   static const QString defaultReturnValue = u"English"_s;
 
   const auto it = g_kLanguageInfoMap.find(code);
@@ -41,10 +41,10 @@ QString labelFor(bl::models::LanguageModel::Code code) {
 
 } // namespace
 
-namespace bl::models {
+namespace readary::models {
 
 LanguageModel::LanguageModel(QObject *parent)
-    : QObject(parent), _current{defaultCode()}, _translator{new QTranslator(this)} {
+    : QObject{parent}, _current{defaultCode()}, _translator{new QTranslator{this}} {
   const QSettings settings;
   const auto stored = settings.value(g_kSettingsKey);
   if (stored.isValid()) {
@@ -114,4 +114,4 @@ LanguageModel::Code LanguageModel::clamp(int raw) {
   return static_cast<Code>(convertedCode);
 }
 
-} // namespace bl::models
+} // namespace readary::models

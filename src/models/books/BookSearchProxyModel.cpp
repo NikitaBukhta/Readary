@@ -8,15 +8,16 @@ struct SearchRoles {
   qint32 weight;
 };
 
-constexpr std::array<SearchRoles, 3> g_searchRoles = {{{bl::models::BookListModel::NameRole, 100},
-                                                       {bl::models::BookListModel::AuthorRole, 60},
-                                                       {bl::models::BookListModel::DescriptionRole, 20}}};
+constexpr std::array<SearchRoles, 3> g_searchRoles = {
+    {{.role = readary::models::BookListModel::NameRole, .weight = 100},
+     {.role = readary::models::BookListModel::AuthorRole, .weight = 60},
+     {.role = readary::models::BookListModel::DescriptionRole, .weight = 20}}};
 
 } // namespace
 
-namespace bl::models {
+namespace readary::models {
 
-BookSearchProxyModel::BookSearchProxyModel(QObject *parent) : QSortFilterProxyModel(parent) {
+BookSearchProxyModel::BookSearchProxyModel(QObject *parent) : QSortFilterProxyModel{parent} {
   setDynamicSortFilter(true);
   sort(0, Qt::AscendingOrder);
 }
@@ -72,8 +73,6 @@ qint8 BookSearchProxyModel::calculateMatchScore(const QModelIndex &index, const 
 
 inline qint8 BookSearchProxyModel::scoreField(const QString &text, const QString &query, qint32 weight,
                                               qsizetype matchIdx) {
-  // Coverage: query.size() / text.size() — fraction of the field covered by the query.
-  // Position: 1 - matchIdx / text.size() — 1.0 at the start of the string, approaches zero toward the end.
   const auto textSize = static_cast<double>(text.size());
   const auto querySize = static_cast<double>(query.size());
   const double positionFactor = 1.0 - (static_cast<double>(matchIdx) / textSize);
@@ -98,4 +97,4 @@ qint8 BookSearchProxyModel::cachedScore(int sourceRow) const {
   return _searchCache.at(sourceRow);
 }
 
-} // namespace bl::models
+} // namespace readary::models

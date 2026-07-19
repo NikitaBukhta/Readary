@@ -3,7 +3,7 @@
 #include <QString>
 #include <QTest>
 
-using bl::services::EmojiResolver;
+using readary::services::EmojiResolver;
 
 class EmojiResolverTest : public QObject {
   Q_OBJECT

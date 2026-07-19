@@ -4,13 +4,13 @@
 #include <algorithm>
 
 namespace {
-Q_LOGGING_CATEGORY(lcCharactersModel, "bl.models.characters")
+Q_LOGGING_CATEGORY(lcCharactersModel, "readary.models.characters")
 }
 
-namespace bl::models {
+namespace readary::models {
 
 BookCharactersModel::BookCharactersModel(std::shared_ptr<services::BookTable> bookTable, QObject *parent)
-    : QAbstractListModel(parent), _bookTable{std::move(bookTable)} {}
+    : QAbstractListModel{parent}, _bookTable{std::move(bookTable)} {}
 
 int BookCharactersModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid())
@@ -46,16 +46,16 @@ bool BookCharactersModel::canLoadMore() const { return _visibleCount < _allItems
 
 bool BookCharactersModel::canHide() const { return _visibleCount > kPageSize; }
 
-void BookCharactersModel::setBookId(qint64 id) {
+void BookCharactersModel::setBookIsbn(qint64 isbn) {
   beginResetModel();
-  _bookId = id;
-  _allItems = (id > 0) ? _bookTable->getCharacters(id) : QList<services::CharacterDTO>{};
+  _bookIsbn = isbn;
+  _allItems = (isbn > 0) ? _bookTable->getCharacters(isbn) : QList<services::CharacterDTO>{};
   _visibleCount = std::min<int>(static_cast<int>(_allItems.size()), kPageSize);
   endResetModel();
   emit canLoadMoreChanged();
   emit canHideChanged();
 
-  qCInfo(lcCharactersModel) << "setBookId" << id << "loaded" << _allItems.size() << "visible" << _visibleCount;
+  qCInfo(lcCharactersModel) << "setBookIsbn" << isbn << "loaded" << _allItems.size() << "visible" << _visibleCount;
 }
 
 void BookCharactersModel::loadMore() {
@@ -90,4 +90,4 @@ void BookCharactersModel::hide() {
   emit canHideChanged();
 }
 
-} // namespace bl::models
+} // namespace readary::models

@@ -8,7 +8,7 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
-namespace bl::controllers {
+namespace readary::controllers {
 
 class NavigationController : public QObject {
   Q_OBJECT
@@ -57,6 +57,6 @@ private:
   QStack<PageEnum> _pageStack;
 };
 
-} // namespace bl::controllers
+} // namespace readary::controllers
 
 #endif // BEELIBRARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP

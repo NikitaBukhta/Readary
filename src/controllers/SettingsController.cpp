@@ -3,24 +3,24 @@
 #include <QLoggingCategory>
 
 namespace {
-Q_LOGGING_CATEGORY(lcSettings, "bl.controllers.settings")
+Q_LOGGING_CATEGORY(lcSettings, "readary.controllers.settings")
 }
 
-namespace bl::controllers {
+namespace readary::controllers {
 
 SettingsController *SettingsController::s_instance = nullptr;
 
 SettingsController::SettingsController(QObject *parent)
-    : QObject(parent), _languageModel{new bl::models::LanguageModel(this)},
-      _fontModel{new bl::models::FontModel(this)} {
+    : QObject{parent}, _languageModel{new readary::models::LanguageModel{this}},
+      _fontModel{new readary::models::FontModel{this}} {
   qCInfo(lcSettings) << "SettingsController initialized";
 }
 
 SettingsController::~SettingsController() = default;
 
-bl::models::LanguageModel *SettingsController::languageModel() const { return _languageModel; }
+readary::models::LanguageModel *SettingsController::languageModel() const { return _languageModel; }
 
-bl::models::FontModel *SettingsController::fontModel() const { return _fontModel; }
+readary::models::FontModel *SettingsController::fontModel() const { return _fontModel; }
 
 void SettingsController::setInstance(SettingsController *instance) { s_instance = instance; }
 
@@ -32,4 +32,4 @@ SettingsController *SettingsController::create(QQmlEngine *engine, QJSEngine *sc
   return s_instance;
 }
 
-} // namespace bl::controllers
+} // namespace readary::controllers

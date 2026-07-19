@@ -5,22 +5,17 @@
 #include <QVariantMap>
 #include <QtTypes>
 
-namespace bl::services {
+namespace readary::services {
 
-// status mirrors BookStatus::Value (services/BookStatus.hpp) — kept as int
-// in storage; QML imports `BookStatus` to compare semantically.
 struct BookDTO {
-  qint64 id = 0;
+  qint64 isbn = 0;
   QString name;
-  qint64 authorId = 0;
   QString authorName;
   int year = 0;
-  qint64 publisherId = 0;
   QString publisherName;
   QString description;
   QString coverUrl;
   bool isHardcover = false;
-  qint64 typeId = 0;
   QString typeName;
   int totalPages = 0;
   int pagesRead = 0;
@@ -31,8 +26,9 @@ struct BookDTO {
   bool inWishList = false;
 
   static BookDTO fromMap(const QVariantMap &data);
+  QVariantMap toMap() const;
 };
 
-} // namespace bl::services
+} // namespace readary::services
 
 #endif // BEELIBRARY_SERVICES_BOOKDTO_HPP

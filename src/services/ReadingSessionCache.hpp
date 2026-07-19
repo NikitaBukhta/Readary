@@ -4,12 +4,12 @@
 #include <QString>
 #include <QVariantMap>
 
-namespace bl::services {
+namespace readary::services {
 
 // Persistent per-book reading-timer state, stored via QSettings so it
 // survives both navigation away from the page AND app process exit.
 //
-// On `save`: writes { seconds, phase, lastSyncAt } under a per-bookId group.
+// On `save`: writes { seconds, phase, lastSyncAt } under a per-bookIsbn group.
 // On `takeState`: returns the saved snapshot, deletes the group, and — if
 // the saved phase was Running — adds the wall-clock seconds elapsed
 // between `lastSyncAt` and now to `seconds` (so a running timer keeps
@@ -20,14 +20,14 @@ class ReadingSessionCache {
 public:
   ReadingSessionCache() = default;
 
-  static void save(qint64 bookId, int seconds, int phase);
-  static QVariantMap takeState(qint64 bookId);
-  static void clear(qint64 bookId);
+  static void save(qint64 bookIsbn, int seconds, int phase);
+  static QVariantMap takeState(qint64 bookIsbn);
+  static void clear(qint64 bookIsbn);
 
 private:
-  static QString groupFor(qint64 bookId);
+  static QString groupFor(qint64 bookIsbn);
 };
 
-} // namespace bl::services
+} // namespace readary::services
 
 #endif // BEELIBRARY_SERVICES_READINGSESSIONCACHE_HPP

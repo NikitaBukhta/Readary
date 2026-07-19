@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Library VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
 # Minimum Qt version — not pinned to an exact release, any newer Qt6 works.
 set(QT_MINIMUM_VERSION 6.8)
-find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick Sql Svg)
+find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick Sql Svg Network)
 
 qt_standard_project_setup(REQUIRES ${QT_MINIMUM_VERSION})
 
@@ -68,7 +68,9 @@ file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS
     src/core/DatabaseManager.cpp src/core/DatabaseManager.hpp
     src/core/SqlQueryBuilder.cpp src/core/SqlQueryBuilder.hpp
     src/services/*.cpp src/services/*.hpp
+    src/utils/*.cpp src/utils/*.hpp
     src/qmltypes/*.cpp src/qmltypes/*.hpp
+    src/api/*.cpp src/api/*.hpp
     src/models/*.cpp src/models/*.hpp
     src/controllers/*.cpp src/controllers/*.hpp
 )
@@ -90,11 +92,12 @@ target_include_directories(ReadaryCore PUBLIC
     src
     src/qmltypes
     src/services
+    src/utils
     src/controllers
     src/models/books
     src/models/settings
 )
-target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg)
+target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg Qt6::Network)
 
 if(ANDROID)
     target_link_libraries(ReadaryCore PUBLIC log)
@@ -129,6 +132,11 @@ set(_LIBRARY_QM_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/translations/library_ru.qm
     ${CMAKE_CURRENT_SOURCE_DIR}/translations/library_uk.qm
 )
+# Re-run configure whenever the .qm files are (re)generated. Without this, an IDE
+# (e.g. CLion) that configured before `bootstrap.py translate` keeps a stale cache
+# with BL_HAS_TRANSLATIONS undefined and silently ships no translations until a
+# manual cache reload. Listing them as configure deps makes the next build pick them up.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_LIBRARY_QM_FILES})
 set(_LIBRARY_QM_ALL_PRESENT TRUE)
 foreach(_qm IN LISTS _LIBRARY_QM_FILES)
     if(NOT EXISTS "${_qm}")
@@ -153,6 +161,7 @@ set(_APP_SOURCES
     src/core/AppInitializer.cpp
     src/core/AppInitializer.hpp
 )
+
 if(WIN32 AND NOT ANDROID)
     list(APPEND _APP_SOURCES assets/app.rc)
 endif()

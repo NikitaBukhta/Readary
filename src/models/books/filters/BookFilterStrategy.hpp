@@ -1,7 +1,7 @@
 #ifndef BEELIBRARY_MODELS_FILTERS_BOOKFILTERSTRATEGY_HPP
 #define BEELIBRARY_MODELS_FILTERS_BOOKFILTERSTRATEGY_HPP
 
-namespace bl::models {
+namespace readary::models {
 
 class BookSortFilterProxyModel;
 
@@ -34,6 +34,6 @@ public:
 };
 
 } // namespace filters
-} // namespace bl::models
+} // namespace readary::models
 
 #endif // BEELIBRARY_MODELS_FILTERS_BOOKFILTERSTRATEGY_HPP

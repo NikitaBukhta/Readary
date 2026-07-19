@@ -8,7 +8,7 @@
 #include <QString>
 #include <memory>
 
-namespace bl::services {
+namespace readary::services {
 
 class BookTable {
 public:
@@ -17,19 +17,19 @@ public:
   QList<BookDTO> getAllBooks();
   qint64 addBook(const BookDTO &book);
   bool updateBook(const BookDTO &book);
-  bool deleteBook(qint64 id);
+  bool deleteBook(qint64 isbn);
 
-  QStringList getGenres(qint64 bookId) const;
-  QList<CharacterDTO> getCharacters(qint64 bookId) const;
+  QStringList getGenres(qint64 bookIsbn) const;
+  QList<CharacterDTO> getCharacters(qint64 bookIsbn) const;
 
-  bool updatePagesRead(qint64 bookId, int pagesRead);
-  qint64 insertReadingSession(qint64 bookId, int pagesFrom, int pagesTo, int durationSeconds);
+  bool updatePagesRead(qint64 bookIsbn, int pagesRead);
+  qint64 insertReadingSession(qint64 bookIsbn, int pagesFrom, int pagesTo, int durationSeconds);
 
 private:
   static const QString kTableName;
   std::shared_ptr<core::DatabaseManager> _db;
 };
 
-} // namespace bl::services
+} // namespace readary::services
 
 #endif // BEELIBRARY_SERVICES_BOOKTABLE_HPP

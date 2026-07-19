@@ -3,7 +3,7 @@
 #include "models/books/BookSortFilterProxyModel.hpp"
 #include "services/BookStatus.hpp"
 
-namespace bl::models::filters {
+namespace readary::models::filters {
 
 void WantToReadFilterStrategy::apply(BookSortFilterProxyModel *proxy) const {
   proxy->clearFilter();
@@ -25,4 +25,4 @@ void ReadInProgressFilterStrategy::apply(BookSortFilterProxyModel *proxy) const 
   proxy->addFilter(BookListModel::StatusRole, services::BookStatus::InProgress);
 }
 
-} // namespace bl::models::filters
+} // namespace readary::models::filters

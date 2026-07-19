@@ -9,10 +9,15 @@ PressableSurface {
     property string iconGlyph: ""
     property url iconSource
     property color iconColor: Theme.primary
+    property bool active: false
 
     implicitHeight: Geometry.size.actionButtonHeight
     shadowOffset: Styles.elevation.subtleOffset
     shadowBlur: Styles.elevation.subtleBlur
+
+    restColor: active ? Theme.primarySoft : Theme.surface
+    border.width: active ? 1 : 0
+    border.color: Theme.primary
 
     RowLayout {
         id: content
@@ -30,7 +35,7 @@ PressableSurface {
         Text {
             id: labelText
             text: root.label
-            color: Theme.textPrimary
+            color: root.active ? Theme.primary : Theme.textPrimary
             font.pixelSize: Styles.fontSize.body
             font.weight: Styles.fontWeight.semibold
         }

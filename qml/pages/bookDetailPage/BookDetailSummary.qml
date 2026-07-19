@@ -16,12 +16,23 @@ ColumnLayout {
     property string description: ""
     property url coverSource
     property int status: 0
+    property bool inWishList: false
     property int sidePadding: 0
 
     signal backRequested
     signal pdfRequested
     signal statsRequested
-    signal favoriteRequested
+    signal wantToReadRequested
+    signal wantToBuyRequested
+    signal startReadingRequested
+
+    function beginReading() {
+        progressCard.beginReading();
+    }
+
+    function stopReading() {
+        progressCard.stopReading();
+    }
 
     readonly property string _actionLabel: {
         switch (root.status) {
@@ -60,6 +71,7 @@ ColumnLayout {
         pagesRead: root.pagesRead
         pagesTotal: root.totalPages
         actionLabel: root._actionLabel
+        onStartReadingRequested: root.startReadingRequested()
     }
 
     RatingsCard {
@@ -100,12 +112,14 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
-        id: actionsRow
+    GridLayout {
+        id: actionsGrid
         Layout.fillWidth: true
         Layout.leftMargin: root.sidePadding
         Layout.rightMargin: root.sidePadding
-        spacing: Geometry.spacing.md
+        columns: 2
+        columnSpacing: Geometry.spacing.md
+        rowSpacing: Geometry.spacing.md
 
         ActionButton {
             id: pdfAction
@@ -114,6 +128,7 @@ ColumnLayout {
             iconGlyph: "📄"
             onClicked: root.pdfRequested()
         }
+
         ActionButton {
             id: statsAction
             Layout.fillWidth: true
@@ -121,12 +136,23 @@ ColumnLayout {
             iconGlyph: "📊"
             onClicked: root.statsRequested()
         }
+
         ActionButton {
-            id: favoriteAction
+            id: wantToReadAction
             Layout.fillWidth: true
-            label: qsTr("Favorite")
-            iconGlyph: "♡"
-            onClicked: root.favoriteRequested()
+            label: qsTr("Want to read")
+            iconGlyph: "📖"
+            active: root.status === BookStatus.WantToRead
+            onClicked: root.wantToReadRequested()
+        }
+
+        ActionButton {
+            id: wantToBuyAction
+            Layout.fillWidth: true
+            label: qsTr("Want to buy")
+            iconGlyph: "🛒"
+            active: root.inWishList
+            onClicked: root.wantToBuyRequested()
         }
     }
 }

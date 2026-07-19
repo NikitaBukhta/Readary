@@ -1,6 +1,7 @@
 #ifndef BEELIBRARY_MODELS_BOOKLISTMODEL_HPP
 #define BEELIBRARY_MODELS_BOOKLISTMODEL_HPP
 
+#include "BookListModelBase.hpp"
 #include "services/BookDTO.hpp"
 #include "services/BookTable.hpp"
 
@@ -8,48 +9,20 @@
 #include <QList>
 #include <memory>
 
-namespace bl::models {
+namespace readary::models {
 
-class BookListModel : public QAbstractListModel {
+class BookListModel : public BookListModelBase {
   Q_OBJECT
 
   Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
 
 public:
-  enum Roles {
-    IdRole = Qt::UserRole + 1,
-    NameRole,
-    AuthorIdRole,
-    AuthorRole,
-    YearRole,
-    PublisherIdRole,
-    PublisherRole,
-    DescriptionRole,
-    CoverUrlRole,
-    IsHardcoverRole,
-    TypeIdRole,
-    TypeRole,
-    TotalPagesRole,
-    PagesReadRole,
-    GlobalRatingRole,
-    LocalRatingRole,
-    UserRatingRole,
-    StatusRole,
-    InWishListRole,
-  };
-  Q_ENUM(Roles)
-
   explicit BookListModel(std::shared_ptr<services::BookTable> bookTable, QObject *parent);
+  void refresh() override;
 
-  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-  QHash<int, QByteArray> roleNames() const override;
-
-  Q_INVOKABLE bool deleteBook(qint64 id);
-
-  services::BookDTO getBook(qint64 id) const;
-  void refresh();
   QString errorMessage() const;
+
+  Q_INVOKABLE bool deleteBook(qint64 isbn);
 
 signals:
   void errorMessageChanged();
@@ -57,11 +30,11 @@ signals:
 private:
   void setErrorMessage(const QString &message);
 
-  QList<services::BookDTO> _books;
+private:
   std::shared_ptr<services::BookTable> _bookTable;
   QString _errorMessage;
 };
 
-} // namespace bl::models
+} // namespace readary::models
 
 #endif // BEELIBRARY_MODELS_BOOKLISTMODEL_HPP

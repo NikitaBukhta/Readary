@@ -9,7 +9,7 @@
 
 #include <vector>
 
-namespace bl::models {
+namespace readary::models {
 
 class BookSearchProxyModel : public QSortFilterProxyModel {
   Q_OBJECT
@@ -47,6 +47,6 @@ private:
   mutable std::vector<qint8> _searchCache; // search match scores
 };
 
-} // namespace bl::models
+} // namespace readary::models
 
 #endif // BEELIBRARY_MODELS_BOOKSEARCHPROXYMODEL_HPP

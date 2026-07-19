@@ -7,7 +7,7 @@
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
-namespace bl::models {
+namespace readary::models {
 
 class FontModel : public QObject {
   Q_OBJECT
@@ -50,6 +50,6 @@ private:
   QHash<Code, QString> _loadedFamilies;
 };
 
-} // namespace bl::models
+} // namespace readary::models
 
 #endif // BEELIBRARY_MODELS_FONTMODEL_HPP

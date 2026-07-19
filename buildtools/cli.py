@@ -6,6 +6,7 @@ from pathlib import Path
 from buildtools.commands import (
     AnalyzeCommand,
     BootstrapCommand,
+    CleanCacheCommand,
     CleanCommand,
     Command,
     CompileCommand,
@@ -100,6 +101,7 @@ class CommandRegistry:
             ),
             "package": PackageCommand(self.config, self.shell),
             "clean": CleanCommand(self.config),
+            "clean-cache": CleanCacheCommand(self.config),
         }
         commands["help"] = HelpCommand(self.config, self.shell, commands)
         return commands
@@ -231,6 +233,17 @@ class CLI:
             help="Remove dependencies, build dirs, and venv",
         )
 
+        p_clean_cache = subs.add_parser(
+            "clean-cache", parents=[help_parser],
+            add_help=False,
+            help="Remove vcpkg build caches (keeps installed deps)",
+        )
+        p_clean_cache.add_argument(
+            "--deep", dest="clean_cache_deep", action="store_true",
+            help="Also clear the vcpkg binary cache (forces a full "
+                 "from-source rebuild on the next bootstrap)",
+        )
+
         subs.add_parser("help", parents=[help_parser],
                          add_help=False,
                          help="Show detailed help and status")
@@ -270,6 +283,8 @@ class CLI:
             kwargs["cmake_defs"] = cmake_defs
         if getattr(args, "skip_analyze", False):
             kwargs["skip_analyze"] = True
+        if getattr(args, "clean_cache_deep", False):
+            kwargs["clean_cache_deep"] = True
 
         command_name = args.command or "help"
 

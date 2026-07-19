@@ -10,7 +10,7 @@ ColumnLayout {
     property int sidePadding: Geometry.spacing.xxl
     property string title: qsTr("Currently reading")
 
-    signal bookOpened(int bookId)
+    signal bookOpened(real isbn)
 
     spacing: Geometry.spacing.md
 
@@ -55,7 +55,7 @@ ColumnLayout {
             coverSource: model.coverUrl ?? ""
             pagesRead: model.pagesRead ?? 0
             pagesTotal: model.totalPages ?? 0
-            onClicked: root.bookOpened(model.bookId)
+            onClicked: root.bookOpened(model.isbn)
         }
     }
 }

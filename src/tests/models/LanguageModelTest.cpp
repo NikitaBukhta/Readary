@@ -8,7 +8,7 @@
 #include <QTest>
 #include <QVariant>
 
-using bl::models::LanguageModel;
+using readary::models::LanguageModel;
 using Code = LanguageModel::Code;
 
 namespace {
@@ -52,7 +52,7 @@ void LanguageModelTest::cleanup() {
 }
 
 void LanguageModelTest::availableCodes_returnsAllThreeInOrder() {
-  const QList<int> codes = bl::models::LanguageModel::available();
+  const QList<int> codes = readary::models::LanguageModel::available();
   QCOMPARE(codes.size(), 3);
   QCOMPARE(codes.at(0), static_cast<int>(Code::English));
   QCOMPARE(codes.at(1), static_cast<int>(Code::Russian));
@@ -61,15 +61,15 @@ void LanguageModelTest::availableCodes_returnsAllThreeInOrder() {
 
 void LanguageModelTest::labels_areNonEmptyForEveryCode() {
   for (Code code : {Code::English, Code::Russian, Code::Ukrainian}) {
-    const QString label = bl::models::LanguageModel::label(code);
+    const QString label = readary::models::LanguageModel::label(code);
     QVERIFY2(!label.isEmpty(), QStringLiteral("empty label for code %1").arg(static_cast<int>(code)).toUtf8());
   }
 }
 
 void LanguageModelTest::localeCode_matchesExpectedTwoLetterTag() {
-  QCOMPARE(bl::models::LanguageModel::localeCode(Code::English), QStringLiteral("en"));
-  QCOMPARE(bl::models::LanguageModel::localeCode(Code::Russian), QStringLiteral("ru"));
-  QCOMPARE(bl::models::LanguageModel::localeCode(Code::Ukrainian), QStringLiteral("uk"));
+  QCOMPARE(readary::models::LanguageModel::localeCode(Code::English), QStringLiteral("en"));
+  QCOMPARE(readary::models::LanguageModel::localeCode(Code::Russian), QStringLiteral("ru"));
+  QCOMPARE(readary::models::LanguageModel::localeCode(Code::Ukrainian), QStringLiteral("uk"));
 }
 
 void LanguageModelTest::initialState_withNoPersistedValue_isValidCode() {

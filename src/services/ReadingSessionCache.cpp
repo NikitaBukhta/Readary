@@ -6,34 +6,34 @@
 #include <QSettings>
 
 namespace {
-Q_LOGGING_CATEGORY(lcReadingCache, "bl.services.readingCache")
+Q_LOGGING_CATEGORY(lcReadingCache, "readary.services.readingCache")
 } // namespace
 
-namespace bl::services {
+namespace readary::services {
 
-QString ReadingSessionCache::groupFor(qint64 bookId) { return QStringLiteral("readingSession/%1").arg(bookId); }
+QString ReadingSessionCache::groupFor(qint64 bookIsbn) { return QStringLiteral("readingSession/%1").arg(bookIsbn); }
 
-void ReadingSessionCache::save(qint64 bookId, int seconds, int phase) {
-  if (bookId <= 0)
+void ReadingSessionCache::save(qint64 bookIsbn, int seconds, int phase) {
+  if (bookIsbn <= 0)
     return;
 
   QSettings settings;
-  settings.beginGroup(groupFor(bookId));
+  settings.beginGroup(groupFor(bookIsbn));
   settings.setValue("seconds", seconds);
   settings.setValue("phase", phase);
   settings.setValue("lastSyncAt", QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
   settings.endGroup();
   settings.sync();
 
-  qCInfo(lcReadingCache) << "Saved bookId:" << bookId << "seconds:" << seconds << "phase:" << phase;
+  qCInfo(lcReadingCache) << "Saved bookIsbn:" << bookIsbn << "seconds:" << seconds << "phase:" << phase;
 }
 
-QVariantMap ReadingSessionCache::takeState(qint64 bookId) {
-  if (bookId <= 0)
+QVariantMap ReadingSessionCache::takeState(qint64 bookIsbn) {
+  if (bookIsbn <= 0)
     return {};
 
   QSettings settings;
-  settings.beginGroup(groupFor(bookId));
+  settings.beginGroup(groupFor(bookIsbn));
   if (!settings.contains("seconds")) {
     settings.endGroup();
     return {};
@@ -54,7 +54,7 @@ QVariantMap ReadingSessionCache::takeState(qint64 bookId) {
   settings.endGroup();
   settings.sync();
 
-  qCInfo(lcReadingCache) << "Restored bookId:" << bookId << "seconds:" << adjustedSeconds << "phase:" << phase;
+  qCInfo(lcReadingCache) << "Restored bookIsbn:" << bookIsbn << "seconds:" << adjustedSeconds << "phase:" << phase;
 
   return QVariantMap{
       {"seconds", adjustedSeconds},
@@ -62,15 +62,15 @@ QVariantMap ReadingSessionCache::takeState(qint64 bookId) {
   };
 }
 
-void ReadingSessionCache::clear(qint64 bookId) {
-  if (bookId <= 0)
+void ReadingSessionCache::clear(qint64 bookIsbn) {
+  if (bookIsbn <= 0)
     return;
 
   QSettings settings;
-  settings.beginGroup(groupFor(bookId));
+  settings.beginGroup(groupFor(bookIsbn));
   settings.remove("");
   settings.endGroup();
   settings.sync();
 }
 
-} // namespace bl::services
+} // namespace readary::services

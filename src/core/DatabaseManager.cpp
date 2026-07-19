@@ -8,10 +8,10 @@
 #include <QVariantMap>
 
 namespace {
-Q_LOGGING_CATEGORY(lcDb, "bl.core.db")
+Q_LOGGING_CATEGORY(lcDb, "readary.core.db")
 }
 
-namespace bl::core {
+namespace readary::core {
 
 DatabaseManager::DatabaseManager(const QString &dbName) {
   _db = QSqlDatabase::addDatabase("QSQLITE", kConnectionName);
@@ -54,6 +54,28 @@ bool DatabaseManager::runScript(const QString &scriptFileName) {
   QTextStream script(&file);
   trimRun(script);
 
+  return true;
+}
+
+bool DatabaseManager::clear(QString *error) {
+  const QString path = _db.databaseName();
+  close();
+
+  if (QFile::exists(path) && !QFile::remove(path)) {
+    qCWarning(lcDb) << "clear: failed to remove database file:" << path;
+    if (error)
+      *error = QStringLiteral("Failed to remove database file: %1").arg(path);
+    open();
+    return false;
+  }
+
+  qCInfo(lcDb) << "clear: removed database file:" << path;
+
+  if (!open()) {
+    if (error)
+      *error = QStringLiteral("Failed to reopen database after clear");
+    return false;
+  }
   return true;
 }
 
@@ -197,4 +219,4 @@ QList<QVariantMap> DatabaseManager::getDataFromQuery(QSqlQuery &query) {
   return ret;
 }
 
-} // namespace bl::core
+} // namespace readary::core

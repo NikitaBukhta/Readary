@@ -18,13 +18,13 @@
 #endif
 
 namespace {
-Q_LOGGING_CATEGORY(lcAppEnv, "bl.core.env")
+Q_LOGGING_CATEGORY(lcAppEnv, "readary.core.env")
 
 QFile *g_logFile = nullptr;
 QMutex g_logMutex;
 } // namespace
 
-namespace bl::core {
+namespace readary::core {
 
 QString AppEnvironment::ensureDataDir() {
   QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -53,7 +53,7 @@ void AppEnvironment::installFileLogger() {
 
   const QString path = logFilePath();
 
-  g_logFile = new QFile(path);
+  g_logFile = new QFile{path};
   if (!g_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
     delete g_logFile;
     g_logFile = nullptr;
@@ -149,4 +149,4 @@ void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &co
 #endif
 }
 
-} // namespace bl::core
+} // namespace readary::core

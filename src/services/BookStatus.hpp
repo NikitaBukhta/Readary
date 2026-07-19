@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
-namespace bl::services {
+namespace readary::services {
 
 // QML-visible enum mirroring the integer `status` column on books.
 // Storage remains plain int in BookDTO/SQL — this type only exists so
@@ -24,6 +24,6 @@ public:
   Q_ENUM(Value)
 };
 
-} // namespace bl::services
+} // namespace readary::services
 
 #endif // BEELIBRARY_SERVICES_BOOKSTATUS_HPP

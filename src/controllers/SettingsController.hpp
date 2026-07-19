@@ -9,22 +9,22 @@
 #include <QQmlEngine>
 #include <QtQml/qqmlregistration.h>
 
-namespace bl::controllers {
+namespace readary::controllers {
 
 class SettingsController : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
 
-  Q_PROPERTY(bl::models::LanguageModel *languageModel READ languageModel CONSTANT FINAL)
-  Q_PROPERTY(bl::models::FontModel *fontModel READ fontModel CONSTANT FINAL)
+  Q_PROPERTY(readary::models::LanguageModel *languageModel READ languageModel CONSTANT FINAL)
+  Q_PROPERTY(readary::models::FontModel *fontModel READ fontModel CONSTANT FINAL)
 
 public:
   explicit SettingsController(QObject *parent = nullptr);
   ~SettingsController() override;
 
-  bl::models::LanguageModel *languageModel() const;
-  bl::models::FontModel *fontModel() const;
+  readary::models::LanguageModel *languageModel() const;
+  readary::models::FontModel *fontModel() const;
 
   static SettingsController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
   static void setInstance(SettingsController *instance);
@@ -32,10 +32,10 @@ public:
 private:
   static SettingsController *s_instance;
 
-  bl::models::LanguageModel *_languageModel;
-  bl::models::FontModel *_fontModel;
+  readary::models::LanguageModel *_languageModel;
+  readary::models::FontModel *_fontModel;
 };
 
-} // namespace bl::controllers
+} // namespace readary::controllers
 
 #endif // BEELIBRARY_CONTROLLERS_SETTINGSCONTROLLER_HPP

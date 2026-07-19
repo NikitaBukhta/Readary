@@ -20,15 +20,15 @@ int main(int argc, char *argv[]) {
   Q_INIT_RESOURCE(translations);
 #endif
 
-  bl::core::AppEnvironment::installFileLogger();
+  readary::core::AppEnvironment::installFileLogger();
 
 #ifdef QT_NO_DEBUG
-  QLoggingCategory::setFilterRules("bl.*.debug=false\n"
-                                   "bl.*.info=false");
+  QLoggingCategory::setFilterRules("readary.*.debug=false\n"
+                                   "readary.*.info=false");
 #else
-  QLoggingCategory::setFilterRules("bl.*.debug=true");
+  QLoggingCategory::setFilterRules("readary.*.debug=true");
 #endif
 
-  bl::core::AppInitializer initializer(app);
+  readary::core::AppInitializer initializer(app);
   return initializer.run();
 }

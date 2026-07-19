@@ -8,23 +8,20 @@
 #include <QStringList>
 #include <QtQml/qqmlregistration.h>
 
-namespace bl::qmltypes {
+namespace readary::qmltypes {
 
-struct BookDTOObject : public bl::services::BookDTO {
+struct BookDTOObject : public readary::services::BookDTO {
   Q_GADGET
   QML_VALUE_TYPE(bookDtoObject)
 
-  Q_PROPERTY(qint64 id MEMBER id)
+  Q_PROPERTY(qint64 isbn MEMBER isbn)
   Q_PROPERTY(QString name MEMBER name)
-  Q_PROPERTY(qint64 authorId MEMBER authorId)
   Q_PROPERTY(QString author MEMBER authorName)
   Q_PROPERTY(int year MEMBER year)
-  Q_PROPERTY(qint64 publisherId MEMBER publisherId)
   Q_PROPERTY(QString publisher MEMBER publisherName)
   Q_PROPERTY(QString description MEMBER description)
   Q_PROPERTY(QString coverUrl MEMBER coverUrl)
   Q_PROPERTY(bool isHardcover MEMBER isHardcover)
-  Q_PROPERTY(qint64 typeId MEMBER typeId)
   Q_PROPERTY(QString type MEMBER typeName)
   Q_PROPERTY(int totalPages MEMBER totalPages)
   Q_PROPERTY(int pagesRead MEMBER pagesRead)
@@ -39,10 +36,10 @@ public:
   QStringList genres;
 
   BookDTOObject() = default;
-  BookDTOObject(const bl::services::BookDTO &base) : bl::services::BookDTO(base) {}
-  BookDTOObject(bl::services::BookDTO &&base) noexcept : bl::services::BookDTO(std::move(base)) {}
+  BookDTOObject(const readary::services::BookDTO &base) : readary::services::BookDTO(base) {}
+  BookDTOObject(readary::services::BookDTO &&base) noexcept : readary::services::BookDTO(std::move(base)) {}
 };
 
-} // namespace bl::qmltypes
+} // namespace readary::qmltypes
 
 #endif // BEELIBRARY_QMLTYPES_BOOKDTOOBJECT_HPP
