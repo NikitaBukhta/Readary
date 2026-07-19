@@ -51,10 +51,6 @@ void AppInitializer::initDatabase() {
   _db = std::make_shared<DatabaseManager>(AppEnvironment::databasePath());
   _db->open();
 
-#ifndef QT_NO_DEBUG
-  _db->clear();
-#endif
-
   _db->runScript(":/db/init.sql");
 
 #ifndef QT_NO_DEBUG

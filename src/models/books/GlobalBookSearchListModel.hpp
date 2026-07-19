@@ -15,9 +15,6 @@ public:
   explicit GlobalBookSearchListModel(QObject *parent = nullptr);
 
   void refresh() override;
-
-public slots:
-  void onSearchListUpdated(const QList<services::BookDTO> &books);
 };
 
 } // namespace models

@@ -23,4 +23,25 @@ BookDTO BookDTO::fromMap(const QVariantMap &data) {
   return dto;
 }
 
+QVariantMap BookDTO::toMap() const {
+  return {
+      {"isbn", isbn},
+      {"name", name},
+      {"author", authorName},
+      {"year", year},
+      {"publisher", publisherName},
+      {"description", description},
+      {"coverUrl", coverUrl},
+      {"isHardcover", isHardcover},
+      {"type", typeName},
+      {"totalPages", totalPages},
+      {"pagesRead", pagesRead},
+      {"globalRating", globalRating},
+      {"localRating", localRating},
+      {"userRating", userRating},
+      {"status", status},
+      {"inWishList", inWishList},
+  };
+}
+
 } // namespace readary::services

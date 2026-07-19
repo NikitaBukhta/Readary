@@ -18,10 +18,10 @@ using namespace Qt::StringLiterals;
 namespace {
 Q_LOGGING_CATEGORY(lcOpenLibrary, "readary.api.openlibrary")
 
+constexpr int g_pageSize{25};
 const QString g_apiNameLink{"https://openlibrary.org"};
 const QString g_searchLink{g_apiNameLink + "/search.json?q="};
-const QString g_fieldsParam{
-    "&fields=title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median&limit=25"};
+const QString g_fieldsParam{"&fields=title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median"};
 
 QString generateRequest(const readary::api::BookSearchFields &params) {
   const std::string separator = " OR ";
@@ -60,9 +60,11 @@ OpenLibrarySeachAPI::OpenLibrarySeachAPI(QObject *parent) : IBookNetSearchAPI{pa
   connect(this, &IBookNetSearchAPI::responseReceived, this, &OpenLibrarySeachAPI::onResponseReceived);
 }
 void OpenLibrarySeachAPI::search(const BookSearchFields &params) {
+  const int page = params.page > 0 ? params.page : 1;
   const auto paramsRequest = generateRequest(params);
-  const auto fullRequest = g_searchLink + paramsRequest + g_fieldsParam;
-  qCInfo(lcOpenLibrary) << "search request:" << QUrl(fullRequest).toEncoded();
+  const auto fullRequest =
+      g_searchLink + paramsRequest + g_fieldsParam + u"&limit=%1&page=%2"_s.arg(g_pageSize).arg(page);
+  qCInfo(lcOpenLibrary) << "search request (page" << page << "):" << QUrl(fullRequest).toEncoded();
   sendRequest(fullRequest);
 }
 void OpenLibrarySeachAPI::searchByISBN(qint64 isbn) {
@@ -129,9 +131,11 @@ void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
     books.append(book);
   }
 
+  const bool hasMore = docs.size() == g_pageSize;
   qCInfo(lcOpenLibrary) << "kept books:" << books.size()
-                        << "skipped (no ISBN or no page count):" << (docs.size() - books.size());
-  emit searchListUpdated(books);
+                        << "skipped (no ISBN or no page count):" << (docs.size() - books.size())
+                        << "hasMore:" << hasMore;
+  emit searchListUpdated(books, hasMore);
 }
 
 } // namespace readary::api

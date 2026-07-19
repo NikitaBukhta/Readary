@@ -6,6 +6,4 @@ GlobalBookSearchListModel::GlobalBookSearchListModel(QObject *parent) : BookList
 
 void GlobalBookSearchListModel::refresh() { setBooks({}); }
 
-void GlobalBookSearchListModel::onSearchListUpdated(const QList<services::BookDTO> &books) { setBooks(books); }
-
 } // namespace readary::models

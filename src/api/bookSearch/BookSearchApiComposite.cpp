@@ -30,10 +30,11 @@ void BookSearchAPIComposite::searchByISBN(qint64 isbn) {
   }
 }
 
-void BookSearchAPIComposite::handleSearchListUpdate(const QList<services::BookDTO> &params) {
+void BookSearchAPIComposite::handleSearchListUpdate(const QList<services::BookDTO> &params, bool hasMore) {
   _aggregated.append(params);
-  qCInfo(lcComposite) << "source returned" << params.size() << "book(s); aggregated total:" << _aggregated.size();
-  emit searchListUpdated(_aggregated);
+  qCInfo(lcComposite) << "source returned" << params.size() << "book(s); aggregated total:" << _aggregated.size()
+                      << "hasMore:" << hasMore;
+  emit searchListUpdated(_aggregated, hasMore);
 }
 
 void BookSearchAPIComposite::initConnect() {

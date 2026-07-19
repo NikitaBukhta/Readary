@@ -7,8 +7,6 @@
 
 namespace readary::services {
 
-// status mirrors BookStatus::Value (services/BookStatus.hpp) — kept as int
-// in storage; QML imports `BookStatus` to compare semantically.
 struct BookDTO {
   qint64 isbn = 0;
   QString name;
@@ -28,6 +26,7 @@ struct BookDTO {
   bool inWishList = false;
 
   static BookDTO fromMap(const QVariantMap &data);
+  QVariantMap toMap() const;
 };
 
 } // namespace readary::services

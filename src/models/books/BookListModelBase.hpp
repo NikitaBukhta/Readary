@@ -41,6 +41,7 @@ public:
   QHash<int, QByteArray> roleNames() const override;
 
   void setBooks(const QList<services::BookDTO> &books);
+  void appendBooks(const QList<services::BookDTO> &books);
   bool contains(qint64 isbn) const;
   services::BookDTO getBook(qint64 isbn) const;
 

@@ -3,7 +3,6 @@
 
 #include "IBookSearchAPI.hpp"
 #include <QList>
-#include <QMap>
 
 namespace readary {
 namespace api {
@@ -18,7 +17,7 @@ public:
   void searchByISBN(qint64 isbn) override;
 
 private slots:
-  void handleSearchListUpdate(const QList<services::BookDTO> &params);
+  void handleSearchListUpdate(const QList<services::BookDTO> &params, bool hasMore);
 
 private:
   void initConnect();

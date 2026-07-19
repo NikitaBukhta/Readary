@@ -87,6 +87,15 @@ void BookListModelBase::setBooks(const QList<services::BookDTO> &books) {
   endResetModel();
 }
 
+void BookListModelBase::appendBooks(const QList<services::BookDTO> &books) {
+  if (books.isEmpty())
+    return;
+  const int first = static_cast<int>(_books.size());
+  beginInsertRows({}, first, first + static_cast<int>(books.size()) - 1);
+  _books.append(books);
+  endInsertRows();
+}
+
 bool BookListModelBase::contains(qint64 isbn) const {
   return std::ranges::any_of(_books, [isbn](const services::BookDTO &book) { return book.isbn == isbn; });
 }

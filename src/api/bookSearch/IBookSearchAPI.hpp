@@ -12,6 +12,7 @@ struct BookSearchFields {
   qint64 isbn;
   QString name;
   QString author;
+  int page{1};
 };
 
 class IBookSearchAPI : public QObject {
@@ -23,7 +24,7 @@ public:
   virtual void searchByISBN(qint64 isbn) = 0;
 
 signals:
-  void searchListUpdated(QList<services::BookDTO> books);
+  void searchListUpdated(QList<services::BookDTO> books, bool hasMore);
 };
 
 } // namespace api

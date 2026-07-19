@@ -60,6 +60,9 @@ Page {
             model: GlobalBookSearchController.resultsModel
             boundsBehavior: Flickable.StopAtBounds
 
+            onAtYEndChanged: if (atYEnd)
+                GlobalBookSearchController.loadMore()
+
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
             }
