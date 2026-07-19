@@ -53,7 +53,7 @@ void AppEnvironment::installFileLogger() {
 
   const QString path = logFilePath();
 
-  g_logFile = new QFile(path);
+  g_logFile = new QFile{path};
   if (!g_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
     delete g_logFile;
     g_logFile = nullptr;

@@ -20,7 +20,7 @@ class StubBookModel : public QAbstractListModel {
 public:
   using Roles = readary::models::BookListModel::RolesEnum;
 
-  explicit StubBookModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
+  explicit StubBookModel(QObject *parent = nullptr) : QAbstractListModel{parent} {}
 
   void setRows(QList<StubRow> rows) {
     beginResetModel();

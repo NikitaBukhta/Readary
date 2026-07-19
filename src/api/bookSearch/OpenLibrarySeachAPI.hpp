@@ -6,17 +6,17 @@
 namespace readary {
 namespace api {
 
-class OpenLibrarySeachAPI : public IBookNetSearchAPI{
+class OpenLibrarySeachAPI : public IBookNetSearchAPI {
 public:
-  OpenLibrarySeachAPI();
-  void search(const BookSearchFields& params) override;
+  OpenLibrarySeachAPI(QObject *parent = nullptr);
+  void search(const BookSearchFields &params) override;
   void searchByISBN(qint64 isbn) override;
 
-private slots:
+private:
   void onResponseReceived(QNetworkReply *reply);
 };
 
-} // api
-} // readary
+} // namespace api
+} // namespace readary
 
-#endif //LIBRARY_ISBNDBSEACHAPI_H
+#endif // LIBRARY_ISBNDBSEACHAPI_H

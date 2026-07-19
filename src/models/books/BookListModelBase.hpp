@@ -40,13 +40,15 @@ public:
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
   QHash<int, QByteArray> roleNames() const override;
 
+  void setBooks(const QList<services::BookDTO> &books);
+  bool contains(qint64 isbn) const;
   services::BookDTO getBook(qint64 isbn) const;
 
 protected:
   QList<services::BookDTO> _books;
 };
 
-} // models
-} // readary
+} // namespace models
+} // namespace readary
 
-#endif //LIBRARY_BOOKLISTMODELBASE_H
+#endif // LIBRARY_BOOKLISTMODELBASE_H

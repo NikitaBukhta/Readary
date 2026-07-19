@@ -1,23 +1,9 @@
----
-# Relaxed rules for unit tests. Inherits from the project root .clang-tidy
-# but disables checks that conflict with the Qt Test idiom:
-#
-# * misc-use-internal-linkage / readability-convert-member-functions-to-static:
-#   Q_OBJECT test classes and their slots are invoked by MOC at runtime.
-#   They can't move into an anonymous namespace and can't be static —
-#   MOC needs to find the class by name and the slots by signature.
-# * readability-identifier-naming: test method names follow the Qt Test
-#   convention (`scenarioName_expectedBehaviour`), which the project's
-#   FunctionCase=camelBack rejects.
-# * cppcoreguidelines-pro-bounds-avoid-unchecked-container-access:
-#   tests operate on hand-built stub data, indexed access is intentional.
-# * misc-const-correctness on QCoreApplication: exec() is non-const so
-#   app must stay non-const — this triggers a false positive when exec()
-#   isn't called in the same TU clang-tidy is analysing.
 InheritParentConfig: true
 Checks: >
   -misc-use-internal-linkage,
   -readability-convert-member-functions-to-static,
   -readability-identifier-naming,
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
-  -misc-const-correctness
+  -misc-const-correctness,
+  -modernize-use-designated-initializers,
+  -modernize-type-traits

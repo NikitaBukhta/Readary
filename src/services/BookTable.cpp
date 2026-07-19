@@ -62,9 +62,9 @@ qint64 BookTable::addBook(const BookDTO &book) {
       .insertInto(kTableName,
                   {"isbn", "name", "author", "year", "publisher", "description", "coverUrl", "isHardcover", "type",
                    "totalPages", "pagesRead", "globalRating", "localRating", "userRating", "status", "inWishList"})
-      .values({book.isbn, book.name, book.authorName, book.year, book.publisherName, book.description,
-               book.coverUrl, book.isHardcover, book.typeName, book.totalPages, book.pagesRead,
-               book.globalRating, book.localRating, book.userRating, book.status, book.inWishList});
+      .values({book.isbn, book.name, book.authorName, book.year, book.publisherName, book.description, book.coverUrl,
+               book.isHardcover, book.typeName, book.totalPages, book.pagesRead, book.globalRating, book.localRating,
+               book.userRating, book.status, book.inWishList});
 
   const qint64 inserted = _db->insert(query, &error);
   if (inserted > 0)
@@ -84,8 +84,8 @@ bool BookTable::updateBook(const BookDTO &book) {
             "pagesRead", "globalRating", "localRating", "userRating", "status", "inWishList"})
       .where("isbn = ?")
       .values({book.name, book.authorName, book.year, book.publisherName, book.description, book.coverUrl,
-               book.isHardcover, book.typeName, book.totalPages, book.pagesRead, book.globalRating,
-               book.localRating, book.userRating, book.status, book.inWishList, book.isbn});
+               book.isHardcover, book.typeName, book.totalPages, book.pagesRead, book.globalRating, book.localRating,
+               book.userRating, book.status, book.inWishList, book.isbn});
 
   const int affected = _db->execute(query, &error);
 
@@ -149,11 +149,7 @@ QList<CharacterDTO> BookTable::getCharacters(qint64 bookIsbn) const {
   core::SqlQueryBuilder query;
   QString error;
 
-  query.select({"id", "name", "role"})
-      .from("book_characters")
-      .where("book_isbn = ?")
-      .orderBy("id")
-      .values({bookIsbn});
+  query.select({"id", "name", "role"}).from("book_characters").where("book_isbn = ?").orderBy("id").values({bookIsbn});
 
   auto rows = _db->select(query, &error);
   if (!error.isEmpty())

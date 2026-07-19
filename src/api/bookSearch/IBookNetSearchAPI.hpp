@@ -11,10 +11,10 @@ namespace api {
 class IBookNetSearchAPI : public IBookSearchAPI {
   Q_OBJECT
 public:
-  IBookNetSearchAPI(QObject* parent = nullptr);
+  IBookNetSearchAPI(QObject *parent = nullptr);
 
 protected:
-  QByteArray sendRequest(const QUrl& request);
+  QByteArray sendRequest(const QUrl &request);
 
 signals:
   void responseReceived(QNetworkReply *reply);
@@ -23,7 +23,7 @@ private:
   QNetworkAccessManager _networkManager;
 };
 
-} // api
-} // readary
+} // namespace api
+} // namespace readary
 
-#endif //LIBRARY_IBOOKNETSEARCH_HPP
+#endif // LIBRARY_IBOOKNETSEARCH_HPP

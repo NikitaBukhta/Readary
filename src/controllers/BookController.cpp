@@ -16,11 +16,11 @@ namespace readary::controllers {
 
 BookController *BookController::s_instance = nullptr;
 
-BookController::BookController(std::shared_ptr<services::BookTable> bookTable, readary::models::BookListModel *listModel,
-                               QObject *parent)
-    : QObject(parent), _bookTable{std::move(bookTable)}, _listModel{listModel},
-      _searchProxy{new readary::models::BookSearchProxyModel(this)},
-      _charactersModel{new readary::models::BookCharactersModel(_bookTable, this)} {
+BookController::BookController(std::shared_ptr<services::BookTable> bookTable,
+                               readary::models::BookListModel *listModel, QObject *parent)
+    : QObject{parent}, _bookTable{std::move(bookTable)}, _listModel{listModel},
+      _searchProxy{new readary::models::BookSearchProxyModel{this}},
+      _charactersModel{new readary::models::BookCharactersModel{_bookTable, this}} {
   using namespace readary::models::filters;
   _listModel->refresh();
 
@@ -105,6 +105,23 @@ void BookController::openBook(qint64 isbn) {
   emit bookOpenRequested(isbn);
 }
 
+void BookController::importAndOpenBook(const services::BookDTO &book) {
+  if (book.isbn <= 0) {
+    qCWarning(lcBook) << "Cannot import book without ISBN — name:" << book.name;
+    return;
+  }
+
+  if (!_listModel->contains(book.isbn)) {
+    if (_bookTable->addBook(book) == 0) {
+      setErrorMessage(tr("Failed to import book."));
+      return;
+    }
+    emit bookSaved();
+  }
+
+  openBook(book.isbn);
+}
+
 void BookController::saveReadingSession(qint64 bookIsbn, int seconds, int phase) {
   if (bookIsbn <= 0)
     return;
@@ -173,8 +190,9 @@ readary::models::BookSearchProxyModel *BookController::searchModel() const { ret
 readary::models::BookCharactersModel *BookController::charactersModel() const { return _charactersModel; }
 
 readary::models::BookSortFilterProxyModel *
-BookController::buildProxy(readary::models::BookListModel *source, const readary::models::filters::BookFilterStrategy &strategy) {
-  auto *proxy = new readary::models::BookSortFilterProxyModel(this);
+BookController::buildProxy(readary::models::BookListModel *source,
+                           const readary::models::filters::BookFilterStrategy &strategy) {
+  auto *proxy = new readary::models::BookSortFilterProxyModel{this};
   proxy->setSourceModel(source);
   strategy.apply(proxy);
   return proxy;

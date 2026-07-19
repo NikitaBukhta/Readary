@@ -13,7 +13,7 @@ namespace readary::controllers {
 
 NavigationController *NavigationController::s_instance = nullptr;
 
-NavigationController::NavigationController(QObject *parent) : QObject(parent) {
+NavigationController::NavigationController(QObject *parent) : QObject{parent} {
   setCurrentPage(PageEnum::MAIN_PAGE);
   qCInfo(lcNavigation) << "NavigationController initialized";
 }
@@ -31,17 +31,18 @@ NavigationController *NavigationController::create(QQmlEngine *engine, QJSEngine
 NavigationController::PageInfo NavigationController::pageInfo(PageEnum page) {
   switch (page) {
   case PageEnum::MAIN_PAGE:
-    return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_s}, 1};
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_s}, .level = 1};
   case PageEnum::CATEGORY_LIST_PAGE:
-    return {QUrl{u"qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml"_s}, 2};
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml"_s}, .level = 2};
   case PageEnum::BOOK_DETAIL_PAGE:
-    return {QUrl{u"qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml"_s}, 3};
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml"_s}, .level = 3};
   case PageEnum::PROFILE_PAGE:
-    return {QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s}, 1};
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s}, .level = 1};
   case PageEnum::SEARCH_PAGE:
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/searchPage/SearchPage.qml"_s}, .level = 1};
   case PageEnum::GOALS_PAGE:
   case PageEnum::CHALLENGES_PAGE:
-    return {QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_s}, 1};
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_s}, .level = 1};
   }
   Q_UNREACHABLE_RETURN({});
 }

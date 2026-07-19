@@ -8,10 +8,8 @@
 #include "services/BookTable.hpp"
 
 #include <QHash>
-#include <QJSEngine>
 #include <QObject>
 #include <QQmlEngine>
-#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
@@ -60,6 +58,7 @@ public:
   Q_INVOKABLE readary::models::BookSortFilterProxyModel *getSortFilterProxyForKind(ListKind kind) const;
 
   Q_INVOKABLE void openBook(qint64 isbn);
+  void importAndOpenBook(const services::BookDTO &book);
 
   static Q_INVOKABLE void saveReadingSession(qint64 bookIsbn, int seconds, int phase);
   static Q_INVOKABLE QVariantMap takeReadingSession(qint64 bookIsbn);
@@ -84,7 +83,7 @@ private:
   void setErrorMessage(const QString &message);
 
   readary::models::BookSortFilterProxyModel *buildProxy(readary::models::BookListModel *source,
-                                                   const readary::models::filters::BookFilterStrategy &strategy);
+                                                        const readary::models::filters::BookFilterStrategy &strategy);
   void applyActiveSourceToSearchProxy();
 
   static BookController *s_instance;

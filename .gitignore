@@ -32,6 +32,10 @@ qrc_*.cpp
 Thumbs.db
 *.res
 *.rc
+aqtinstall.log
+# Hand-authored Windows resource script (icon + version info), required by the
+# desktop build — keep it tracked despite the blanket *.rc ignore above.
+!assets/app.rc
 /.qmake.cache
 /.qmake.stash
 
@@ -85,6 +89,7 @@ CMakeLists.txt.user*
 .idea/modules.xml
 .idea/*.iml
 .idea/.gitignore
+.idea/editor.xml
 *.iml
 cmake-build-*/
 

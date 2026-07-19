@@ -19,7 +19,7 @@ struct FontInfo {
 constexpr auto g_kSettingsKey = "ui/font";
 const std::map<readary::models::FontModel::Code, FontInfo> g_kFontInfoMap{
     {readary::models::FontModel::Code::NotoColorEmoji,
-     {u"Noto Color Emoji"_s, u":/fonts/NotoColorEmoji_WindowsCompatible.ttf"_s}},
+     {.label = u"Noto Color Emoji"_s, .resourcePath = u":/fonts/NotoColorEmoji_WindowsCompatible.ttf"_s}},
 };
 
 QString labelFor(readary::models::FontModel::Code code) {
@@ -40,7 +40,7 @@ QString resourcePathFor(readary::models::FontModel::Code code) {
 
 namespace readary::models {
 
-FontModel::FontModel(QObject *parent) : QObject(parent), _current{defaultCode()} {
+FontModel::FontModel(QObject *parent) : QObject{parent}, _current{defaultCode()} {
   const QSettings settings;
   const auto stored = settings.value(g_kSettingsKey);
   if (stored.isValid()) {

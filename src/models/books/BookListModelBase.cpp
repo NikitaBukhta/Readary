@@ -6,11 +6,9 @@ namespace {
 Q_LOGGING_CATEGORY(lcBookModelBase, "readary.models.booksBase")
 }
 
-namespace readary {
-namespace models {
+namespace readary::models {
 
-BookListModelBase::BookListModelBase(QObject *parent) : QAbstractListModel(parent) {
-}
+BookListModelBase::BookListModelBase(QObject *parent) : QAbstractListModel{parent} {}
 
 int BookListModelBase::rowCount(const QModelIndex &parent) const {
   if (parent.isValid())
@@ -64,28 +62,37 @@ QVariant BookListModelBase::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> BookListModelBase::roleNames() const {
   return {
-        {IsbnRole, "isbn"},
-        {NameRole, "name"},
-        {AuthorRole, "author"},
-        {YearRole, "year"},
-        {PublisherRole, "publisher"},
-        {DescriptionRole, "description"},
-        {CoverUrlRole, "coverUrl"},
-        {IsHardcoverRole, "isHardcover"},
-        {TypeRole, "type"},
-        {TotalPagesRole, "totalPages"},
-        {PagesReadRole, "pagesRead"},
-        {GlobalRatingRole, "globalRating"},
-        {LocalRatingRole, "localRating"},
-        {UserRatingRole, "userRating"},
-        {StatusRole, "status"},
-        {InWishListRole, "inWishList"},
-    };
+      {IsbnRole, "isbn"},
+      {NameRole, "name"},
+      {AuthorRole, "author"},
+      {YearRole, "year"},
+      {PublisherRole, "publisher"},
+      {DescriptionRole, "description"},
+      {CoverUrlRole, "coverUrl"},
+      {IsHardcoverRole, "isHardcover"},
+      {TypeRole, "type"},
+      {TotalPagesRole, "totalPages"},
+      {PagesReadRole, "pagesRead"},
+      {GlobalRatingRole, "globalRating"},
+      {LocalRatingRole, "localRating"},
+      {UserRatingRole, "userRating"},
+      {StatusRole, "status"},
+      {InWishListRole, "inWishList"},
+  };
+}
+
+void BookListModelBase::setBooks(const QList<services::BookDTO> &books) {
+  beginResetModel();
+  _books = books;
+  endResetModel();
+}
+
+bool BookListModelBase::contains(qint64 isbn) const {
+  return std::ranges::any_of(_books, [isbn](const services::BookDTO &book) { return book.isbn == isbn; });
 }
 
 services::BookDTO BookListModelBase::getBook(qint64 isbn) const {
-  if (const auto it = std::find_if(_books.begin(), _books.end(),
-                                   [isbn](const services::BookDTO &book) { return book.isbn == isbn; });
+  if (const auto it = std::ranges::find_if(_books, [isbn](const services::BookDTO &book) { return book.isbn == isbn; });
       it != _books.end()) {
     return *it;
   }
@@ -93,5 +100,4 @@ services::BookDTO BookListModelBase::getBook(qint64 isbn) const {
   return {};
 }
 
-} // models
-} // readary
+} // namespace readary::models

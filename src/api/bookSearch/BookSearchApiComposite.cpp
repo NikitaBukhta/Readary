@@ -1,34 +1,45 @@
 #include "BookSearchApiComposite.hpp"
 
-namespace readary {
-namespace api {
+#include <QLoggingCategory>
+#include <utility>
 
+namespace {
+Q_LOGGING_CATEGORY(lcComposite, "readary.api.composite")
+}
 
+namespace readary::api {
 
-BookSearchAPIComposite::BookSearchAPIComposite(QList<IBookSearchAPI *> &&book_search_ap_is, QObject *parent) : IBookSearchAPI(parent) {
+BookSearchAPIComposite::BookSearchAPIComposite(QList<IBookSearchAPI *> &&bookSearchAPIs, QObject *parent)
+    : IBookSearchAPI{parent}, _bookSearchAPIs{std::move(bookSearchAPIs)} {
   initConnect();
 }
 
-void BookSearchAPIComposite::search(const BookSearchFields &params){
+void BookSearchAPIComposite::search(const BookSearchFields &params) {
+  qCInfo(lcComposite) << "fan-out search to" << _bookSearchAPIs.size() << "source(s)";
+  _aggregated.clear();
   for (IBookSearchAPI *bookAPI : _bookSearchAPIs) {
     bookAPI->search(params);
   }
 }
 
-void BookSearchAPIComposite::searchByISBN(qint64 isbn){
+void BookSearchAPIComposite::searchByISBN(qint64 isbn) {
+  qCInfo(lcComposite) << "fan-out searchByISBN" << isbn << "to" << _bookSearchAPIs.size() << "source(s)";
+  _aggregated.clear();
   for (IBookSearchAPI *bookAPI : _bookSearchAPIs) {
     bookAPI->searchByISBN(isbn);
   }
 }
 
-void BookSearchAPIComposite::handleSearchListUpdate(const QList<services::BookDTO> &params){
+void BookSearchAPIComposite::handleSearchListUpdate(const QList<services::BookDTO> &params) {
+  _aggregated.append(params);
+  qCInfo(lcComposite) << "source returned" << params.size() << "book(s); aggregated total:" << _aggregated.size();
+  emit searchListUpdated(_aggregated);
 }
 
-void BookSearchAPIComposite::initConnect(){
-  for (IBookSearchAPI *bookAPI : _bookSearchAPIs) {
+void BookSearchAPIComposite::initConnect() {
+  for (const IBookSearchAPI *bookAPI : _bookSearchAPIs) {
     connect(bookAPI, &IBookSearchAPI::searchListUpdated, this, &BookSearchAPIComposite::handleSearchListUpdate);
   }
 }
 
-} // api
-} // readary
+} // namespace readary::api

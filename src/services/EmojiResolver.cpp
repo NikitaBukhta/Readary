@@ -17,10 +17,10 @@ constexpr auto g_kUrlPrefix = "qrc:/emoji/";
 
 namespace readary::services {
 
-EmojiResolver::EmojiResolver(QObject *parent) : QObject(parent) { loadAvailableStems(); }
+EmojiResolver::EmojiResolver(QObject *parent) : QObject{parent} { loadAvailableStems(); }
 
 EmojiResolver *EmojiResolver::create(QQmlEngine * /*engine*/, QJSEngine * /*scriptEngine*/) {
-  return new EmojiResolver();
+  return new EmojiResolver{};
 }
 
 QString EmojiResolver::iconUrl(const QString &emoji) const {

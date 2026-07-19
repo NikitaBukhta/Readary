@@ -3,7 +3,7 @@
 
 namespace readary::models {
 
-BookSortFilterProxyModel::BookSortFilterProxyModel(QObject *parent) : QSortFilterProxyModel(parent) {
+BookSortFilterProxyModel::BookSortFilterProxyModel(QObject *parent) : QSortFilterProxyModel{parent} {
   setSortRole(BookListModel::NameRole);
   setDynamicSortFilter(true);
   sort(0, Qt::AscendingOrder);
@@ -15,7 +15,7 @@ BookSortFilterProxyModel::BookSortFilterProxyModel(QObject *parent) : QSortFilte
 }
 
 void BookSortFilterProxyModel::addFilter(int role, const QVariant &value, Op op) {
-  _filters.insert(role, Filter{value, op});
+  _filters.insert(role, Filter{.value = value, .op = op});
   invalidateFilter();
 }
 

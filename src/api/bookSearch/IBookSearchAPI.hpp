@@ -17,16 +17,16 @@ struct BookSearchFields {
 class IBookSearchAPI : public QObject {
   Q_OBJECT
 public:
-  IBookSearchAPI(QObject* parent = nullptr) : QObject(parent) {}
+  IBookSearchAPI(QObject *parent = nullptr) : QObject{parent} {}
   virtual ~IBookSearchAPI() = default;
-  virtual void search(const BookSearchFields& params) = 0;
+  virtual void search(const BookSearchFields &params) = 0;
   virtual void searchByISBN(qint64 isbn) = 0;
 
 signals:
   void searchListUpdated(QList<services::BookDTO> books);
 };
 
-} // api
-} // readary
+} // namespace api
+} // namespace readary
 
-#endif //LIBRARY_IBOOKSEARCHAPI_H
+#endif // LIBRARY_IBOOKSEARCHAPI_H

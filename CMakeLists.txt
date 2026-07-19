@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Library VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
@@ -68,6 +68,7 @@ file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS
     src/core/DatabaseManager.cpp src/core/DatabaseManager.hpp
     src/core/SqlQueryBuilder.cpp src/core/SqlQueryBuilder.hpp
     src/services/*.cpp src/services/*.hpp
+    src/utils/*.cpp src/utils/*.hpp
     src/qmltypes/*.cpp src/qmltypes/*.hpp
     src/api/*.cpp src/api/*.hpp
     src/models/*.cpp src/models/*.hpp
@@ -91,6 +92,7 @@ target_include_directories(ReadaryCore PUBLIC
     src
     src/qmltypes
     src/services
+    src/utils
     src/controllers
     src/models/books
     src/models/settings

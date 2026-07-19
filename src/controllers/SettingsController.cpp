@@ -11,8 +11,8 @@ namespace readary::controllers {
 SettingsController *SettingsController::s_instance = nullptr;
 
 SettingsController::SettingsController(QObject *parent)
-    : QObject(parent), _languageModel{new readary::models::LanguageModel(this)},
-      _fontModel{new readary::models::FontModel(this)} {
+    : QObject{parent}, _languageModel{new readary::models::LanguageModel{this}},
+      _fontModel{new readary::models::FontModel{this}} {
   qCInfo(lcSettings) << "SettingsController initialized";
 }
 

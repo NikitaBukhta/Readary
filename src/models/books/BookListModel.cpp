@@ -9,8 +9,7 @@ Q_LOGGING_CATEGORY(lcBookModel, "readary.models.books")
 namespace readary::models {
 
 BookListModel::BookListModel(std::shared_ptr<services::BookTable> bookTable, QObject *parent)
-    : BookListModelBase(parent), _bookTable{std::move(bookTable)} {
-}
+    : BookListModelBase{parent}, _bookTable{std::move(bookTable)} {}
 
 bool BookListModel::deleteBook(qint64 isbn) {
   if (!_bookTable->deleteBook(isbn)) {

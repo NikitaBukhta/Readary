@@ -10,7 +10,7 @@ Q_LOGGING_CATEGORY(lcCharactersModel, "readary.models.characters")
 namespace readary::models {
 
 BookCharactersModel::BookCharactersModel(std::shared_ptr<services::BookTable> bookTable, QObject *parent)
-    : QAbstractListModel(parent), _bookTable{std::move(bookTable)} {}
+    : QAbstractListModel{parent}, _bookTable{std::move(bookTable)} {}
 
 int BookCharactersModel::rowCount(const QModelIndex &parent) const {
   if (parent.isValid())

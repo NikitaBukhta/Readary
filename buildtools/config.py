@@ -124,6 +124,9 @@ class ProjectConfig:
     jobs: int = field(default_factory=lambda: os.cpu_count() or 1)
     cmake_defs: list[str] = field(default_factory=list)
     skip_analyze: bool = False
+    # `clean-cache --deep`: also drop the vcpkg binary cache (forces a full
+    # from-source rebuild next bootstrap). Off = keep it for fast re-bootstraps.
+    clean_cache_deep: bool = False
     # Explicit build type (e.g. "MinSizeRel") that supersedes the Debug/Release
     # derived from `release`. Set by the `--all` matrix; None for normal runs.
     build_type_override: str | None = None
@@ -230,6 +233,36 @@ class ProjectConfig:
         # blow past Windows' 250-char limit under the default buildtrees
         # location, failing the qtdeclarative port build. Kept short here.
         return Path(self.deps_dir.anchor or "C:/") / "vcpkgbt"
+
+    @property
+    def vcpkg_default_buildtrees_dir(self) -> Path:
+        # vcpkg's in-tree buildtrees, used when no --x-buildtrees-root is passed
+        # (older runs, manual `vcpkg install`). Pruned alongside the relocated one.
+        return self.vcpkg_dir / "buildtrees"
+
+    @property
+    def vcpkg_packages_dir(self) -> Path:
+        # Per-port staging vcpkg fills before copying into the install tree;
+        # dead weight once the deps_dir install tree is populated.
+        return self.vcpkg_dir / "packages"
+
+    @property
+    def vcpkg_downloads_dir(self) -> Path:
+        # Cached upstream source tarballs; re-fetched on demand if a port rebuilds.
+        return self.vcpkg_dir / "downloads"
+
+    @property
+    def vcpkg_binary_cache_dir(self) -> Path:
+        # vcpkg's default binary cache (prebuilt port archives). Removing it
+        # forces a full from-source rebuild on the next bootstrap, so it's only
+        # cleared on a --deep clean.
+        if self.is_windows:
+            local = os.environ.get("LOCALAPPDATA")
+            base = Path(local) if local else Path.home() / "AppData" / "Local"
+            return base / "vcpkg" / "archives"
+        xdg = os.environ.get("XDG_CACHE_HOME")
+        base = Path(xdg) if xdg else Path.home() / ".cache"
+        return base / "vcpkg" / "archives"
 
     # ---- Android paths ----------------------------------------------------
 

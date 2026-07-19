@@ -25,7 +25,7 @@ public:
   Q_INVOKABLE bool deleteBook(qint64 isbn);
 
 signals:
-    void errorMessageChanged();
+  void errorMessageChanged();
 
 private:
   void setErrorMessage(const QString &message);

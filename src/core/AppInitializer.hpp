@@ -19,6 +19,7 @@ namespace readary::controllers {
 class BookController;
 class NavigationController;
 class SettingsController;
+class GlobalBookSearchController;
 } // namespace readary::controllers
 
 namespace readary::core {
@@ -49,6 +50,7 @@ private:
   controllers::BookController *_bookController;
   controllers::NavigationController *_contextModel;
   controllers::SettingsController *_settingsController;
+  controllers::GlobalBookSearchController *_globalSearchController;
 };
 
 } // namespace readary::core

@@ -1,0 +1,43 @@
+// Windows application resource script for Readary.
+// Pulled into the executable on desktop builds only (CMakeLists.txt guards it
+// behind WIN32 AND NOT ANDROID). Provides the app icon + version metadata
+// shown in Explorer/Task Manager. Paths are relative to this file's dir.
+
+#include <windows.h>
+
+// Application icon (Explorer, taskbar, title bar). Lowest ID = the icon
+// Windows uses for the .exe.
+IDI_ICON1 ICON "icon.ico"
+
+VS_VERSION_INFO VERSIONINFO
+    FILEVERSION     0,1,0,0
+    PRODUCTVERSION  0,1,0,0
+    FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+    FILEFLAGS       VS_FF_DEBUG
+#else
+    FILEFLAGS       0x0L
+#endif
+    FILEOS          VOS_NT_WINDOWS32
+    FILETYPE        VFT_APP
+    FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"  // U.S. English, Unicode
+        BEGIN
+            VALUE "CompanyName",      "Readary"
+            VALUE "FileDescription",  "Readary - personal book library"
+            VALUE "FileVersion",      "0.1.0.0"
+            VALUE "InternalName",     "Readary"
+            VALUE "LegalCopyright",   "Copyright (C) 2026"
+            VALUE "OriginalFilename", "Readary.exe"
+            VALUE "ProductName",      "Readary"
+            VALUE "ProductVersion",   "0.1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200  // U.S. English, Unicode
+    END
+END

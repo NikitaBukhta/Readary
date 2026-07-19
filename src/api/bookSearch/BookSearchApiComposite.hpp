@@ -13,7 +13,7 @@ using Priority = qint8;
 class BookSearchAPIComposite : public IBookSearchAPI {
   Q_OBJECT
 public:
-  BookSearchAPIComposite(QList<IBookSearchAPI *> &&book_search_ap_is, QObject *parent = nullptr);
+  BookSearchAPIComposite(QList<IBookSearchAPI *> &&bookSearchAPIs, QObject *parent = nullptr);
   void search(const BookSearchFields &params) override;
   void searchByISBN(qint64 isbn) override;
 
@@ -24,12 +24,11 @@ private:
   void initConnect();
 
 private:
-  QList<IBookSearchAPI*> _bookSearchAPIs;
+  QList<IBookSearchAPI *> _bookSearchAPIs;
+  QList<services::BookDTO> _aggregated;
 };
 
-} // api
-} // readary
+} // namespace api
+} // namespace readary
 
-
-
-#endif //LIBRARY_BOOKSEARCHAPIAGREGATOR_HPP
+#endif // LIBRARY_BOOKSEARCHAPIAGREGATOR_HPP
