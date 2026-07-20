@@ -60,9 +60,9 @@ public:
   Q_INVOKABLE void openBook(qint64 isbn);
   void importAndOpenBook(const services::BookDTO &book);
 
-  static Q_INVOKABLE void saveReadingSession(qint64 bookIsbn, int seconds, int phase);
-  static Q_INVOKABLE QVariantMap takeReadingSession(qint64 bookIsbn);
-  static Q_INVOKABLE void clearReadingSession(qint64 bookIsbn);
+  static Q_INVOKABLE void saveReadingSession(const QString &bookIsbn, int seconds, int phase);
+  static Q_INVOKABLE QVariantMap takeReadingSession(const QString &bookIsbn);
+  static Q_INVOKABLE void clearReadingSession(const QString &bookIsbn);
   Q_INVOKABLE void setBookStatus(int status);
   Q_INVOKABLE void toggleWantToRead();
   Q_INVOKABLE void toggleWishList();

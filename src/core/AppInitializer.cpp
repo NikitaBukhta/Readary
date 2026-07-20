@@ -11,9 +11,6 @@
 #include "models/settings/FontModel.hpp"
 #include "models/settings/LanguageModel.hpp"
 
-#include <QLoggingCategory>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
 #include <QtQml>
 
 namespace {
@@ -53,8 +50,8 @@ void AppInitializer::initDatabase() {
 
   _db->runScript(":/db/init.sql");
 
-#ifndef QT_NO_DEBUG
-  _db->runScript(":/db/test_data.sql");
+#ifdef QT_DEBUG
+  // _db->runScript(":/db/test_data.sql");
 #endif
 
   _bookTable = std::make_shared<services::BookTable>(_db);

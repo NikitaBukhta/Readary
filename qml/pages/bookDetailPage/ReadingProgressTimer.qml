@@ -18,7 +18,7 @@ PaddedCard {
     property bool _confirming: false
     property int _pageInput: 0
     property int _phaseBeforeConfirm: ReadingPhase.Stopped
-    property real _bookIsbnAtCreation: 0
+    property string _bookIsbnAtCreation: ""
 
     signal endSessionConfirmed(int pageNumber, int durationSeconds)
 
@@ -56,6 +56,19 @@ PaddedCard {
         phase = ReadingPhase.Stopped;
     }
 
+    // Persist only on state changes: the cache stores lastSyncAt, so a Running
+    // session's elapsed time is reconstructed on restore — no periodic flushing
+    // needed. Writing here (start/pause/resume/stop) means a crash mid-session
+    // still recovers, because the Running phase was stamped when it began.
+    function _persistState() {
+        if (_bookIsbnAtCreation.length === 0)
+            return;
+        if (phase === ReadingPhase.Stopped)
+            BookController.clearReadingSession(_bookIsbnAtCreation);
+        else
+            BookController.saveReadingSession(_bookIsbnAtCreation, seconds, phase);
+    }
+
     onPhaseChanged: {
         if (phase === ReadingPhase.Stopped) {
             seconds = 0;
@@ -63,11 +76,13 @@ PaddedCard {
         } else if (phase === ReadingPhase.Running) {
             BookController.setBookStatus(BookStatus.InProgress);
         }
+        _persistState();
     }
 
     Component.onCompleted: {
-        _bookIsbnAtCreation = BookController.currentBookIsbn;
-        if (_bookIsbnAtCreation <= 0)
+        const isbn = BookController.currentBookIsbn;
+        _bookIsbnAtCreation = isbn > 0 ? "" + isbn : "";
+        if (_bookIsbnAtCreation.length === 0)
             return;
 
         const cached = BookController.takeReadingSession(_bookIsbnAtCreation);
@@ -77,15 +92,7 @@ PaddedCard {
         }
     }
 
-    Component.onDestruction: {
-        if (_bookIsbnAtCreation <= 0)
-            return;
-        if (phase !== ReadingPhase.Stopped) {
-            BookController.saveReadingSession(_bookIsbnAtCreation, seconds, phase);
-        } else {
-            BookController.clearReadingSession(_bookIsbnAtCreation);
-        }
-    }
+    Component.onDestruction: _persistState()
 
     Timer {
         id: tick
@@ -93,15 +100,6 @@ PaddedCard {
         repeat: true
         running: root.phase === ReadingPhase.Running
         onTriggered: root.seconds += 1
-    }
-
-    // Periodic flush so a non-graceful shutdown loses at most one interval.
-    Timer {
-        id: persistTick
-        interval: 5000
-        repeat: true
-        running: root.phase === ReadingPhase.Running && root._bookIsbnAtCreation > 0
-        onTriggered: BookController.saveReadingSession(root._bookIsbnAtCreation, root.seconds, root.phase)
     }
 
     ColumnLayout {

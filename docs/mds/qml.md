@@ -318,12 +318,18 @@ Key behaviours:
 - **Tick loop** — internal `Timer { interval: 1000; running: phase ===
   Running }` increments `seconds`.
 - **Persistence** — on `Component.onCompleted` the timer captures
-  `BookController.currentBookId` into `_bookIdAtCreation` and pulls saved
-  state via `BookController.takeReadingSession(_bookIdAtCreation)`. A
+  `BookController.currentBookIsbn` into `_bookIsbnAtCreation` and pulls saved
+  state via `BookController.takeReadingSession(_bookIsbnAtCreation)`. A
   second `Timer { interval: 5000 }` flushes `(seconds, phase)` to
   `ReadingSessionCache` while running, so a non-graceful shutdown loses at
   most 5s. `Component.onDestruction` does a final save (or clear when
   Stopped). See [database.md → ReadingSessionCache](database.md#readingsessioncache-qsettings).
+  **`_bookIsbnAtCreation` is a `string`, not a number**: a 13-digit ISBN
+  passed through a `qint64` QML invokable parameter silently arrives as `0`
+  on the C++ side (reads out of a `qint64` Q_PROPERTY are fine — only the
+  invokable-argument direction breaks), which previously made restore a
+  no-op. Capture and pass the ISBN as a string; `BookController` parses it
+  back to `qint64`.
 - **Confirm form** — tapping "End session and save progress" opens an
   inline form (`Where did you stop?` + page-number `TextField` + Cancel
   / Save). Open auto-pauses if currently Running and remembers

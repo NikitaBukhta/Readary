@@ -54,3 +54,47 @@ target_link_libraries(IsbnValidatorTest PRIVATE
 )
 
 add_test(NAME IsbnValidator COMMAND IsbnValidatorTest)
+
+qt_add_executable(SearchCacheTest
+    services/SearchCacheTest.cpp
+)
+
+target_link_libraries(SearchCacheTest PRIVATE
+    ReadaryCore
+    Qt6::Test
+)
+
+add_test(NAME SearchCache COMMAND SearchCacheTest)
+
+qt_add_executable(ReadingSessionCacheTest
+    services/ReadingSessionCacheTest.cpp
+)
+
+target_link_libraries(ReadingSessionCacheTest PRIVATE
+    ReadaryCore
+    Qt6::Test
+)
+
+add_test(NAME ReadingSessionCache COMMAND ReadingSessionCacheTest)
+
+qt_add_executable(BookControllerSessionTest
+    controllers/BookControllerSessionTest.cpp
+)
+
+target_link_libraries(BookControllerSessionTest PRIVATE
+    ReadaryCore
+    Qt6::Test
+)
+
+add_test(NAME BookControllerSession COMMAND BookControllerSessionTest)
+
+qt_add_executable(GlobalBookSearchControllerTest
+    controllers/GlobalBookSearchControllerTest.cpp
+)
+
+target_link_libraries(GlobalBookSearchControllerTest PRIVATE
+    ReadaryCore
+    Qt6::Test
+)
+
+add_test(NAME GlobalBookSearchController COMMAND GlobalBookSearchControllerTest)

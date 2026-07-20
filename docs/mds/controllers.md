@@ -40,9 +40,9 @@ responsibilities deliberately, since both are book-scoped and small:
 | `hasCachedProgress()` | `Q_INVOKABLE` (const) | true if the current book has a cached progress snapshot (i.e. it was moved out of in-progress). Drives the "restore progress?" prompt shown when reading is (re)started |
 | `restoreCachedProgress()` | `Q_INVOKABLE` | takes-and-clears the cached snapshot, writing it back to `books.pagesRead` and setting status `InProgress`; emits `bookSaved` |
 | `discardCachedProgress()` | `Q_INVOKABLE` (const) | drops the cached snapshot without restoring (the "start over" choice) |
-| `saveReadingSession(bookId, seconds, phase)` | `Q_INVOKABLE static` | per-book timer-state writer; thin wrapper over `services::ReadingSessionCache::save`. Static because there's no instance state — the bookId is explicit |
-| `takeReadingSession(bookId)` | `Q_INVOKABLE static` | reads-and-clears the timer-state group via `ReadingSessionCache::takeState`. Returns `{}` if nothing saved |
-| `clearReadingSession(bookId)` | `Q_INVOKABLE static` | drops the timer-state group |
+| `saveReadingSession(bookIsbn, seconds, phase)` | `Q_INVOKABLE static` | per-book timer-state writer; parses `bookIsbn` (string) and forwards to `services::ReadingSessionCache::save`. Static because there's no instance state — the ISBN is explicit |
+| `takeReadingSession(bookIsbn)` | `Q_INVOKABLE static` | reads-and-clears the timer-state group via `ReadingSessionCache::takeState`. Returns `{}` if nothing saved |
+| `clearReadingSession(bookIsbn)` | `Q_INVOKABLE static` | drops the timer-state group |
 | `bookSaved` | signal | emitted after a successful save; wired to `BookListModel::refresh` |
 | `bookOpenRequested(qint64 id)` | signal | wired in `AppInitializer` to `NavigationController::setCurrentPage(BOOK_DETAIL_PAGE)` |
 
@@ -135,10 +135,14 @@ under `readingSession/<bookId>/`) so it survives app restarts.
 Two distinct paths through `BookController`:
 
 - **Per-tick state** — `saveReadingSession`/`takeReadingSession`/`clearReadingSession`
-  proxy to `ReadingSessionCache::*`. They take `bookId` explicitly so the QML
-  side can capture the bookId at component creation and use the same id at
-  destruction even if `currentBookId` shifts in between. Static because they
-  carry no controller state of their own.
+  proxy to `ReadingSessionCache::*`. They take the ISBN explicitly so the QML
+  side can capture it at component creation and use the same value at
+  destruction even if `currentBookIsbn` shifts in between. Static because they
+  carry no controller state of their own. The ISBN is passed as a **string**,
+  not `qint64`: a 13-digit ISBN silently arrives as `0` through a `qint64` QML
+  invokable parameter (see [qml.md](qml.md) and the note in
+  `ReadingProgressTimer.qml`), so these methods parse the string back to
+  `qint64` internally.
 - **Final progress** — when the user confirms the page on session end,
   `updateReadingProgress(pageNumber, durationSeconds)` runs a real DB write:
   - `BookTable::updatePagesRead` → `UPDATE books SET pagesRead = ?`

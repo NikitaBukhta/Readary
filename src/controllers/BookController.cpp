@@ -123,22 +123,25 @@ void BookController::importAndOpenBook(const services::BookDTO &book) {
   openBook(book.isbn);
 }
 
-void BookController::saveReadingSession(qint64 bookIsbn, int seconds, int phase) {
-  if (bookIsbn <= 0)
+void BookController::saveReadingSession(const QString &bookIsbn, int seconds, int phase) {
+  const qint64 isbn = bookIsbn.toLongLong();
+  if (isbn <= 0)
     return;
-  services::ReadingSessionCache::save(bookIsbn, seconds, phase);
+  services::ReadingSessionCache::save(isbn, seconds, phase);
 }
 
-QVariantMap BookController::takeReadingSession(qint64 bookIsbn) {
-  if (bookIsbn <= 0)
+QVariantMap BookController::takeReadingSession(const QString &bookIsbn) {
+  const qint64 isbn = bookIsbn.toLongLong();
+  if (isbn <= 0)
     return {};
-  return services::ReadingSessionCache::takeState(bookIsbn);
+  return services::ReadingSessionCache::takeState(isbn);
 }
 
-void BookController::clearReadingSession(qint64 bookIsbn) {
-  if (bookIsbn <= 0)
+void BookController::clearReadingSession(const QString &bookIsbn) {
+  const qint64 isbn = bookIsbn.toLongLong();
+  if (isbn <= 0)
     return;
-  services::ReadingSessionCache::clear(bookIsbn);
+  services::ReadingSessionCache::clear(isbn);
 }
 
 void BookController::setBookStatus(int status) {
