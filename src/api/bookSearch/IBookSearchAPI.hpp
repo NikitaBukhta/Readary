@@ -22,9 +22,11 @@ public:
   virtual ~IBookSearchAPI() = default;
   virtual void search(const BookSearchFields &params) = 0;
   virtual void searchByISBN(qint64 isbn) = 0;
+  virtual void fetchDescription(const QString &workKey) = 0;
 
 signals:
   void searchListUpdated(QList<services::BookDTO> books, bool hasMore);
+  void descriptionReady(QString workKey, QString description);
 };
 
 } // namespace api

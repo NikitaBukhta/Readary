@@ -21,7 +21,7 @@ Q_LOGGING_CATEGORY(lcOpenLibrary, "readary.api.openlibrary")
 constexpr int g_pageSize{25};
 const QString g_apiNameLink{"https://openlibrary.org"};
 const QString g_searchLink{g_apiNameLink + "/search.json?q="};
-const QString g_fieldsParam{"&fields=title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median"};
+const QString g_fieldsParam{"&fields=key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median"};
 
 QString generateRequest(const readary::api::BookSearchFields &params) {
   const std::string separator = " OR ";
@@ -71,6 +71,15 @@ void OpenLibrarySeachAPI::searchByISBN(qint64 isbn) {
   search(BookSearchFields{.isbn = isbn, .name = {}, .author = {}});
 }
 
+void OpenLibrarySeachAPI::fetchDescription(const QString &workKey) {
+  if (workKey.isEmpty()) {
+    return;
+  }
+  const auto url = g_apiNameLink + workKey + u".json"_s;
+    qCInfo(lcOpenLibrary) << "description request:" << url;
+  sendRequest(url);
+}
+
 void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
   if (reply == nullptr) {
     qCWarning(lcOpenLibrary) << "reply is not valid";
@@ -78,6 +87,14 @@ void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
   }
   reply->deleteLater();
 
+  if (reply->url().path().startsWith(u"/works/"_s)) {
+    handleWorkResponse(reply);
+  } else {
+    handleSearchResponse(reply);
+  }
+}
+
+void OpenLibrarySeachAPI::handleSearchResponse(QNetworkReply *reply) {
   const auto httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   if (reply->error()) {
     qCWarning(lcOpenLibrary) << "network error:" << reply->error() << reply->errorString()
@@ -117,6 +134,7 @@ void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
 
     services::BookDTO book;
     book.isbn = isbn;
+    book.workKey = obj.value(u"key"_s).toString();
     book.name = obj.value(u"title"_s).toString();
     book.year = obj.value(u"first_publish_year"_s).toInt();
     book.totalPages = totalPages;
@@ -136,6 +154,31 @@ void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
                         << "skipped (no ISBN or no page count):" << (docs.size() - books.size())
                         << "hasMore:" << hasMore;
   emit searchListUpdated(books, hasMore);
+}
+
+void OpenLibrarySeachAPI::handleWorkResponse(QNetworkReply *reply) {
+  QString workKey = reply->url().path();
+  if (workKey.endsWith(u".json"_s)) {
+    workKey.chop(5);
+  }
+
+  if (reply->error()) {
+    qCWarning(lcOpenLibrary) << "work fetch error:" << reply->errorString();
+    emit descriptionReady(workKey, QString{});
+    return;
+  }
+
+  const auto obj = QJsonDocument::fromJson(reply->readAll()).object();
+  const auto descriptionValue = obj.value(u"description"_s);
+  QString description;
+  if (descriptionValue.isString()) {
+    description = descriptionValue.toString();
+  } else if (descriptionValue.isObject()) {
+    description = descriptionValue.toObject().value(u"value"_s).toString();
+  }
+
+  qCInfo(lcOpenLibrary) << "description for" << workKey << "chars:" << description.size();
+  emit descriptionReady(workKey, description);
 }
 
 } // namespace readary::api

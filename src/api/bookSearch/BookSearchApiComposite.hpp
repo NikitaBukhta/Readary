@@ -15,6 +15,7 @@ public:
   BookSearchAPIComposite(QList<IBookSearchAPI *> &&bookSearchAPIs, QObject *parent = nullptr);
   void search(const BookSearchFields &params) override;
   void searchByISBN(qint64 isbn) override;
+  void fetchDescription(const QString &workKey) override;
 
 private slots:
   void handleSearchListUpdate(const QList<services::BookDTO> &params, bool hasMore);

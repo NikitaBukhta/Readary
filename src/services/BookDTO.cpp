@@ -20,6 +20,7 @@ BookDTO BookDTO::fromMap(const QVariantMap &data) {
   dto.userRating = data.value("userRating").toInt();
   dto.status = data.value("status").toInt();
   dto.inWishList = data.value("inWishList").toBool();
+  dto.workKey = data.value("workKey").toString();
   return dto;
 }
 
@@ -41,6 +42,7 @@ QVariantMap BookDTO::toMap() const {
       {"userRating", userRating},
       {"status", status},
       {"inWishList", inWishList},
+      {"workKey", workKey},
   };
 }
 

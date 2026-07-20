@@ -22,6 +22,8 @@ void GlobalBookSearchController::setBookSearchAPI(api::IBookSearchAPI *api) {
   if (_bookSearchAPI != nullptr) {
     connect(_bookSearchAPI, &api::IBookSearchAPI::searchListUpdated, this,
             &GlobalBookSearchController::onSearchResults);
+    connect(_bookSearchAPI, &api::IBookSearchAPI::descriptionReady, this,
+            &GlobalBookSearchController::onDescriptionReady);
   }
 }
 
@@ -165,8 +167,26 @@ void GlobalBookSearchController::openBook(qint64 isbn) {
     qCWarning(lcGlobalSearch) << "openBook — isbn not in results:" << isbn;
     return;
   }
+
+  _pendingImport = book;
+  if (_bookSearchAPI != nullptr && !book.workKey.isEmpty()) {
+    qCInfo(lcGlobalSearch) << "fetching description before import — isbn:" << book.isbn << "workKey:" << book.workKey;
+    _bookSearchAPI->fetchDescription(book.workKey);
+    return;
+  }
+
   qCInfo(lcGlobalSearch) << "import & open requested — isbn:" << book.isbn << "name:" << book.name;
   emit bookImportRequested(book);
+}
+
+void GlobalBookSearchController::onDescriptionReady(const QString &workKey, const QString &description) {
+  if (workKey != _pendingImport.workKey) {
+    return;
+  }
+  _pendingImport.description = description;
+  qCInfo(lcGlobalSearch) << "import & open requested — isbn:" << _pendingImport.isbn
+                         << "description chars:" << description.size();
+  emit bookImportRequested(_pendingImport);
 }
 
 GlobalBookSearchController *GlobalBookSearchController::create(QQmlEngine *engine, QJSEngine *scriptEngine) {

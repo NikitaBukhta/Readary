@@ -19,6 +19,7 @@ BookDTO makeBook(qint64 isbn, const QString &name) {
   book.year = 1999;
   book.totalPages = 321;
   book.coverUrl = QStringLiteral("https://covers/%1.jpg").arg(isbn);
+  book.workKey = QStringLiteral("/works/OL%1W").arg(isbn);
   return book;
 }
 
@@ -96,6 +97,7 @@ void SearchCacheTest::put_thenGet_roundTripsBookFields() {
   QCOMPARE(out->books.at(0).name, QStringLiteral("hobbit"));
   QCOMPARE(out->books.at(0).authorName, QStringLiteral("Author of hobbit"));
   QCOMPARE(out->books.at(0).totalPages, 321);
+  QCOMPARE(out->books.at(0).workKey, QStringLiteral("/works/OL111W"));
   QCOMPARE(out->books.at(1).coverUrl, QStringLiteral("https://covers/222.jpg"));
 }
 

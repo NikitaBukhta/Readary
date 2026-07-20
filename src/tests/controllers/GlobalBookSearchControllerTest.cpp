@@ -39,14 +39,23 @@ public:
     ++isbnCalls;
     lastIsbn = isbn;
   }
+  void fetchDescription(const QString &workKey) override {
+    ++descriptionCalls;
+    lastWorkKey = workKey;
+  }
 
   void deliver(const QList<BookDTO> &books, bool hasMore) { emit searchListUpdated(books, hasMore); }
+  void deliverDescription(const QString &workKey, const QString &description) {
+    emit descriptionReady(workKey, description);
+  }
 
   int searchCalls = 0;
   int isbnCalls = 0;
+  int descriptionCalls = 0;
   int lastPage = 0;
   qint64 lastIsbn = 0;
   QString lastName;
+  QString lastWorkKey;
 };
 
 qint64 isbnAt(const QAbstractItemModel *model, int row) {
@@ -78,6 +87,9 @@ private slots:
   void loadMore_whileRequestInFlight_isIgnored();
   void cachedQuery_resumesPaginationFromNextPage();
   void search_withoutApi_doesNotCrash();
+  void openBook_withWorkKey_fetchesDescriptionThenImportsWithIt();
+  void openBook_withoutWorkKey_importsWithoutFetch();
+  void onDescriptionReady_forStaleWorkKey_isIgnored();
 };
 
 void GlobalBookSearchControllerTest::initTestCase() {
@@ -321,6 +333,72 @@ void GlobalBookSearchControllerTest::search_withoutApi_doesNotCrash() {
   GlobalBookSearchController ctrl(nullptr); // no setBookSearchAPI()
   ctrl.search(QStringLiteral("orphan"));
   QCOMPARE(ctrl.resultsModel()->rowCount(), 0);
+}
+
+void GlobalBookSearchControllerTest::openBook_withWorkKey_fetchesDescriptionThenImportsWithIt() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+
+  BookDTO result = makeBook(111, QStringLiteral("a"));
+  result.workKey = QStringLiteral("/works/OL1W");
+  ctrl.search(QStringLiteral("tolkien"));
+  api.deliver({result}, false);
+
+  int importCount = 0;
+  BookDTO imported;
+  QObject::connect(&ctrl, &GlobalBookSearchController::bookImportRequested, &ctrl, [&](const BookDTO &book) {
+    ++importCount;
+    imported = book;
+  });
+
+  ctrl.openBook(111);
+  QCOMPARE(api.descriptionCalls, 1);
+  QCOMPARE(api.lastWorkKey, QStringLiteral("/works/OL1W"));
+  QCOMPARE(importCount, 0); // deferred until the description arrives
+
+  api.deliverDescription(QStringLiteral("/works/OL1W"), QStringLiteral("What the book is about."));
+  QCOMPARE(importCount, 1);
+  QCOMPARE(imported.description, QStringLiteral("What the book is about."));
+}
+
+void GlobalBookSearchControllerTest::openBook_withoutWorkKey_importsWithoutFetch() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+
+  ctrl.search(QStringLiteral("tolkien"));
+  api.deliver({makeBook(111, QStringLiteral("a"))}, false); // no workKey
+
+  int importCount = 0;
+  QObject::connect(&ctrl, &GlobalBookSearchController::bookImportRequested, &ctrl,
+                   [&](const BookDTO &) { ++importCount; });
+
+  ctrl.openBook(111);
+  QCOMPARE(api.descriptionCalls, 0);
+  QCOMPARE(importCount, 1);
+}
+
+void GlobalBookSearchControllerTest::onDescriptionReady_forStaleWorkKey_isIgnored() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+
+  BookDTO result = makeBook(111, QStringLiteral("a"));
+  result.workKey = QStringLiteral("/works/OL1W");
+  ctrl.search(QStringLiteral("tolkien"));
+  api.deliver({result}, false);
+
+  int importCount = 0;
+  QObject::connect(&ctrl, &GlobalBookSearchController::bookImportRequested, &ctrl,
+                   [&](const BookDTO &) { ++importCount; });
+
+  ctrl.openBook(111);
+  api.deliverDescription(QStringLiteral("/works/OTHER"), QStringLiteral("x")); // mismatched key
+  QCOMPARE(importCount, 0);
+
+  api.deliverDescription(QStringLiteral("/works/OL1W"), QStringLiteral("real"));
+  QCOMPARE(importCount, 1);
 }
 
 QTEST_GUILESS_MAIN(GlobalBookSearchControllerTest)

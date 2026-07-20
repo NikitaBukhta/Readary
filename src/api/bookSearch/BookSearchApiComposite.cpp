@@ -30,6 +30,12 @@ void BookSearchAPIComposite::searchByISBN(qint64 isbn) {
   }
 }
 
+void BookSearchAPIComposite::fetchDescription(const QString &workKey) {
+  for (IBookSearchAPI *bookAPI : _bookSearchAPIs) {
+    bookAPI->fetchDescription(workKey);
+  }
+}
+
 void BookSearchAPIComposite::handleSearchListUpdate(const QList<services::BookDTO> &params, bool hasMore) {
   _aggregated.append(params);
   qCInfo(lcComposite) << "source returned" << params.size() << "book(s); aggregated total:" << _aggregated.size()
@@ -40,6 +46,7 @@ void BookSearchAPIComposite::handleSearchListUpdate(const QList<services::BookDT
 void BookSearchAPIComposite::initConnect() {
   for (const IBookSearchAPI *bookAPI : _bookSearchAPIs) {
     connect(bookAPI, &IBookSearchAPI::searchListUpdated, this, &BookSearchAPIComposite::handleSearchListUpdate);
+    connect(bookAPI, &IBookSearchAPI::descriptionReady, this, &IBookSearchAPI::descriptionReady);
   }
 }
 

@@ -24,6 +24,7 @@ struct BookDTO {
   int userRating = 0;
   int status = 0;
   bool inWishList = false;
+  QString workKey;
 
   static BookDTO fromMap(const QVariantMap &data);
   QVariantMap toMap() const;

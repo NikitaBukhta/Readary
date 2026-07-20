@@ -11,9 +11,12 @@ public:
   OpenLibrarySeachAPI(QObject *parent = nullptr);
   void search(const BookSearchFields &params) override;
   void searchByISBN(qint64 isbn) override;
+  void fetchDescription(const QString &workKey) override;
 
 private:
   void onResponseReceived(QNetworkReply *reply);
+  void handleSearchResponse(QNetworkReply *reply);
+  void handleWorkResponse(QNetworkReply *reply);
 };
 
 } // namespace api

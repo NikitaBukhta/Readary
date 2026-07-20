@@ -58,6 +58,8 @@ private:
   CachedSearch &accumulatePage(const QString &query, int page, const QList<services::BookDTO> &books, bool hasMore);
   void showPage(const QList<services::BookDTO> &books, bool firstPage);
 
+  void onDescriptionReady(const QString &workKey, const QString &description);
+
   static GlobalBookSearchController *s_instance;
   api::IBookSearchAPI *_bookSearchAPI;
   models::GlobalBookSearchListModel *_resultsModel;
@@ -67,6 +69,8 @@ private:
   QString _pendingQuery;
   int _pendingPage{1};
   bool _loading = false;
+
+  services::BookDTO _pendingImport;
 };
 
 } // namespace controllers
