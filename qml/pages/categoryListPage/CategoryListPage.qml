@@ -82,16 +82,31 @@ Page {
             font.pixelSize: Styles.fontSize.body
         }
 
-        AppSearchField {
-            id: searchField
+        RowLayout {
+            id: searchRow
             Layout.fillWidth: true
             Layout.leftMargin: root._sidePadding
             Layout.rightMargin: root._sidePadding
             Layout.topMargin: Geometry.spacing.lg
-            placeholderText: qsTr("Search in this list...")
-            text: BookController.searchModel.searchQuery
-            onTextEdited: text => BookController.searchModel.searchQuery = text
-            onAccepted: text => BookController.searchModel.searchQuery = text
+            spacing: Geometry.spacing.md
+
+            AppSearchField {
+                id: searchField
+                Layout.fillWidth: true
+                placeholderText: qsTr("Search in this list...")
+                text: BookController.searchModel.searchQuery
+                onTextEdited: text => BookController.searchModel.searchQuery = text
+                onAccepted: text => BookController.searchModel.searchQuery = text
+            }
+
+            FilterButton {
+                id: filterButton
+                activeCount: BookFilterController.activeCount
+                onClicked: {
+                    BookFilterController.scope = BookFilterController.Library;
+                    filterSheet.open();
+                }
+            }
         }
 
         ListView {
@@ -124,5 +139,9 @@ Page {
                 onClicked: BookController.openBook(model.isbn)
             }
         }
+    }
+
+    FilterSheet {
+        id: filterSheet
     }
 }

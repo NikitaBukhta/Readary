@@ -30,11 +30,10 @@ struct BookDTOObject : public readary::services::BookDTO {
   Q_PROPERTY(int userRating MEMBER userRating)
   Q_PROPERTY(int status MEMBER status)
   Q_PROPERTY(bool inWishList MEMBER inWishList)
+  Q_PROPERTY(QString language MEMBER language)
   Q_PROPERTY(QStringList genres MEMBER genres)
 
 public:
-  QStringList genres;
-
   BookDTOObject() = default;
   BookDTOObject(const readary::services::BookDTO &base) : readary::services::BookDTO(base) {}
   BookDTOObject(readary::services::BookDTO &&base) noexcept : readary::services::BookDTO(std::move(base)) {}

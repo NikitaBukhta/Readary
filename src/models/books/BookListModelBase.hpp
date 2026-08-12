@@ -29,6 +29,8 @@ public:
     UserRatingRole,
     StatusRole,
     InWishListRole,
+    LanguageRole,
+    GenresRole,
   };
   Q_ENUM(RolesEnum)
 
@@ -44,6 +46,7 @@ public:
   void appendBooks(const QList<services::BookDTO> &books);
   bool contains(qint64 isbn) const;
   services::BookDTO getBook(qint64 isbn) const;
+  const QList<services::BookDTO> &books() const;
 
 protected:
   QList<services::BookDTO> _books;

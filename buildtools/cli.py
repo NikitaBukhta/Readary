@@ -95,7 +95,7 @@ class CommandRegistry:
             "run": RunCommand(
                 self.config, self.shell, self._jdk, self._android_sdk,
             ),
-            "test": TestCommand(self.config),
+            "test": TestCommand(self.config, self.shell, self._cmake),
             "translate": TranslateCommand(
                 self.config, self.shell, self._venv_mgr, self._linguist,
             ),

@@ -67,6 +67,9 @@ Read these before non-trivial work in the corresponding area — they are kept c
 | `docs/mds/controllers.md` | Full QML-visible API of each controller |
 | `docs/mds/models-and-filters.md` | Filter Strategy pattern |
 | `docs/mds/book-search.md` | Search proxy ranking algorithm + score-cache caveats |
+| `docs/mds/online-book-search.md` | Online catalogs: OpenLibrary → Google Books fallback, language filter, retry, API keys |
+| `docs/mds/filtering.md` | Multi-criteria filtering across the local library and the online search |
+| `docs/mds/description-translation.md` | Translating imported book descriptions into the UI language |
 | `docs/mds/database.md` | SQLite schema |
 | `docs/mds/i18n.md` | Translation pipeline (`tr`/`qsTr` → auto-translate → `.qm` → runtime) |
 | `docs/mds/build-and-resources.md` | qrc bundling, static-analysis details, logging |

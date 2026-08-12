@@ -99,6 +99,11 @@ target_include_directories(ReadaryCore PUBLIC
 )
 target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg Qt6::Network)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ReadarySecrets.cmake)
+set(_SECRETS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/secrets/api_keys.env)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_SECRETS_FILE})
+readary_load_secrets(${_SECRETS_FILE} ReadaryCore GOOGLE_BOOKS_API_KEY)
+
 if(ANDROID)
     target_link_libraries(ReadaryCore PUBLIC log)
 endif()

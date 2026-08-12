@@ -47,6 +47,27 @@ class CMakeProvider(ToolProvider):
             "or let the venv install one."
         )
 
+    def ensure_ctest(self) -> Path:
+        """Path to the ctest shipped alongside the cmake we resolved.
+
+        ctest is not necessarily on PATH — when cmake comes from the venv,
+        nothing exports venv/Scripts. Take the sibling of the resolved cmake.
+        """
+        cmake_path = self.ensure()
+        ctest = cmake_path.with_name(f"ctest{cmake_path.suffix}")
+        if ctest.exists():
+            return ctest
+
+        found = self.shell.which("ctest")
+        if found:
+            return Path(found)
+
+        raise ToolNotFoundError(
+            f"ctest not found next to {cmake_path} nor on PATH. Reinstall "
+            "CMake, or run `python bootstrap.py bootstrap` to provision one "
+            "into the venv."
+        )
+
     def _is_acceptable(self, cmake: Path) -> bool:
         """True if `cmake` is a stable release at or above the minimum version."""
         line = self.shell.get_output([cmake, "--version"])

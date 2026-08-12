@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS books (
   localRating  REAL    DEFAULT NULL CHECK (localRating  IS NULL OR (localRating  >= 0 AND localRating  <= 10)),
   userRating   INTEGER DEFAULT NULL CHECK (userRating   IS NULL OR (userRating   >= 0 AND userRating   <= 10)),
   status       INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0, 1, 2, 3)),
-  inWishList   INTEGER NOT NULL DEFAULT 0 CHECK (inWishList IN (0, 1))
+  inWishList   INTEGER NOT NULL DEFAULT 0 CHECK (inWishList IN (0, 1)),
+  language     TEXT    DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS book_genres (

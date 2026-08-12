@@ -1,5 +1,6 @@
 #include "GlobalBookSearchController.hpp"
 
+#include "api/translate/LanguageDetector.hpp"
 #include "services/SearchCache.hpp"
 #include "utils/IsbnValidator.hpp"
 
@@ -8,6 +9,8 @@
 namespace {
 Q_LOGGING_CATEGORY(lcGlobalSearch, "readary.controllers.globalsearch")
 constexpr int g_searchCacheMaxAgeDays{7};
+constexpr int g_minFilteredResults{10};
+constexpr int g_maxAutoPages{5};
 } // namespace
 
 namespace readary::controllers {
@@ -15,7 +18,7 @@ namespace readary::controllers {
 GlobalBookSearchController *GlobalBookSearchController::s_instance = nullptr;
 
 GlobalBookSearchController::GlobalBookSearchController(QObject *parent)
-    : QObject{parent}, _bookSearchAPI{nullptr}, _resultsModel{new models::GlobalBookSearchListModel{this}} {}
+    : QObject{parent}, _resultsModel{new models::GlobalBookSearchListModel{this}} {}
 
 void GlobalBookSearchController::setBookSearchAPI(api::IBookSearchAPI *api) {
   _bookSearchAPI = api;
@@ -27,15 +30,66 @@ void GlobalBookSearchController::setBookSearchAPI(api::IBookSearchAPI *api) {
   }
 }
 
+void GlobalBookSearchController::setTranslator(api::ITranslator *translator) {
+  _translator = translator;
+  if (_translator != nullptr) {
+    connect(_translator, &api::ITranslator::translationReady, this, &GlobalBookSearchController::onTranslationReady);
+  }
+}
+
+void GlobalBookSearchController::setLanguageModel(models::LanguageModel *languageModel) {
+  _languageModel = languageModel;
+}
+
+void GlobalBookSearchController::setOwnershipChecker(std::function<bool(qint64)> isOwned) {
+  _isOwned = std::move(isOwned);
+}
+
+void GlobalBookSearchController::setFilterCriteria(const services::BookFilterCriteria &criteria) {
+  _criteria = criteria.catalogSubset();
+  if (_activeQuery.isEmpty() && !_criteria.hasCatalogTerms()) {
+    qCInfo(lcGlobalSearch) << "criteria changed but nothing to query for — no search issued";
+    return;
+  }
+
+  qCInfo(lcGlobalSearch) << "criteria changed — running query:" << _activeQuery;
+  search(_activeQuery);
+}
+
+void GlobalBookSearchController::setPendingQuery(const QString &text) {
+  _activeQuery = normalizeKey(text);
+  _activeKey = cacheKey(_activeQuery);
+}
+
+QString GlobalBookSearchController::cacheKey(const QString &normalizedQuery) const {
+  if (_criteria.isEmpty()) {
+    return normalizedQuery;
+  }
+  const QStringList parts{normalizedQuery,
+                          _criteria.languages.join(u'+'),
+                          _criteria.genres.join(u'+'),
+                          _criteria.author,
+                          _criteria.publisher,
+                          QString::number(_criteria.minPages),
+                          QString::number(_criteria.maxPages),
+                          QString::number(_criteria.minYear),
+                          QString::number(_criteria.maxYear),
+                          QString::number(_criteria.minRating)};
+  return parts.join(u'|');
+}
+
 models::GlobalBookSearchListModel *GlobalBookSearchController::resultsModel() const { return _resultsModel; }
 
 void GlobalBookSearchController::search(const QString &query) {
-  const QString key = normalizeKey(query);
-  if (key.isEmpty()) {
+  const QString text = normalizeKey(query);
+  if (text.isEmpty() && !_criteria.hasCatalogTerms()) {
     return;
   }
-  qCInfo(lcGlobalSearch) << "search query:" << key;
-  _activeQuery = key;
+  const QString key = cacheKey(text);
+  qCInfo(lcGlobalSearch) << "search query:" << text << "criteria:" << _criteria.activeCount();
+  _activeQuery = text;
+  _activeKey = key;
+  _autoPagesFetched = 0;
 
   if (tryServeFromMemoryCache(key) || tryServeFromDiskCache(key)) {
     return;
@@ -47,7 +101,7 @@ QString GlobalBookSearchController::normalizeKey(const QString &query) { return 
 
 bool GlobalBookSearchController::tryServeFromMemoryCache(const QString &key) {
   const auto cached = _searchCache.constFind(key);
-  if (cached == _searchCache.constEnd()) {
+  if (cached == _searchCache.constEnd() || cached->books.isEmpty()) {
     return false;
   }
   qCInfo(lcGlobalSearch) << "memory cache hit — returning" << cached->books.size()
@@ -58,7 +112,7 @@ bool GlobalBookSearchController::tryServeFromMemoryCache(const QString &key) {
 
 bool GlobalBookSearchController::tryServeFromDiskCache(const QString &key) {
   const auto persisted = services::SearchCache::get(key, g_searchCacheMaxAgeDays);
-  if (!persisted) {
+  if (!persisted || persisted->books.isEmpty()) {
     return false;
   }
   qCInfo(lcGlobalSearch) << "disk cache hit — returning" << persisted->books.size()
@@ -71,30 +125,33 @@ bool GlobalBookSearchController::tryServeFromDiskCache(const QString &key) {
 
 void GlobalBookSearchController::startFreshSearch(const QString &key) {
   _searchCache.insert(key, CachedSearch{});
+  _loading = true;
   _resultsModel->setBooks({});
-  requestPage(key, 1);
+  requestPage(_activeQuery, 1);
 }
 
 void GlobalBookSearchController::loadMore() {
-  if (_activeQuery.isEmpty() || _loading) {
+  if (_activeKey.isEmpty() || _loading) {
     return;
   }
-  const auto it = _searchCache.constFind(_activeQuery);
+  const auto it = _searchCache.constFind(_activeKey);
   if (it == _searchCache.constEnd() || !it->hasMore) {
     return;
   }
   qCInfo(lcGlobalSearch) << "loadMore — query:" << _activeQuery << "page:" << it->nextPage;
+  _autoPagesFetched = 0; // a user-driven page is not part of the auto-fetch budget
   requestPage(_activeQuery, it->nextPage);
 }
 
 void GlobalBookSearchController::requestPage(const QString &query, int page) {
   if (_bookSearchAPI == nullptr) {
     qCWarning(lcGlobalSearch) << "search aborted — book search API not set";
+    _loading = false;
     return;
   }
 
   _loading = true;
-  _pendingQuery = query;
+  _pendingKey = cacheKey(query);
   _pendingPage = page;
 
   if (const auto isbn = queryAsIsbn(query)) {
@@ -108,6 +165,7 @@ void GlobalBookSearchController::requestPage(const QString &query, int page) {
       .name = query,
       .author = query,
       .page = page,
+      .criteria = _criteria,
   };
   _bookSearchAPI->search(searchFields);
 }
@@ -119,25 +177,42 @@ std::optional<qint64> GlobalBookSearchController::queryAsIsbn(const QString &que
 
 void GlobalBookSearchController::onSearchResults(const QList<services::BookDTO> &books, bool hasMore) {
   _loading = false;
-  if (_pendingQuery.isEmpty()) {
+  if (_pendingKey.isEmpty()) {
     return;
   }
 
-  const CachedSearch &entry = accumulatePage(_pendingQuery, _pendingPage, books, hasMore);
-  services::SearchCache::put(_pendingQuery,
-                             {.books = entry.books, .nextPage = entry.nextPage, .hasMore = entry.hasMore});
+  const CachedSearch &entry = accumulatePage(_pendingKey, _pendingPage, books, hasMore);
+  services::SearchCache::put(_pendingKey, {.books = entry.books, .nextPage = entry.nextPage, .hasMore = entry.hasMore});
 
-  if (_pendingQuery == _activeQuery) {
-    showPage(books, _pendingPage <= 1);
+  if (_pendingKey != _activeKey) {
+    return;
   }
+  showPage(books, _pendingPage <= 1);
+  maybeFetchMorePages(entry, hasMore);
+}
+
+void GlobalBookSearchController::maybeFetchMorePages(const CachedSearch &entry, bool hasMore) {
+  if (_criteria.isEmpty() || !hasMore || entry.books.size() >= g_minFilteredResults) {
+    return;
+  }
+  if (_autoPagesFetched >= g_maxAutoPages) {
+    qCInfo(lcGlobalSearch) << "auto-fetch budget spent after" << _autoPagesFetched << "page(s) —" << entry.books.size()
+                           << "result(s) survived the filter";
+    return;
+  }
+
+  ++_autoPagesFetched;
+  qCInfo(lcGlobalSearch) << "only" << entry.books.size() << "result(s) after filtering — fetching page"
+                         << entry.nextPage << "(auto" << _autoPagesFetched << "of" << g_maxAutoPages << ")";
+  requestPage(_activeQuery, entry.nextPage);
 }
 
 GlobalBookSearchController::CachedSearch &
-GlobalBookSearchController::accumulatePage(const QString &query, int page, const QList<services::BookDTO> &books,
+GlobalBookSearchController::accumulatePage(const QString &key, int page, const QList<services::BookDTO> &books,
                                            bool hasMore) {
-  auto it = _searchCache.find(query);
+  auto it = _searchCache.find(key);
   if (it == _searchCache.end()) {
-    it = _searchCache.insert(query, CachedSearch{});
+    it = _searchCache.insert(key, CachedSearch{});
   }
   CachedSearch &entry = *it;
   if (page <= 1) {
@@ -168,6 +243,12 @@ void GlobalBookSearchController::openBook(qint64 isbn) {
     return;
   }
 
+  if (_isOwned && _isOwned(book.isbn)) {
+    qCInfo(lcGlobalSearch) << "already in library — opening without a description fetch, isbn:" << book.isbn;
+    emit bookImportRequested(book);
+    return;
+  }
+
   _pendingImport = book;
   if (_bookSearchAPI != nullptr && !book.workKey.isEmpty()) {
     qCInfo(lcGlobalSearch) << "fetching description before import — isbn:" << book.isbn << "workKey:" << book.workKey;
@@ -184,8 +265,45 @@ void GlobalBookSearchController::onDescriptionReady(const QString &workKey, cons
     return;
   }
   _pendingImport.description = description;
+
+  if (maybeTranslateDescription(description)) {
+    return;
+  }
+
   qCInfo(lcGlobalSearch) << "import & open requested — isbn:" << _pendingImport.isbn
                          << "description chars:" << description.size();
+  emit bookImportRequested(_pendingImport);
+}
+
+bool GlobalBookSearchController::maybeTranslateDescription(const QString &description) {
+  if (_translator == nullptr || _languageModel == nullptr || description.isEmpty()) {
+    return false;
+  }
+
+  const QString target = models::LanguageModel::localeCode(_languageModel->current());
+  const QString detected = api::detectLanguage(description);
+  if (target.isEmpty() || detected.isEmpty() || detected == target) {
+    return false;
+  }
+
+  _pendingTranslateId = ++_nextTranslateId;
+  qCInfo(lcGlobalSearch) << "translating description — isbn:" << _pendingImport.isbn << "target:" << target
+                         << "req:" << _pendingTranslateId;
+  _translator->translate(description, target, _pendingTranslateId);
+  return true;
+}
+
+void GlobalBookSearchController::onTranslationReady(quint64 requestId, const QString &translated) {
+  if (requestId != _pendingTranslateId) {
+    return;
+  }
+  _pendingTranslateId = 0;
+  if (!translated.isEmpty()) {
+    _pendingImport.description = translated;
+  }
+
+  qCInfo(lcGlobalSearch) << "import & open requested (translated) — isbn:" << _pendingImport.isbn
+                         << "description chars:" << _pendingImport.description.size();
   emit bookImportRequested(_pendingImport);
 }
 

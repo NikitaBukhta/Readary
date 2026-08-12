@@ -2,6 +2,7 @@
 #define BEELIBRARY_CONTROLLERS_BOOKCONTROLLER_HPP
 
 #include "models/books/BookCharactersModel.hpp"
+#include "models/books/BookCriteriaFilterProxyModel.hpp"
 #include "models/books/BookSearchProxyModel.hpp"
 #include "models/books/BookSortFilterProxyModel.hpp"
 #include "qmltypes/BookDTOObject.hpp"
@@ -57,6 +58,8 @@ public:
   void setActiveKind(ListKind kind);
   Q_INVOKABLE readary::models::BookSortFilterProxyModel *getSortFilterProxyForKind(ListKind kind) const;
 
+  void setFilterCriteria(const services::BookFilterCriteria &criteria);
+
   Q_INVOKABLE void openBook(qint64 isbn);
   void importAndOpenBook(const services::BookDTO &book);
 
@@ -97,6 +100,7 @@ private:
   std::shared_ptr<services::BookTable> _bookTable;
   readary::models::BookListModel *_listModel;
   readary::models::BookSearchProxyModel *_searchProxy;
+  readary::models::BookCriteriaFilterProxyModel *_criteriaProxy;
   readary::models::BookCharactersModel *_charactersModel;
 
   QHash<ListKind, readary::models::BookSortFilterProxyModel *> _proxies;

@@ -55,6 +55,10 @@ QVariant BookListModelBase::data(const QModelIndex &index, int role) const {
     return book.status;
   case InWishListRole:
     return book.inWishList;
+  case LanguageRole:
+    return book.language;
+  case GenresRole:
+    return book.genres;
   default:
     return {};
   }
@@ -78,6 +82,8 @@ QHash<int, QByteArray> BookListModelBase::roleNames() const {
       {UserRatingRole, "userRating"},
       {StatusRole, "status"},
       {InWishListRole, "inWishList"},
+      {LanguageRole, "language"},
+      {GenresRole, "genres"},
   };
 }
 
@@ -95,6 +101,8 @@ void BookListModelBase::appendBooks(const QList<services::BookDTO> &books) {
   _books.append(books);
   endInsertRows();
 }
+
+const QList<services::BookDTO> &BookListModelBase::books() const { return _books; }
 
 bool BookListModelBase::contains(qint64 isbn) const {
   return std::ranges::any_of(_books, [isbn](const services::BookDTO &book) { return book.isbn == isbn; });

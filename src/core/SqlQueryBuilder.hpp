@@ -12,6 +12,7 @@ public:
   SqlQueryBuilder &select(const QStringList &columns = {});
   SqlQueryBuilder &selectCount();
   SqlQueryBuilder &insertInto(const QString &table, const QStringList &columns);
+  SqlQueryBuilder &insertOrIgnoreInto(const QString &table, const QStringList &columns);
   SqlQueryBuilder &update(const QString &table);
   SqlQueryBuilder &from(const QString &table, const QString &alias = "");
   SqlQueryBuilder &deleteFrom(const QString &table);
@@ -28,6 +29,8 @@ public:
   QString build() const;
 
 private:
+  SqlQueryBuilder &appendInsert(const QString &verb, const QString &table, const QStringList &columns);
+
   QString _query;
   QVariantList _values;
 };

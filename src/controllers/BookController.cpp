@@ -21,6 +21,7 @@ BookController::BookController(std::shared_ptr<services::BookTable> bookTable,
                                readary::models::BookListModel *listModel, QObject *parent)
     : QObject{parent}, _bookTable{std::move(bookTable)}, _listModel{listModel},
       _searchProxy{new readary::models::BookSearchProxyModel{this}},
+      _criteriaProxy{new readary::models::BookCriteriaFilterProxyModel{this}},
       _charactersModel{new readary::models::BookCharactersModel{_bookTable, this}} {
   using namespace readary::models::filters;
   _listModel->refresh();
@@ -272,7 +273,13 @@ BookController::buildProxy(readary::models::BookListModel *source,
 void BookController::applyActiveSourceToSearchProxy() {
   if (!_searchProxy)
     return;
-  _searchProxy->setSourceModel(getSortFilterProxyForKind(_activeKind));
+
+  _criteriaProxy->setSourceModel(getSortFilterProxyForKind(_activeKind));
+  _searchProxy->setSourceModel(_criteriaProxy);
+}
+
+void BookController::setFilterCriteria(const services::BookFilterCriteria &criteria) {
+  _criteriaProxy->setCriteria(criteria);
 }
 
 void BookController::setErrorMessage(const QString &message) {

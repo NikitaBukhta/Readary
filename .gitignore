@@ -113,3 +113,7 @@ CMakeUserPresets.json
 *.jks
 local.properties
 .gradle/
+
+#secret — the filled-in file never lands in the repo, the template always does.
+secrets/*
+!secrets/api_keys.env.example

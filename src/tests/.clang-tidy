@@ -6,4 +6,9 @@ Checks: >
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -misc-const-correctness,
   -modernize-use-designated-initializers,
-  -modernize-type-traits
+  -modernize-type-traits,
+  -readability-math-missing-parentheses
+
+CheckOptions:
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: 'true'

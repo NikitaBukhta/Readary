@@ -1,0 +1,26 @@
+function(readary_load_secrets file target)
+    if(NOT EXISTS "${file}")
+        message(STATUS "Secrets: ${file} not found — API clients use anonymous quotas")
+        return()
+    endif()
+
+    file(STRINGS "${file}" _lines ENCODING UTF-8)
+
+    foreach(_name IN LISTS ARGN)
+        set(_value "")
+        foreach(_line IN LISTS _lines)
+            # Anchored on the name, so `#`-comment lines can never match.
+            if(_line MATCHES "^[ \t]*${_name}[ \t]*=[ \t]*(.*)$")
+                string(STRIP "${CMAKE_MATCH_1}" _value)
+            endif()
+        endforeach()
+
+        if(_value STREQUAL "")
+            message(STATUS "Secrets: ${_name} not set — using anonymous quota")
+        else()
+            target_compile_definitions(${target} PRIVATE ${_name}="${_value}")
+            string(LENGTH "${_value}" _length)
+            message(STATUS "Secrets: ${_name} loaded (${_length} chars)")
+        endif()
+    endforeach()
+endfunction()

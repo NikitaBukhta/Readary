@@ -17,6 +17,7 @@ class BookListModel;
 
 namespace readary::controllers {
 class BookController;
+class BookFilterController;
 class NavigationController;
 class SettingsController;
 class GlobalBookSearchController;
@@ -46,11 +47,13 @@ private:
 
   std::shared_ptr<DatabaseManager> _db;
   std::shared_ptr<services::BookTable> _bookTable;
-  models::BookListModel *_bookListModel;
-  controllers::BookController *_bookController;
-  controllers::NavigationController *_contextModel;
-  controllers::SettingsController *_settingsController;
-  controllers::GlobalBookSearchController *_globalSearchController;
+
+  models::BookListModel *_bookListModel{nullptr};
+  controllers::BookController *_bookController{nullptr};
+  controllers::NavigationController *_contextModel{nullptr};
+  controllers::SettingsController *_settingsController{nullptr};
+  controllers::GlobalBookSearchController *_globalSearchController{nullptr};
+  controllers::BookFilterController *_filterController{nullptr};
 };
 
 } // namespace readary::core

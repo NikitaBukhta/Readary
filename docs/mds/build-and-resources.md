@@ -8,7 +8,18 @@ CMake-based, Qt 6.8+. Two top-level targets:
   `main.cpp` + `AppInitializer`.
 
 Tests live in `src/tests/` as a separate sub-project guarded by
-`option(BUILD_TESTS "Build unit tests" ON)`.
+`option(BUILD_TESTS "Build unit tests" ON)`. Registering one is a single line —
+`readary_add_test(api/FooTest.cpp)`, plus `LIBS Qt6::Network` for a test that
+needs more than `ReadaryCore` and `Qt6::Test`. The target is named after the
+file (`FooTest`) and the CTest name drops the suffix, so `ctest -R Foo` matches.
+
+Shared test scaffolding sits in `src/tests/support/` and is reachable as
+`#include "support/…"` from any test:
+
+| Header | Provides |
+|---|---|
+| [FakeHttpServer.hpp](../../src/tests/support/FakeHttpServer.hpp) | Loopback HTTP stub for the network-backed API clients — a responder callback per request, plus canned failures for the retry paths |
+| [SearchCapture.hpp](../../src/tests/support/SearchCapture.hpp) | Captures `searchListUpdated` (a `QList<BookDTO>` payload can't go through `QSignalSpy`) |
 
 ## CMakeLists overview
 
@@ -279,4 +290,6 @@ positives on Qt code:
 | [db/db_scripts.qrc](../../db/db_scripts.qrc) | qrc manifest for SQL scripts |
 | [.clang-tidy](../../.clang-tidy) | Strict static-analysis profile |
 | [src/tests/.clang-tidy](../../src/tests/.clang-tidy) | Relaxed rules for Qt Test classes |
+| [src/tests/CMakeLists.txt](../../src/tests/CMakeLists.txt) | `readary_add_test()` + the test roster |
+| [src/tests/support/](../../src/tests/support/) | Shared scaffolding: HTTP stub, search capture |
 | [buildtools/clang_tidy_wrapper.py](../../buildtools/clang_tidy_wrapper.py) | Wrapper that skips autogen TUs and lifts MSVC flags |

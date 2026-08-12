@@ -24,8 +24,6 @@ BookDTO makeBook(qint64 isbn, const QString &name) {
   return book;
 }
 
-// Minimal IBookSearchAPI stand-in: records how it was called and lets the test
-// deliver results synchronously via the inherited searchListUpdated signal.
 class FakeSearchApi : public readary::api::IBookSearchAPI {
 public:
   explicit FakeSearchApi(QObject *parent = nullptr) : IBookSearchAPI(parent) {}
@@ -82,13 +80,16 @@ private slots:
   void openBook_knownIsbn_emitsImportRequest();
   void openBook_unknownIsbn_doesNotEmit();
   void persistedSearch_reusedByNewInstance_noNetwork();
+  void emptyResult_isNotServedFromCache_andIsRetried();
   void switchingQuery_replacesModelContents();
   void loadMore_acrossPages_accumulatesThenStopsWhenNoMore();
   void loadMore_whileRequestInFlight_isIgnored();
+  void loadMore_fromModelResetOfFreshSearch_doesNotRefetchPageOne();
   void cachedQuery_resumesPaginationFromNextPage();
   void search_withoutApi_doesNotCrash();
   void openBook_withWorkKey_fetchesDescriptionThenImportsWithIt();
   void openBook_withoutWorkKey_importsWithoutFetch();
+  void openBook_ownedBook_skipsDescriptionFetch();
   void onDescriptionReady_forStaleWorkKey_isIgnored();
 };
 
@@ -262,6 +263,31 @@ void GlobalBookSearchControllerTest::persistedSearch_reusedByNewInstance_noNetwo
   QCOMPARE(ctrl2.resultsModel()->rowCount(), 2);
 }
 
+void GlobalBookSearchControllerTest::emptyResult_isNotServedFromCache_andIsRetried() {
+  {
+    GlobalBookSearchController ctrl(nullptr);
+    FakeSearchApi api;
+    ctrl.setBookSearchAPI(&api);
+    ctrl.search(QStringLiteral("empty"));
+    api.deliver({}, false); // catalogs throttled, or a query shape that matches nothing
+    QCOMPARE(api.searchCalls, 1);
+
+    // A miss must not shadow the same query for the cache lifetime — in memory...
+    ctrl.search(QStringLiteral("empty"));
+    QCOMPARE(api.searchCalls, 2);
+  }
+
+  // ...nor on disk, across a restart.
+  GlobalBookSearchController ctrl2(nullptr);
+  FakeSearchApi api2;
+  ctrl2.setBookSearchAPI(&api2);
+  ctrl2.search(QStringLiteral("empty"));
+  QCOMPARE(api2.searchCalls, 1);
+
+  api2.deliver({makeBook(1, QStringLiteral("a"))}, false);
+  QCOMPARE(ctrl2.resultsModel()->rowCount(), 1);
+}
+
 void GlobalBookSearchControllerTest::switchingQuery_replacesModelContents() {
   GlobalBookSearchController ctrl(nullptr);
   FakeSearchApi api;
@@ -307,6 +333,23 @@ void GlobalBookSearchControllerTest::loadMore_whileRequestInFlight_isIgnored() {
 
   ctrl.loadMore(); // guarded while loading
   QCOMPARE(api.searchCalls, 1);
+}
+
+void GlobalBookSearchControllerTest::loadMore_fromModelResetOfFreshSearch_doesNotRefetchPageOne() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+
+  int reloads = 0;
+  connect(ctrl.resultsModel(), &QAbstractItemModel::modelReset, &ctrl, [&ctrl, &reloads]() {
+    if (reloads++ == 0) {
+      ctrl.loadMore();
+    }
+  });
+
+  ctrl.search(QStringLiteral("dune"));
+  QCOMPARE(api.searchCalls, 1);
+  QCOMPARE(api.lastPage, 1);
 }
 
 void GlobalBookSearchControllerTest::cachedQuery_resumesPaginationFromNextPage() {
@@ -377,6 +420,26 @@ void GlobalBookSearchControllerTest::openBook_withoutWorkKey_importsWithoutFetch
   ctrl.openBook(111);
   QCOMPARE(api.descriptionCalls, 0);
   QCOMPARE(importCount, 1);
+}
+
+void GlobalBookSearchControllerTest::openBook_ownedBook_skipsDescriptionFetch() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+  ctrl.setOwnershipChecker([](qint64) { return true; }); // book already in the internal library
+
+  BookDTO result = makeBook(111, QStringLiteral("a"));
+  result.workKey = QStringLiteral("/works/OL1W");
+  ctrl.search(QStringLiteral("tolkien"));
+  api.deliver({result}, false);
+
+  int importCount = 0;
+  QObject::connect(&ctrl, &GlobalBookSearchController::bookImportRequested, &ctrl,
+                   [&](const BookDTO &) { ++importCount; });
+
+  ctrl.openBook(111);
+  QCOMPARE(api.descriptionCalls, 0); // owned → no external fetch
+  QCOMPARE(importCount, 1);          // opened immediately (DB description used downstream)
 }
 
 void GlobalBookSearchControllerTest::onDescriptionReady_forStaleWorkKey_isIgnored() {

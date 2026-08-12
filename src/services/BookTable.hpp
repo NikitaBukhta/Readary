@@ -5,6 +5,7 @@
 #include "CharacterDTO.hpp"
 #include "core/DatabaseManager.hpp"
 
+#include <QHash>
 #include <QString>
 #include <memory>
 
@@ -20,12 +21,16 @@ public:
   bool deleteBook(qint64 isbn);
 
   QStringList getGenres(qint64 bookIsbn) const;
+  bool setGenres(qint64 bookIsbn, const QStringList &genres);
+
   QList<CharacterDTO> getCharacters(qint64 bookIsbn) const;
 
   bool updatePagesRead(qint64 bookIsbn, int pagesRead);
   qint64 insertReadingSession(qint64 bookIsbn, int pagesFrom, int pagesTo, int durationSeconds);
 
 private:
+  QHash<qint64, QStringList> getGenresByBook() const;
+
   static const QString kTableName;
   std::shared_ptr<core::DatabaseManager> _db;
 };

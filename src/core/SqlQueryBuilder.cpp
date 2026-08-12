@@ -17,8 +17,16 @@ SqlQueryBuilder &SqlQueryBuilder::selectCount() {
 }
 
 SqlQueryBuilder &SqlQueryBuilder::insertInto(const QString &table, const QStringList &columns) {
-  _query += "INSERT INTO " + table + " (" + columns.join(", ") + ") VALUES (" +
-            QString(", ?").repeated(columns.size()).mid(2) + ")";
+  return appendInsert("INSERT INTO ", table, columns);
+}
+
+SqlQueryBuilder &SqlQueryBuilder::insertOrIgnoreInto(const QString &table, const QStringList &columns) {
+  return appendInsert("INSERT OR IGNORE INTO ", table, columns);
+}
+
+SqlQueryBuilder &SqlQueryBuilder::appendInsert(const QString &verb, const QString &table, const QStringList &columns) {
+  const QString placeholders = QStringList(columns.size(), QStringLiteral("?")).join(", ");
+  _query += verb + table + " (" + columns.join(", ") + ") VALUES (" + placeholders + ")";
   _values.clear();
   return *this;
 }

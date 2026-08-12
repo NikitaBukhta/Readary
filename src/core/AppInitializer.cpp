@@ -2,8 +2,11 @@
 #include "AppEnvironment.hpp"
 #include "DatabaseManager.hpp"
 #include "api/bookSearch/BookSearchApiComposite.hpp"
+#include "api/bookSearch/GoogleBooksSearchAPI.hpp"
 #include "api/bookSearch/OpenLibrarySeachAPI.hpp"
+#include "api/translate/GoogleTranslator.hpp"
 #include "controllers/BookController.hpp"
+#include "controllers/BookFilterController.hpp"
 #include "controllers/GlobalBookSearchController.hpp"
 #include "controllers/NavigationController.hpp"
 #include "controllers/SettingsController.hpp"
@@ -20,9 +23,7 @@ Q_LOGGING_CATEGORY(lcInit, "readary.core.init")
 namespace readary::core {
 
 AppInitializer::AppInitializer(QGuiApplication &app, QObject *parent)
-    : QObject{parent}, _app{app}, _engine{std::make_unique<QQmlApplicationEngine>()}, _bookListModel{nullptr},
-      _bookController{nullptr}, _contextModel{nullptr}, _settingsController{nullptr}, _globalSearchController{nullptr} {
-}
+    : QObject{parent}, _app{app}, _engine{std::make_unique<QQmlApplicationEngine>()} {}
 
 AppInitializer::~AppInitializer() = default;
 
@@ -74,15 +75,29 @@ void AppInitializer::initModels() {
   // Global search init;
   _globalSearchController = new controllers::GlobalBookSearchController{this};
   auto *openLibraryApi = new api::OpenLibrarySeachAPI{_globalSearchController};
+  auto *googleBooksApi = new api::GoogleBooksSearchAPI{_globalSearchController};
   QList<api::IBookSearchAPI *> searchApis{openLibraryApi};
-  _globalSearchController->setBookSearchAPI(
-      new api::BookSearchAPIComposite{std::move(searchApis), _globalSearchController});
+  auto *searchComposite = new api::BookSearchAPIComposite{std::move(searchApis), _globalSearchController};
+  searchComposite->setFallbackAPI(googleBooksApi);
+  _globalSearchController->setBookSearchAPI(searchComposite);
+  _globalSearchController->setTranslator(new api::GoogleTranslator{_globalSearchController});
+  _globalSearchController->setOwnershipChecker([this](qint64 isbn) { return _bookListModel->contains(isbn); });
   connect(_globalSearchController, &controllers::GlobalBookSearchController::bookImportRequested, _bookController,
           &controllers::BookController::importAndOpenBook);
+
+  _filterController = new controllers::BookFilterController{this};
+  _filterController->setLibraryModel(_bookListModel);
+  _filterController->setSearchModel(_globalSearchController->resultsModel());
+  connect(_filterController, &controllers::BookFilterController::criteriaApplied, this, [this] {
+    const services::BookFilterCriteria &criteria = _filterController->criteria();
+    _bookController->setFilterCriteria(criteria);
+    _globalSearchController->setFilterCriteria(criteria);
+  });
 
   // Settings init;
   _settingsController = new controllers::SettingsController{this};
   _settingsController->languageModel()->applyCurrent();
+  _globalSearchController->setLanguageModel(_settingsController->languageModel());
   _settingsController->fontModel()->applyCurrent();
   connect(
       _settingsController->languageModel(), &models::LanguageModel::currentChanged, this,
@@ -96,6 +111,7 @@ void AppInitializer::registerQmlTypes() {
   controllers::NavigationController::setInstance(_contextModel);
   controllers::SettingsController::setInstance(_settingsController);
   controllers::GlobalBookSearchController::setInstance(_globalSearchController);
+  controllers::BookFilterController::setInstance(_filterController);
 
   QObject::connect(
       _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app, []() { QCoreApplication::exit(-1); },

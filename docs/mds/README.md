@@ -6,6 +6,9 @@
 | [controllers.md](controllers.md) | `BookController` (form + list) and `NavigationController` |
 | [models-and-filters.md](models-and-filters.md) | `BookListModel`, sort/filter proxy, Strategy pattern |
 | [book-search.md](book-search.md) | Search proxy: ranking, cache, tests |
+| [online-book-search.md](online-book-search.md) | Online catalogs: OpenLibrary → Google Books fallback, language filter, retry, API keys |
+| [filtering.md](filtering.md) | Multi-criteria filtering (language, genre, author, publisher, pages, year, rating) across both lists |
+| [description-translation.md](description-translation.md) | Translating imported descriptions into the reading language |
 | [database.md](database.md) | DB layer: `DatabaseManager`, `SqlQueryBuilder`, `BookTable`, `BookDTO`, `BookStatus` |
 | [qml.md](qml.md) | QML structure: pages, components, theme, geometry |
 | [i18n.md](i18n.md) | Languages: `LanguageModel` + `SettingsController`, runtime retranslate, `python bootstrap.py translate` pipeline |

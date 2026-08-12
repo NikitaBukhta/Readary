@@ -3,27 +3,32 @@
 
 #include "IBookSearchAPI.hpp"
 
+#include <QHash>
 #include <QNetworkAccessManager>
 
-namespace readary {
-namespace api {
+namespace readary::api {
 
 class IBookNetSearchAPI : public IBookSearchAPI {
   Q_OBJECT
 public:
-  IBookNetSearchAPI(QObject *parent = nullptr);
+  explicit IBookNetSearchAPI(QObject *parent = nullptr);
 
 protected:
-  QByteArray sendRequest(const QUrl &request);
+  void sendRequest(const QUrl &request);
+  static QString asFieldValue(const QString &value);
 
 signals:
   void responseReceived(QNetworkReply *reply);
 
 private:
+  void send(const QUrl &url, int attempt);
+  void onReplyFinished(QNetworkReply *reply);
+  static bool isRetriable(QNetworkReply *reply);
+
   QNetworkAccessManager _networkManager;
+  QHash<QNetworkReply *, int> _attempts;
 };
 
-} // namespace api
-} // namespace readary
+} // namespace readary::api
 
 #endif // LIBRARY_IBOOKNETSEARCH_HPP

@@ -1,25 +1,32 @@
-#ifndef LIBRARY_ISBNDBSEACHAPI_H
-#define LIBRARY_ISBNDBSEACHAPI_H
+#ifndef LIBRARY_OPENLIBRARYSEACHAPI_H
+#define LIBRARY_OPENLIBRARYSEACHAPI_H
 
 #include "IBookNetSearchAPI.hpp"
 
-namespace readary {
-namespace api {
+namespace readary::api {
 
 class OpenLibrarySeachAPI : public IBookNetSearchAPI {
+  Q_OBJECT
 public:
-  OpenLibrarySeachAPI(QObject *parent = nullptr);
+  explicit OpenLibrarySeachAPI(QObject *parent = nullptr);
+
+  // Overrides the API base (default: the live OpenLibrary endpoint). For tests.
+  void setEndpoint(const QString &endpoint);
+
   void search(const BookSearchFields &params) override;
   void searchByISBN(qint64 isbn) override;
   void fetchDescription(const QString &workKey) override;
 
 private:
+  static QString generateQuery(const BookSearchFields &params);
+
   void onResponseReceived(QNetworkReply *reply);
   void handleSearchResponse(QNetworkReply *reply);
   void handleWorkResponse(QNetworkReply *reply);
+
+  QString _endpoint;
 };
 
-} // namespace api
-} // namespace readary
+} // namespace readary::api
 
-#endif // LIBRARY_ISBNDBSEACHAPI_H
+#endif // LIBRARY_OPENLIBRARYSEACHAPI_H

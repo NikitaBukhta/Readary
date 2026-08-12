@@ -1,17 +1,18 @@
 #include "OpenLibrarySeachAPI.hpp"
 
+#include "api/translate/LanguageConverter.hpp"
 #include "utils/IsbnValidator.hpp"
 
-#include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLoggingCategory>
-#include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QStringBuilder>
+#include <QStringList>
 #include <QUrl>
+#include <QUrlQuery>
+#include <optional>
 
 using namespace Qt::StringLiterals;
 
@@ -19,64 +20,157 @@ namespace {
 Q_LOGGING_CATEGORY(lcOpenLibrary, "readary.api.openlibrary")
 
 constexpr int g_pageSize{25};
-const QString g_apiNameLink{"https://openlibrary.org"};
-const QString g_searchLink{g_apiNameLink + "/search.json?q="};
-const QString g_fieldsParam{"&fields=key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median"};
+constexpr auto g_endpoint = "https://openlibrary.org"_L1;
+constexpr auto g_searchPath = "/search.json"_L1;
+constexpr auto g_jsonSuffix = ".json"_L1;
+constexpr auto g_fields =
+    "key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median,language,publisher,subject"_L1;
+constexpr int g_maxGenres{5};
+constexpr auto g_workKeyPrefix = "/works/"_L1;
 
-QString generateRequest(const readary::api::BookSearchFields &params) {
-  const std::string separator = " OR ";
-
-  QString req;
-  req.reserve(256); // заранее выделяем память
-
-  bool first = true;
-
-  auto appendField = [&](const QString &field) {
-    if (!first) {
-      req.append(separator);
+qint64 extractIsbn(const QJsonArray &isbns) {
+  for (const auto &isbnValue : isbns) {
+    if (const auto normalized = readary::utils::IsbnValidator::convert(isbnValue.toString())) {
+      return *normalized;
     }
-    req.append(field);
-    first = false;
-  };
+  }
+  return 0;
+}
 
-  if (params.isbn != 0) {
-    appendField(QString{"isbn:"} + QString::number(params.isbn));
+QStringList extractGenres(const QJsonArray &subjects) {
+  QStringList genres;
+  for (const auto &subject : subjects) {
+    if (genres.size() >= g_maxGenres) {
+      break;
+    }
+    if (const QString name = subject.toString().trimmed();
+        !name.isEmpty() && !genres.contains(name, Qt::CaseInsensitive)) {
+      genres.append(name);
+    }
   }
-  if (!params.author.isEmpty()) {
-    appendField(QString{"author:"} + params.author);
+  return genres;
+}
+
+QString extractLanguages(const QJsonArray &codes) {
+  QStringList languages;
+  for (const auto &code : codes) {
+    if (const QString iso = readary::api::LanguageConverter::toIso639_1(code.toString());
+        !iso.isEmpty() && !languages.contains(iso)) {
+      languages.append(iso);
+    }
   }
-  if (!params.name.isEmpty()) {
-    appendField(QString{"title:"} + params.name);
+  return languages.join(u", "_s);
+}
+
+std::optional<readary::services::BookDTO> parseDoc(const QJsonObject &obj) {
+  const qint64 isbn = extractIsbn(obj.value(u"isbn"_s).toArray());
+  if (isbn == 0) {
+    return std::nullopt;
+  }
+  const auto totalPages = obj.value(u"number_of_pages_median"_s).toInt();
+  if (totalPages <= 0) {
+    return std::nullopt;
   }
 
-  return req;
+  readary::services::BookDTO book;
+  book.isbn = isbn;
+  book.workKey = obj.value(u"key"_s).toString();
+  book.name = obj.value(u"title"_s).toString();
+  book.year = obj.value(u"first_publish_year"_s).toInt();
+  book.totalPages = totalPages;
+  book.genres = extractGenres(obj.value(u"subject"_s).toArray());
+  book.language = extractLanguages(obj.value(u"language"_s).toArray());
+
+  if (const auto authors = obj.value(u"author_name"_s).toArray(); !authors.isEmpty()) {
+    book.authorName = authors.first().toString();
+  }
+  if (const auto publishers = obj.value(u"publisher"_s).toArray(); !publishers.isEmpty()) {
+    book.publisherName = publishers.first().toString();
+  }
+  if (const auto coverId = obj.value(u"cover_i"_s).toInt(); coverId != 0) {
+    book.coverUrl = u"https://covers.openlibrary.org/b/id/%1-M.jpg"_s.arg(coverId);
+  }
+  return book;
 }
 
 } // namespace
 
 namespace readary::api {
 
-OpenLibrarySeachAPI::OpenLibrarySeachAPI(QObject *parent) : IBookNetSearchAPI{parent} {
+OpenLibrarySeachAPI::OpenLibrarySeachAPI(QObject *parent) : IBookNetSearchAPI{parent}, _endpoint{g_endpoint} {
   connect(this, &IBookNetSearchAPI::responseReceived, this, &OpenLibrarySeachAPI::onResponseReceived);
 }
-void OpenLibrarySeachAPI::search(const BookSearchFields &params) {
-  const int page = params.page > 0 ? params.page : 1;
-  const auto paramsRequest = generateRequest(params);
-  const auto fullRequest =
-      g_searchLink + paramsRequest + g_fieldsParam + u"&limit=%1&page=%2"_s.arg(g_pageSize).arg(page);
-  qCInfo(lcOpenLibrary) << "search request (page" << page << "):" << QUrl(fullRequest).toEncoded();
-  sendRequest(fullRequest);
-}
-void OpenLibrarySeachAPI::searchByISBN(qint64 isbn) {
-  search(BookSearchFields{.isbn = isbn, .name = {}, .author = {}});
+
+void OpenLibrarySeachAPI::setEndpoint(const QString &endpoint) { _endpoint = endpoint; }
+
+QString OpenLibrarySeachAPI::generateQuery(const BookSearchFields &params) {
+  QStringList terms;
+  if (params.isbn != 0) {
+    terms.append(u"isbn:"_s + QString::number(params.isbn));
+  }
+  if (!params.author.isEmpty()) {
+    terms.append(u"author:"_s + asFieldValue(params.author));
+  }
+  if (!params.name.isEmpty()) {
+    terms.append(u"title:"_s + asFieldValue(params.name));
+  }
+  QStringList clauses;
+  if (!terms.isEmpty()) {
+    clauses.append(terms.size() > 1 ? u"("_s + terms.join(u" OR "_s) + u")"_s : terms.first());
+  }
+  if (const QString marc = LanguageConverter::toMarc(params.language); !marc.isEmpty()) {
+    clauses.append(u"language:"_s + marc);
+  }
+
+  const services::BookFilterCriteria &criteria = params.criteria;
+  if (const QString author = criteria.author.trimmed(); !author.isEmpty()) {
+    clauses.append(u"author:"_s + asFieldValue(author));
+  }
+  if (const QString publisher = criteria.publisher.trimmed(); !publisher.isEmpty()) {
+    clauses.append(u"publisher:"_s + asFieldValue(publisher));
+  }
+  if (!criteria.genres.isEmpty()) {
+    QStringList subjects;
+    subjects.reserve(criteria.genres.size());
+    for (const QString &genre : criteria.genres) {
+      subjects.append(u"subject:"_s + asFieldValue(genre));
+    }
+    clauses.append(u"("_s + subjects.join(u" OR "_s) + u")"_s);
+  }
+
+  return clauses.join(u" AND "_s);
 }
 
-void OpenLibrarySeachAPI::fetchDescription(const QString &workKey) {
-  if (workKey.isEmpty()) {
+void OpenLibrarySeachAPI::search(const BookSearchFields &params) {
+  const int page = params.page > 0 ? params.page : 1;
+  const QString q = generateQuery(params);
+  if (q.isEmpty()) {
+    qCInfo(lcOpenLibrary) << "no query terms for this source — completing empty";
+    emit searchListUpdated({}, false);
     return;
   }
-  const auto url = g_apiNameLink + workKey + u".json"_s;
-    qCInfo(lcOpenLibrary) << "description request:" << url;
+
+  QUrl url{_endpoint + g_searchPath};
+  QUrlQuery query;
+  query.addQueryItem(u"q"_s, q);
+  query.addQueryItem(u"fields"_s, g_fields);
+  query.addQueryItem(u"limit"_s, QString::number(g_pageSize));
+  query.addQueryItem(u"page"_s, QString::number(page));
+  url.setQuery(query);
+
+  qCInfo(lcOpenLibrary) << "search request (page" << page << "):" << url.toString(QUrl::RemoveQuery) << "q:" << q;
+  sendRequest(url);
+}
+
+void OpenLibrarySeachAPI::searchByISBN(qint64 isbn) { search(BookSearchFields{.isbn = isbn}); }
+
+void OpenLibrarySeachAPI::fetchDescription(const QString &workKey) {
+  if (!workKey.startsWith(g_workKeyPrefix)) {
+    return;
+  }
+
+  const QUrl url{_endpoint + workKey + g_jsonSuffix};
+  qCInfo(lcOpenLibrary) << "description request:" << url.toString();
   sendRequest(url);
 }
 
@@ -87,7 +181,7 @@ void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
   }
   reply->deleteLater();
 
-  if (reply->url().path().startsWith(u"/works/"_s)) {
+  if (reply->url().path().startsWith(g_workKeyPrefix)) {
     handleWorkResponse(reply);
   } else {
     handleSearchResponse(reply);
@@ -99,6 +193,7 @@ void OpenLibrarySeachAPI::handleSearchResponse(QNetworkReply *reply) {
   if (reply->error()) {
     qCWarning(lcOpenLibrary) << "network error:" << reply->error() << reply->errorString()
                              << "http status:" << httpStatus;
+    emit searchListUpdated({}, false);
     return;
   }
 
@@ -111,42 +206,9 @@ void OpenLibrarySeachAPI::handleSearchResponse(QNetworkReply *reply) {
   QList<services::BookDTO> books;
   books.reserve(docs.size());
   for (const auto &docValue : docs) {
-    const auto obj = docValue.toObject();
-
-    // Normalize to a canonical ISBN-13 so keys match how internal books are stored.
-    // Results without a valid ISBN can't become internal books, so they are dropped.
-    qint64 isbn = 0;
-    const auto isbns = obj.value(u"isbn"_s).toArray();
-    for (const auto &isbnValue : isbns) {
-      if (const auto normalized = utils::IsbnValidator::convert(isbnValue.toString())) {
-        isbn = *normalized;
-        break;
-      }
+    if (const auto book = parseDoc(docValue.toObject())) {
+      books.append(*book);
     }
-    if (isbn == 0) {
-      continue;
-    }
-
-    const auto totalPages = obj.value(u"number_of_pages_median"_s).toInt();
-    if (totalPages <= 0) {
-      continue;
-    }
-
-    services::BookDTO book;
-    book.isbn = isbn;
-    book.workKey = obj.value(u"key"_s).toString();
-    book.name = obj.value(u"title"_s).toString();
-    book.year = obj.value(u"first_publish_year"_s).toInt();
-    book.totalPages = totalPages;
-
-    if (const auto authors = obj.value(u"author_name"_s).toArray(); !authors.isEmpty()) {
-      book.authorName = authors.first().toString();
-    }
-    if (const auto coverId = obj.value(u"cover_i"_s).toInt(); coverId != 0) {
-      book.coverUrl = u"https://covers.openlibrary.org/b/id/%1-M.jpg"_s.arg(coverId);
-    }
-
-    books.append(book);
   }
 
   const bool hasMore = docs.size() == g_pageSize;
@@ -158,8 +220,8 @@ void OpenLibrarySeachAPI::handleSearchResponse(QNetworkReply *reply) {
 
 void OpenLibrarySeachAPI::handleWorkResponse(QNetworkReply *reply) {
   QString workKey = reply->url().path();
-  if (workKey.endsWith(u".json"_s)) {
-    workKey.chop(5);
+  if (workKey.endsWith(g_jsonSuffix)) {
+    workKey.chop(g_jsonSuffix.size());
   }
 
   if (reply->error()) {

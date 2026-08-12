@@ -1,7 +1,6 @@
 #ifndef BEELIBRARY_SERVICES_BOOKDTO_HPP
 #define BEELIBRARY_SERVICES_BOOKDTO_HPP
 
-#include <QString>
 #include <QVariantMap>
 #include <QtTypes>
 
@@ -24,7 +23,9 @@ struct BookDTO {
   int userRating = 0;
   int status = 0;
   bool inWishList = false;
+  QString language;
   QString workKey;
+  QStringList genres;
 
   static BookDTO fromMap(const QVariantMap &data);
   QVariantMap toMap() const;
