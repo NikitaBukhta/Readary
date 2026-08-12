@@ -1,6 +1,20 @@
 ---
 # Strict static-analysis profile. Enabled by ENABLE_ANALYZE in CMake.
 # Skip via `python bootstrap.py compile --skip-analyze` for one-off builds.
+#
+# The google-* family encodes the Google C++ Style Guide. Two of its checks are
+# switched off below (the Checks block is a YAML folded scalar, so the reasons
+# can't live inline):
+#   google-default-arguments — QAbstractItemModel declares rowCount()/data()
+#     as virtual *with* defaults, so every model override inherits the pattern.
+#     Our overrides repeat the base's own default values, which means the
+#     "caller through a base pointer silently gets a different default" hazard
+#     the check guards against cannot occur here.
+#   google-readability-braces-around-statements — alias of the already-disabled
+#     readability-braces-around-statements; clang-format's InsertBraces owns
+#     brace placement now, so the check would only duplicate its work.
+# google-build-using-namespace IS enabled: use per-operator using-declarations
+# (`using Qt::StringLiterals::operator""_s;`) rather than a using-directive.
 
 Checks: >
   bugprone-*,
@@ -8,6 +22,7 @@ Checks: >
   clang-analyzer-*,
   concurrency-*,
   cppcoreguidelines-*,
+  google-*,
   misc-*,
   modernize-*,
   performance-*,
@@ -36,7 +51,9 @@ Checks: >
   -modernize-use-nodiscard,
   -cert-err58-cpp,
   -cppcoreguidelines-avoid-do-while,
-  -misc-confusable-identifiers
+  -misc-confusable-identifiers,
+  -google-default-arguments,
+  -google-readability-braces-around-statements
 
 WarningsAsErrors: '*'
 

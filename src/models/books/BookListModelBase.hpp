@@ -1,18 +1,17 @@
-#ifndef LIBRARY_BOOKLISTMODELBASE_H
-#define LIBRARY_BOOKLISTMODELBASE_H
+#ifndef READARY_MODELS_BOOKS_BOOKLISTMODELBASE_HPP
+#define READARY_MODELS_BOOKS_BOOKLISTMODELBASE_HPP
 
 #include "services/BookDTO.hpp"
 
 #include <QAbstractListModel>
 
-namespace readary {
-namespace models {
+namespace readary::models {
 
 class BookListModelBase : public QAbstractListModel {
   Q_OBJECT
 
 public:
-  enum RolesEnum {
+  enum Roles {
     IsbnRole = Qt::UserRole + 1,
     NameRole,
     AuthorRole,
@@ -32,7 +31,7 @@ public:
     LanguageRole,
     GenresRole,
   };
-  Q_ENUM(RolesEnum)
+  Q_ENUM(Roles)
 
   explicit BookListModelBase(QObject *parent);
 
@@ -52,7 +51,6 @@ protected:
   QList<services::BookDTO> _books;
 };
 
-} // namespace models
-} // namespace readary
+} // namespace readary::models
 
-#endif // LIBRARY_BOOKLISTMODELBASE_H
+#endif // READARY_MODELS_BOOKS_BOOKLISTMODELBASE_HPP

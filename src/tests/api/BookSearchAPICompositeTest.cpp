@@ -1,4 +1,4 @@
-#include "api/bookSearch/BookSearchApiComposite.hpp"
+#include "api/bookSearch/BookSearchAPIComposite.hpp"
 #include "api/bookSearch/IBookSearchAPI.hpp"
 #include "services/BookDTO.hpp"
 #include "support/SearchCapture.hpp"
@@ -7,7 +7,7 @@
 #include <QString>
 #include <QTest>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 using readary::api::BookSearchAPIComposite;
 using readary::api::BookSearchFields;
@@ -90,7 +90,7 @@ BookDTO makeBook(qint64 isbn) {
 
 } // namespace
 
-class BookSearchApiCompositeTest : public QObject {
+class BookSearchAPICompositeTest : public QObject {
   Q_OBJECT
 
 private slots:
@@ -103,7 +103,7 @@ private slots:
   void criteria_rejectingEveryPrimaryResult_queriesFallback();
 };
 
-void BookSearchApiCompositeTest::primaryWithResults_doesNotQueryFallback() {
+void BookSearchAPICompositeTest::primaryWithResults_doesNotQueryFallback() {
   FakeSearchAPI primary{{makeBook(111)}};
   FakeSearchAPI fallback{{makeBook(999)}};
 
@@ -122,7 +122,7 @@ void BookSearchApiCompositeTest::primaryWithResults_doesNotQueryFallback() {
   QCOMPARE(fallback.searchCount, 0);
 }
 
-void BookSearchApiCompositeTest::primaryEmpty_queriesFallback() {
+void BookSearchAPICompositeTest::primaryEmpty_queriesFallback() {
   FakeSearchAPI primary{{}};
   FakeSearchAPI fallback{{makeBook(222), makeBook(333)}};
 
@@ -140,7 +140,7 @@ void BookSearchApiCompositeTest::primaryEmpty_queriesFallback() {
   QCOMPARE(fallback.searchCount, 1);
 }
 
-void BookSearchApiCompositeTest::bothEmpty_emitsEmptyResult() {
+void BookSearchAPICompositeTest::bothEmpty_emitsEmptyResult() {
   FakeSearchAPI primary{{}};
   FakeSearchAPI fallback{{}};
 
@@ -158,7 +158,7 @@ void BookSearchApiCompositeTest::bothEmpty_emitsEmptyResult() {
   QCOMPARE(fallback.searchCount, 1);
 }
 
-void BookSearchApiCompositeTest::overlappingSearch_ignoresStalePrimaryReply_queriesFallbackOnce() {
+void BookSearchAPICompositeTest::overlappingSearch_ignoresStalePrimaryReply_queriesFallbackOnce() {
   DeferredSearchAPI primary{{}}; // both empty → fallback path
   DeferredSearchAPI fallback{{}};
 
@@ -185,7 +185,7 @@ void BookSearchApiCompositeTest::overlappingSearch_ignoresStalePrimaryReply_quer
   QCOMPARE(fallback.searchCount, 1);
 }
 
-void BookSearchApiCompositeTest::fetchDescription_reachesFallback() {
+void BookSearchAPICompositeTest::fetchDescription_reachesFallback() {
   FakeSearchAPI primary{{}};
   FakeSearchAPI fallback{{}};
 
@@ -198,7 +198,7 @@ void BookSearchApiCompositeTest::fetchDescription_reachesFallback() {
   QCOMPARE(fallback.fetchCount, 1);
 }
 
-void BookSearchApiCompositeTest::criteria_dropResultsTheSourceDidNotHonour() {
+void BookSearchAPICompositeTest::criteria_dropResultsTheSourceDidNotHonour() {
   BookDTO english = makeBook(111);
   english.language = u"en"_s;
   BookDTO russian = makeBook(222);
@@ -221,7 +221,7 @@ void BookSearchApiCompositeTest::criteria_dropResultsTheSourceDidNotHonour() {
   QCOMPARE(cap.books.first().isbn, 222LL);
 }
 
-void BookSearchApiCompositeTest::criteria_rejectingEveryPrimaryResult_queriesFallback() {
+void BookSearchAPICompositeTest::criteria_rejectingEveryPrimaryResult_queriesFallback() {
   BookDTO english = makeBook(111);
   english.language = u"en"_s;
   BookDTO russian = makeBook(333);
@@ -249,5 +249,5 @@ void BookSearchApiCompositeTest::criteria_rejectingEveryPrimaryResult_queriesFal
   QCOMPARE(fallback.searchCount, 1);
 }
 
-QTEST_GUILESS_MAIN(BookSearchApiCompositeTest)
-#include "BookSearchApiCompositeTest.moc"
+QTEST_GUILESS_MAIN(BookSearchAPICompositeTest)
+#include "BookSearchAPICompositeTest.moc"

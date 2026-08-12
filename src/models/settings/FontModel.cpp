@@ -4,36 +4,39 @@
 #include <QLoggingCategory>
 #include <QSettings>
 
-#include <map>
+#include <algorithm>
+#include <array>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_L1;
 
 namespace {
 Q_LOGGING_CATEGORY(lcFont, "readary.models.font")
 
+using Code = readary::models::FontModel::Code;
+
 struct FontInfo {
-  QString label;
-  QString resourcePath;
+  QStringView label;
+  QStringView resourcePath;
 };
 
-constexpr auto g_kSettingsKey = "ui/font";
-const std::map<readary::models::FontModel::Code, FontInfo> g_kFontInfoMap{
-    {readary::models::FontModel::Code::NotoColorEmoji,
-     {.label = u"Noto Color Emoji"_s, .resourcePath = u":/fonts/NotoColorEmoji_WindowsCompatible.ttf"_s}},
-};
+constexpr auto g_settingsKey = "ui/font"_L1;
+constexpr std::array<FontInfo, static_cast<size_t>(Code::Count)> g_fontInfo{{
+    {.label = u"Noto Color Emoji", .resourcePath = u":/fonts/NotoColorEmoji_WindowsCompatible.ttf"},
+}};
 
-QString labelFor(readary::models::FontModel::Code code) {
-  static const QString defaultReturnValue = u"Noto Color Emoji"_s;
-
-  const auto it = g_kFontInfoMap.find(code);
-  return it != g_kFontInfoMap.end() ? it->second.label : defaultReturnValue;
+const FontInfo *infoFor(Code code) {
+  const auto index = static_cast<size_t>(code);
+  return index < g_fontInfo.size() ? &g_fontInfo.at(index) : nullptr;
 }
 
-QString resourcePathFor(readary::models::FontModel::Code code) {
-  static const QString defaultReturnValue;
+QString labelFor(Code code) {
+  const FontInfo *info = infoFor(code);
+  return (info != nullptr ? info->label : g_fontInfo.front().label).toString();
+}
 
-  const auto it = g_kFontInfoMap.find(code);
-  return it != g_kFontInfoMap.end() ? it->second.resourcePath : defaultReturnValue;
+QString resourcePathFor(Code code) {
+  const FontInfo *info = infoFor(code);
+  return info != nullptr ? info->resourcePath.toString() : QString{};
 }
 
 } // namespace
@@ -42,12 +45,12 @@ namespace readary::models {
 
 FontModel::FontModel(QObject *parent) : QObject{parent}, _current{defaultCode()} {
   const QSettings settings;
-  const auto stored = settings.value(g_kSettingsKey);
+  const auto stored = settings.value(g_settingsKey);
   if (stored.isValid()) {
     bool ok = false;
-    const int v = stored.toInt(&ok);
+    const int storedCode = stored.toInt(&ok);
     if (ok) {
-      _current = clamp(v);
+      _current = clamp(storedCode);
     }
   }
   qCInfo(lcFont) << "FontModel initialized, current:" << labelFor(_current);
@@ -58,12 +61,13 @@ FontModel::~FontModel() = default;
 FontModel::Code FontModel::current() const { return _current; }
 
 void FontModel::setCurrent(Code code) {
-  if (_current == code)
+  if (_current == code) {
     return;
+  }
 
   _current = code;
   QSettings settings;
-  settings.setValue(g_kSettingsKey, static_cast<int>(_current));
+  settings.setValue(g_settingsKey, static_cast<int>(_current));
 
   applyCurrent();
   qCInfo(lcFont) << "Current font changed to" << labelFor(_current);
@@ -90,8 +94,9 @@ void FontModel::applyCurrent() {
 }
 
 QString FontModel::loadFont(Code code) {
-  if (_loadedFamilies.contains(code))
+  if (_loadedFamilies.contains(code)) {
     return _loadedFamilies.value(code);
+  }
 
   const QString path = resourcePathFor(code);
   if (path.isEmpty()) {

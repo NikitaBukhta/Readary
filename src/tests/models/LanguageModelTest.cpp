@@ -8,11 +8,14 @@
 #include <QTest>
 #include <QVariant>
 
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
+
 using readary::models::LanguageModel;
 using Code = LanguageModel::Code;
 
 namespace {
-constexpr auto g_kSettingsKey = "ui/language";
+constexpr auto g_settingsKey = "ui/language"_L1;
 } // namespace
 
 class LanguageModelTest : public QObject {
@@ -62,14 +65,14 @@ void LanguageModelTest::availableCodes_returnsAllThreeInOrder() {
 void LanguageModelTest::labels_areNonEmptyForEveryCode() {
   for (Code code : {Code::English, Code::Russian, Code::Ukrainian}) {
     const QString label = readary::models::LanguageModel::label(code);
-    QVERIFY2(!label.isEmpty(), QStringLiteral("empty label for code %1").arg(static_cast<int>(code)).toUtf8());
+    QVERIFY2(!label.isEmpty(), u"empty label for code %1"_s.arg(static_cast<int>(code)).toUtf8());
   }
 }
 
 void LanguageModelTest::localeCode_matchesExpectedTwoLetterTag() {
-  QCOMPARE(readary::models::LanguageModel::localeCode(Code::English), QStringLiteral("en"));
-  QCOMPARE(readary::models::LanguageModel::localeCode(Code::Russian), QStringLiteral("ru"));
-  QCOMPARE(readary::models::LanguageModel::localeCode(Code::Ukrainian), QStringLiteral("uk"));
+  QCOMPARE(readary::models::LanguageModel::localeCode(Code::English), u"en"_s);
+  QCOMPARE(readary::models::LanguageModel::localeCode(Code::Russian), u"ru"_s);
+  QCOMPARE(readary::models::LanguageModel::localeCode(Code::Ukrainian), u"uk"_s);
 }
 
 void LanguageModelTest::initialState_withNoPersistedValue_isValidCode() {
@@ -81,7 +84,7 @@ void LanguageModelTest::initialState_withNoPersistedValue_isValidCode() {
 void LanguageModelTest::initialState_withPersistedValue_restoresIt() {
   {
     QSettings settings;
-    settings.setValue(g_kSettingsKey, static_cast<int>(Code::Ukrainian));
+    settings.setValue(g_settingsKey, static_cast<int>(Code::Ukrainian));
     settings.sync();
   }
   LanguageModel m;
@@ -91,7 +94,7 @@ void LanguageModelTest::initialState_withPersistedValue_restoresIt() {
 void LanguageModelTest::initialState_withOutOfRangePersistedValue_clampsToValidCode() {
   {
     QSettings settings;
-    settings.setValue(g_kSettingsKey, 999);
+    settings.setValue(g_settingsKey, 999);
     settings.sync();
   }
   LanguageModel m;
@@ -99,7 +102,7 @@ void LanguageModelTest::initialState_withOutOfRangePersistedValue_clampsToValidC
 
   {
     QSettings settings;
-    settings.setValue(g_kSettingsKey, -42);
+    settings.setValue(g_settingsKey, -42);
     settings.sync();
   }
   LanguageModel m2;
@@ -135,7 +138,7 @@ void LanguageModelTest::setCurrent_persistsToQSettings() {
 
   // Re-read raw to confirm we wrote what we expect to the documented key.
   QSettings settings;
-  QCOMPARE(settings.value(g_kSettingsKey).toInt(), static_cast<int>(Code::Ukrainian));
+  QCOMPARE(settings.value(g_settingsKey).toInt(), static_cast<int>(Code::Ukrainian));
 
   // And a fresh LanguageModel must restore it.
   LanguageModel m2;

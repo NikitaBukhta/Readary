@@ -12,7 +12,7 @@ std::optional<qint64> IsbnValidator::convert(const QString &val) {
   if (*count == 10) {
     return fromIsbn10(digits);
   }
-  if (*count == maxDigits) {
+  if (*count == kMaxDigits) {
     return fromIsbn13(digits);
   }
   return std::nullopt;
@@ -24,13 +24,13 @@ std::optional<int> IsbnValidator::collectDigits(const QString &val, Digits &out)
     if (ch == u'-' || ch == u' ') {
       continue;
     }
-    if (count >= maxDigits) {
+    if (count >= kMaxDigits) {
       return std::nullopt; // More significant characters than any ISBN allows.
     }
     if (ch.isDigit()) {
       out.at(count) = ch.digitValue();
     } else if (ch == u'X' || ch == u'x') {
-      out.at(count) = checkX; // Only valid as an ISBN-10 check digit; checked later.
+      out.at(count) = kCheckX; // Only valid as an ISBN-10 check digit; checked later.
     } else {
       return std::nullopt;
     }
@@ -43,8 +43,8 @@ std::optional<qint64> IsbnValidator::fromIsbn10(const Digits &digits) {
   int sum = 0;
   for (int i = 0; i < 10; ++i) {
     const int value = digits.at(i);
-    // 'X' (checkX) is only permitted as the trailing check digit.
-    if (value == checkX && i != 9) {
+    // 'X' (kCheckX) is only permitted as the trailing check digit.
+    if (value == kCheckX && i != 9) {
       return std::nullopt;
     }
     sum += value * (10 - i);
@@ -68,9 +68,9 @@ std::optional<qint64> IsbnValidator::fromIsbn10(const Digits &digits) {
 std::optional<qint64> IsbnValidator::fromIsbn13(const Digits &digits) {
   qint64 value = 0;
   int sum = 0;
-  for (int i = 0; i < maxDigits; ++i) {
+  for (int i = 0; i < kMaxDigits; ++i) {
     const int digit = digits.at(i);
-    if (digit == checkX) {
+    if (digit == kCheckX) {
       return std::nullopt; // 'X' is not a valid ISBN-13 character.
     }
     sum += digit * ((i % 2 == 0) ? 1 : 3);

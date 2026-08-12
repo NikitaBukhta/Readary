@@ -8,11 +8,14 @@
 #include <QTest>
 #include <QVariant>
 
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
+
 using readary::models::FontModel;
 using Code = FontModel::Code;
 
 namespace {
-constexpr auto g_kSettingsKey = "ui/font";
+constexpr auto g_settingsKey = "ui/font"_L1;
 } // namespace
 
 class FontModelTest : public QObject {
@@ -58,14 +61,14 @@ void FontModelTest::availableCodes_returnsAllInOrder() {
 void FontModelTest::labels_areNonEmptyForEveryCode() {
   for (Code code : {Code::NotoColorEmoji}) {
     const QString label = FontModel::label(code);
-    QVERIFY2(!label.isEmpty(), QStringLiteral("empty label for code %1").arg(static_cast<int>(code)).toUtf8());
+    QVERIFY2(!label.isEmpty(), u"empty label for code %1"_s.arg(static_cast<int>(code)).toUtf8());
   }
 }
 
 void FontModelTest::resourcePath_pointsToFontsPrefix() {
   const QString path = FontModel::resourcePath(Code::NotoColorEmoji);
-  QVERIFY(path.startsWith(QStringLiteral(":/fonts/")));
-  QVERIFY(path.endsWith(QStringLiteral(".ttf")));
+  QVERIFY(path.startsWith(u":/fonts/"_s));
+  QVERIFY(path.endsWith(u".ttf"_s));
 }
 
 void FontModelTest::initialState_withNoPersistedValue_isValidCode() {
@@ -76,7 +79,7 @@ void FontModelTest::initialState_withNoPersistedValue_isValidCode() {
 void FontModelTest::initialState_withPersistedValue_restoresIt() {
   {
     QSettings settings;
-    settings.setValue(g_kSettingsKey, static_cast<int>(Code::NotoColorEmoji));
+    settings.setValue(g_settingsKey, static_cast<int>(Code::NotoColorEmoji));
     settings.sync();
   }
   FontModel m;
@@ -86,7 +89,7 @@ void FontModelTest::initialState_withPersistedValue_restoresIt() {
 void FontModelTest::initialState_withOutOfRangePersistedValue_clampsToValidCode() {
   {
     QSettings settings;
-    settings.setValue(g_kSettingsKey, 999);
+    settings.setValue(g_settingsKey, 999);
     settings.sync();
   }
   FontModel m;
@@ -94,7 +97,7 @@ void FontModelTest::initialState_withOutOfRangePersistedValue_clampsToValidCode(
 
   {
     QSettings settings;
-    settings.setValue(g_kSettingsKey, -42);
+    settings.setValue(g_settingsKey, -42);
     settings.sync();
   }
   FontModel m2;
@@ -114,7 +117,7 @@ void FontModelTest::setCurrent_sameValue_doesNotEmit() {
 void FontModelTest::setCurrent_persistsToQSettings() {
   {
     QSettings settings;
-    settings.setValue(g_kSettingsKey, static_cast<int>(Code::NotoColorEmoji));
+    settings.setValue(g_settingsKey, static_cast<int>(Code::NotoColorEmoji));
     settings.sync();
   }
   FontModel m;

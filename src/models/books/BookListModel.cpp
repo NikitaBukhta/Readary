@@ -32,8 +32,9 @@ void BookListModel::refresh() {
 QString BookListModel::errorMessage() const { return _errorMessage; }
 
 void BookListModel::setErrorMessage(const QString &message) {
-  if (_errorMessage == message)
+  if (_errorMessage == message) {
     return;
+  }
   _errorMessage = message;
   emit errorMessageChanged();
 }

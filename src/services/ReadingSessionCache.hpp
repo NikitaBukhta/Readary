@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_SERVICES_READINGSESSIONCACHE_HPP
-#define BEELIBRARY_SERVICES_READINGSESSIONCACHE_HPP
+#ifndef READARY_SERVICES_READINGSESSIONCACHE_HPP
+#define READARY_SERVICES_READINGSESSIONCACHE_HPP
 
 #include <QString>
 #include <QVariantMap>
@@ -18,8 +18,6 @@ namespace readary::services {
 // Not QML-visible by design — QML reaches this through `BookController`.
 class ReadingSessionCache {
 public:
-  ReadingSessionCache() = default;
-
   static void save(qint64 bookIsbn, int seconds, int phase);
   static QVariantMap takeState(qint64 bookIsbn);
   static void clear(qint64 bookIsbn);
@@ -30,4 +28,4 @@ private:
 
 } // namespace readary::services
 
-#endif // BEELIBRARY_SERVICES_READINGSESSIONCACHE_HPP
+#endif // READARY_SERVICES_READINGSESSIONCACHE_HPP

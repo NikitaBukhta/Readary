@@ -1,16 +1,17 @@
 #include "BookTable.hpp"
+
 #include "core/SqlQueryBuilder.hpp"
 
 #include <QDateTime>
 #include <QLoggingCategory>
+
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcBookTable, "readary.services.books")
 }
 
 namespace readary::services {
-
-const QString BookTable::kTableName = QStringLiteral("books");
 
 BookTable::BookTable(std::shared_ptr<core::DatabaseManager> db) : _db{std::move(db)} {}
 
@@ -20,25 +21,25 @@ QList<BookDTO> BookTable::getAllBooks() {
 
   query
       .select({
-          "b.isbn",
-          "b.name",
-          "b.author",
-          "b.year",
-          "b.publisher",
-          "b.description",
-          "b.coverUrl",
-          "b.isHardcover",
-          "b.type",
-          "b.totalPages",
-          "b.pagesRead",
-          "b.globalRating",
-          "b.localRating",
-          "b.userRating",
-          "b.status",
-          "b.inWishList",
-          "b.language",
+          u"b.isbn"_s,
+          u"b.name"_s,
+          u"b.author"_s,
+          u"b.year"_s,
+          u"b.publisher"_s,
+          u"b.description"_s,
+          u"b.coverUrl"_s,
+          u"b.isHardcover"_s,
+          u"b.type"_s,
+          u"b.totalPages"_s,
+          u"b.pagesRead"_s,
+          u"b.globalRating"_s,
+          u"b.localRating"_s,
+          u"b.userRating"_s,
+          u"b.status"_s,
+          u"b.inWishList"_s,
+          u"b.language"_s,
       })
-      .from(kTableName, "b");
+      .from(kTableName, u"b"_s);
 
   auto data = _db->select(query, &error);
   const QHash<qint64, QStringList> genresByBook = getGenresByBook();
@@ -59,26 +60,29 @@ QHash<qint64, QStringList> BookTable::getGenresByBook() const {
   core::SqlQueryBuilder query;
   QString error;
 
-  query.select({"bg.book_isbn", "g.name"})
-      .from("book_genres", "bg")
-      .leftJoin("genres", "g")
-      .on("g.id = bg.genre_id")
-      .orderBy("g.name");
+  query.select({u"bg.book_isbn"_s, u"g.name"_s})
+      .from(u"book_genres"_s, u"bg"_s)
+      .leftJoin(u"genres"_s, u"g"_s)
+      .on(u"g.id = bg.genre_id"_s)
+      .orderBy(u"g.name"_s);
 
   auto rows = _db->select(query, &error);
-  if (!error.isEmpty())
+  if (!error.isEmpty()) {
     qCWarning(lcBookTable) << "Failed to load genres:" << error;
+  }
 
   QHash<qint64, QStringList> result;
   for (const auto &row : std::as_const(rows)) {
-    const QString name = row.value("name").toString();
-    if (name.isEmpty())
+    const QString name = row.value(u"name"_s).toString();
+    if (name.isEmpty()) {
       continue;
+    }
 
-    const qint64 isbn = row.value("book_isbn").toLongLong();
+    const qint64 isbn = row.value(u"book_isbn"_s).toLongLong();
     auto it = result.find(isbn);
-    if (it == result.end())
+    if (it == result.end()) {
       it = result.insert(isbn, {});
+    }
     it->append(name);
   }
   return result;
@@ -89,7 +93,7 @@ bool BookTable::setGenres(qint64 bookIsbn, const QStringList &genres) {
   QString error;
 
   // Replace rather than merge: the caller owns the whole list.
-  clearQuery.deleteFrom("book_genres").where("book_isbn = ?").values({bookIsbn});
+  clearQuery.deleteFrom(u"book_genres"_s).where(u"book_isbn = ?"_s).values({bookIsbn});
   if (_db->execute(clearQuery, &error) < 0) {
     qCWarning(lcBookTable) << "Failed to clear genres for book isbn:" << bookIsbn << "error:" << error;
     return false;
@@ -97,15 +101,16 @@ bool BookTable::setGenres(qint64 bookIsbn, const QStringList &genres) {
 
   for (const QString &rawName : genres) {
     const QString name = rawName.trimmed();
-    if (name.isEmpty())
+    if (name.isEmpty()) {
       continue;
+    }
 
     core::SqlQueryBuilder addGenre;
-    addGenre.insertOrIgnoreInto("genres", {"name"}).values({name});
+    addGenre.insertOrIgnoreInto(u"genres"_s, {u"name"_s}).values({name});
     _db->insert(addGenre, &error); // already-present names return 0, which is fine
 
     core::SqlQueryBuilder findGenre;
-    findGenre.select({"id"}).from("genres").where("name = ?").values({name});
+    findGenre.select({u"id"_s}).from(u"genres"_s).where(u"name = ?"_s).values({name});
     const auto rows = _db->select(findGenre, &error);
     if (rows.isEmpty()) {
       qCWarning(lcBookTable) << "Genre lookup failed after insert:" << name << "error:" << error;
@@ -113,8 +118,8 @@ bool BookTable::setGenres(qint64 bookIsbn, const QStringList &genres) {
     }
 
     core::SqlQueryBuilder link;
-    link.insertOrIgnoreInto("book_genres", {"book_isbn", "genre_id"})
-        .values({bookIsbn, rows.first().value("id").toLongLong()});
+    link.insertOrIgnoreInto(u"book_genres"_s, {u"book_isbn"_s, u"genre_id"_s})
+        .values({bookIsbn, rows.first().value(u"id"_s).toLongLong()});
     _db->insert(link, &error);
   }
 
@@ -128,9 +133,10 @@ qint64 BookTable::addBook(const BookDTO &book) {
 
   // isbn is the primary key and is supplied by the caller (not autoincremented).
   query
-      .insertInto(kTableName, {"isbn", "name", "author", "year", "publisher", "description", "coverUrl", "isHardcover",
-                               "type", "totalPages", "pagesRead", "globalRating", "localRating", "userRating", "status",
-                               "inWishList", "language"})
+      .insertInto(kTableName,
+                  {u"isbn"_s, u"name"_s, u"author"_s, u"year"_s, u"publisher"_s, u"description"_s, u"coverUrl"_s,
+                   u"isHardcover"_s, u"type"_s, u"totalPages"_s, u"pagesRead"_s, u"globalRating"_s, u"localRating"_s,
+                   u"userRating"_s, u"status"_s, u"inWishList"_s, u"language"_s})
       .values({book.isbn, book.name, book.authorName, book.year, book.publisherName, book.description, book.coverUrl,
                book.isHardcover, book.typeName, book.totalPages, book.pagesRead, book.globalRating, book.localRating,
                book.userRating, book.status, book.inWishList, book.language});
@@ -143,8 +149,9 @@ qint64 BookTable::addBook(const BookDTO &book) {
 
   qCInfo(lcBookTable) << "Added book isbn:" << book.isbn << "name:" << book.name;
 
-  if (!book.genres.isEmpty())
+  if (!book.genres.isEmpty()) {
     setGenres(book.isbn, book.genres);
+  }
 
   return book.isbn;
 }
@@ -154,9 +161,10 @@ bool BookTable::updateBook(const BookDTO &book) {
   QString error;
 
   query.update(kTableName)
-      .set({"name", "author", "year", "publisher", "description", "coverUrl", "isHardcover", "type", "totalPages",
-            "pagesRead", "globalRating", "localRating", "userRating", "status", "inWishList", "language"})
-      .where("isbn = ?")
+      .set({u"name"_s, u"author"_s, u"year"_s, u"publisher"_s, u"description"_s, u"coverUrl"_s, u"isHardcover"_s,
+            u"type"_s, u"totalPages"_s, u"pagesRead"_s, u"globalRating"_s, u"localRating"_s, u"userRating"_s,
+            u"status"_s, u"inWishList"_s, u"language"_s})
+      .where(u"isbn = ?"_s)
       .values({book.name, book.authorName, book.year, book.publisherName, book.description, book.coverUrl,
                book.isHardcover, book.typeName, book.totalPages, book.pagesRead, book.globalRating, book.localRating,
                book.userRating, book.status, book.inWishList, book.language, book.isbn});
@@ -165,15 +173,17 @@ bool BookTable::updateBook(const BookDTO &book) {
 
   if (affected > 0) {
     qCInfo(lcBookTable) << "Updated book isbn:" << book.isbn << "name:" << book.name;
-    if (!book.genres.isEmpty())
+    if (!book.genres.isEmpty()) {
       setGenres(book.isbn, book.genres);
+    }
     return true;
   }
 
-  if (affected == 0)
+  if (affected == 0) {
     qCWarning(lcBookTable) << "No book found with isbn:" << book.isbn;
-  else
+  } else {
     qCWarning(lcBookTable) << "Failed to update book isbn:" << book.isbn << "error:" << error;
+  }
   return false;
 }
 
@@ -181,7 +191,7 @@ bool BookTable::deleteBook(qint64 isbn) {
   core::SqlQueryBuilder query;
   QString error;
 
-  query.deleteFrom(kTableName).where("isbn = ?").values({isbn});
+  query.deleteFrom(kTableName).where(u"isbn = ?"_s).values({isbn});
 
   const int affected = _db->execute(query, &error);
 
@@ -190,10 +200,11 @@ bool BookTable::deleteBook(qint64 isbn) {
     return true;
   }
 
-  if (affected == 0)
+  if (affected == 0) {
     qCWarning(lcBookTable) << "No book found with isbn:" << isbn;
-  else
+  } else {
     qCWarning(lcBookTable) << "Failed to delete book isbn:" << isbn << "error:" << error;
+  }
   return false;
 }
 
@@ -201,22 +212,23 @@ QStringList BookTable::getGenres(qint64 bookIsbn) const {
   core::SqlQueryBuilder query;
   QString error;
 
-  query.select({"g.name"})
-      .from("book_genres", "bg")
-      .leftJoin("genres", "g")
-      .on("g.id = bg.genre_id")
-      .where("bg.book_isbn = ?")
-      .orderBy("g.name")
+  query.select({u"g.name"_s})
+      .from(u"book_genres"_s, u"bg"_s)
+      .leftJoin(u"genres"_s, u"g"_s)
+      .on(u"g.id = bg.genre_id"_s)
+      .where(u"bg.book_isbn = ?"_s)
+      .orderBy(u"g.name"_s)
       .values({bookIsbn});
 
   auto rows = _db->select(query, &error);
-  if (!error.isEmpty())
+  if (!error.isEmpty()) {
     qCWarning(lcBookTable) << "Failed to load genres for book isbn:" << bookIsbn << "error:" << error;
+  }
 
   QStringList result;
   result.reserve(rows.size());
   for (const auto &row : std::as_const(rows)) {
-    result.append(row.value("name").toString());
+    result.append(row.value(u"name"_s).toString());
   }
   return result;
 }
@@ -225,11 +237,16 @@ QList<CharacterDTO> BookTable::getCharacters(qint64 bookIsbn) const {
   core::SqlQueryBuilder query;
   QString error;
 
-  query.select({"id", "name", "role"}).from("book_characters").where("book_isbn = ?").orderBy("id").values({bookIsbn});
+  query.select({u"id"_s, u"name"_s, u"role"_s})
+      .from(u"book_characters"_s)
+      .where(u"book_isbn = ?"_s)
+      .orderBy(u"id"_s)
+      .values({bookIsbn});
 
   auto rows = _db->select(query, &error);
-  if (!error.isEmpty())
+  if (!error.isEmpty()) {
     qCWarning(lcBookTable) << "Failed to load characters for book isbn:" << bookIsbn << "error:" << error;
+  }
 
   QList<CharacterDTO> result;
   result.reserve(rows.size());
@@ -243,17 +260,18 @@ bool BookTable::updatePagesRead(qint64 bookIsbn, int pagesRead) {
   core::SqlQueryBuilder query;
   QString error;
 
-  query.update(kTableName).set({"pagesRead"}).where("isbn = ?").values({pagesRead, bookIsbn});
+  query.update(kTableName).set({u"pagesRead"_s}).where(u"isbn = ?"_s).values({pagesRead, bookIsbn});
   const int affected = _db->execute(query, &error);
 
   if (affected > 0) {
     qCInfo(lcBookTable) << "Updated pagesRead — book isbn:" << bookIsbn << "value:" << pagesRead;
     return true;
   }
-  if (affected == 0)
+  if (affected == 0) {
     qCWarning(lcBookTable) << "updatePagesRead: no book found with isbn:" << bookIsbn;
-  else
+  } else {
     qCWarning(lcBookTable) << "updatePagesRead failed for book isbn:" << bookIsbn << "error:" << error;
+  }
   return false;
 }
 
@@ -264,14 +282,17 @@ qint64 BookTable::insertReadingSession(qint64 bookIsbn, int pagesFrom, int pages
   const QDateTime endedAt = QDateTime::currentDateTimeUtc();
   const QDateTime startedAt = endedAt.addSecs(-durationSeconds);
 
-  query.insertInto("reading_sessions", {"book_isbn", "started_at", "ended_at", "pages_from", "pages_to"})
+  query
+      .insertInto(u"reading_sessions"_s,
+                  {u"book_isbn"_s, u"started_at"_s, u"ended_at"_s, u"pages_from"_s, u"pages_to"_s})
       .values({bookIsbn, startedAt.toString(Qt::ISODate), endedAt.toString(Qt::ISODate), pagesFrom, pagesTo});
 
   const qint64 id = _db->insert(query, &error);
-  if (id > 0)
+  if (id > 0) {
     qCInfo(lcBookTable) << "Inserted session — book isbn:" << bookIsbn << "duration(s):" << durationSeconds;
-  else
+  } else {
     qCWarning(lcBookTable) << "insertReadingSession failed for book isbn:" << bookIsbn << "error:" << error;
+  }
   return id;
 }
 

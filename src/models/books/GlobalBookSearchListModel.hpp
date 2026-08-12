@@ -1,12 +1,11 @@
-#ifndef LIBRARY_GLOBALBOOKSEARCHLISTMODEL_HPP
-#define LIBRARY_GLOBALBOOKSEARCHLISTMODEL_HPP
+#ifndef READARY_MODELS_BOOKS_GLOBALBOOKSEARCHLISTMODEL_HPP
+#define READARY_MODELS_BOOKS_GLOBALBOOKSEARCHLISTMODEL_HPP
 
 #include "BookListModelBase.hpp"
 
 #include <QtQml/qqmlregistration.h>
 
-namespace readary {
-namespace models {
+namespace readary::models {
 
 class GlobalBookSearchListModel : public BookListModelBase {
   Q_OBJECT
@@ -17,7 +16,6 @@ public:
   void refresh() override;
 };
 
-} // namespace models
-} // namespace readary
+} // namespace readary::models
 
-#endif // LIBRARY_GLOBALBOOKSEARCHLISTMODEL_HPP
+#endif // READARY_MODELS_BOOKS_GLOBALBOOKSEARCHLISTMODEL_HPP

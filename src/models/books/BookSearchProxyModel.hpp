@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_MODELS_BOOKSEARCHPROXYMODEL_HPP
-#define BEELIBRARY_MODELS_BOOKSEARCHPROXYMODEL_HPP
+#ifndef READARY_MODELS_BOOKS_BOOKSEARCHPROXYMODEL_HPP
+#define READARY_MODELS_BOOKS_BOOKSEARCHPROXYMODEL_HPP
 
 #include "BookListModel.hpp"
 
@@ -35,7 +35,6 @@ private:
   qint8 cachedScore(int sourceRow) const;
   static qint8 scoreField(const QString &text, const QString &query, qint32 weight, qsizetype matchIdx);
 
-private:
   QString _searchQuery;
 
   // NOTE: in case of bug with searching during rowsInserted / rowsRemoved on the source model —
@@ -49,4 +48,4 @@ private:
 
 } // namespace readary::models
 
-#endif // BEELIBRARY_MODELS_BOOKSEARCHPROXYMODEL_HPP
+#endif // READARY_MODELS_BOOKS_BOOKSEARCHPROXYMODEL_HPP

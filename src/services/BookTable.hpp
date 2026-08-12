@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_SERVICES_BOOKTABLE_HPP
-#define BEELIBRARY_SERVICES_BOOKTABLE_HPP
+#ifndef READARY_SERVICES_BOOKTABLE_HPP
+#define READARY_SERVICES_BOOKTABLE_HPP
 
 #include "BookDTO.hpp"
 #include "CharacterDTO.hpp"
@@ -31,10 +31,11 @@ public:
 private:
   QHash<qint64, QStringList> getGenresByBook() const;
 
-  static const QString kTableName;
+  static constexpr QLatin1StringView kTableName{"books"};
+
   std::shared_ptr<core::DatabaseManager> _db;
 };
 
 } // namespace readary::services
 
-#endif // BEELIBRARY_SERVICES_BOOKTABLE_HPP
+#endif // READARY_SERVICES_BOOKTABLE_HPP

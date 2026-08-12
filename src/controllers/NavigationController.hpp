@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP
-#define BEELIBRARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP
+#ifndef READARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP
+#define READARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP
 
 #include <QJSEngine>
 #include <QObject>
@@ -7,6 +7,8 @@
 #include <QStack>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
+
+#include <cstdint>
 
 namespace readary::controllers {
 
@@ -16,25 +18,25 @@ class NavigationController : public QObject {
   QML_SINGLETON
 
   Q_PROPERTY(QUrl currentPagePath READ currentPagePath NOTIFY currentPageChanged FINAL)
-  Q_PROPERTY(PageEnum currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged FINAL)
+  Q_PROPERTY(Page currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged FINAL)
 
 public:
-  enum class PageEnum {
-    MAIN_PAGE = 1,
-    CATEGORY_LIST_PAGE,
-    SEARCH_PAGE,
-    GOALS_PAGE,
-    CHALLENGES_PAGE,
-    PROFILE_PAGE,
-    BOOK_DETAIL_PAGE,
+  enum class Page : std::uint8_t {
+    MainPage = 1,
+    CategoryListPage,
+    SearchPage,
+    GoalsPage,
+    ChallengesPage,
+    ProfilePage,
+    BookDetailPage,
   };
-  Q_ENUM(PageEnum)
+  Q_ENUM(Page)
 
   explicit NavigationController(QObject *parent);
 
   QUrl currentPagePath() const;
-  PageEnum currentPage() const;
-  void setCurrentPage(PageEnum page);
+  Page currentPage() const;
+  void setCurrentPage(Page page);
 
   Q_INVOKABLE void goBack();
 
@@ -50,13 +52,13 @@ private:
     qint8 level;
   };
 
-  static PageInfo pageInfo(PageEnum page);
+  static PageInfo pageInfo(Page page);
 
   static NavigationController *s_instance;
 
-  QStack<PageEnum> _pageStack;
+  QStack<Page> _pageStack;
 };
 
 } // namespace readary::controllers
 
-#endif // BEELIBRARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP
+#endif // READARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP

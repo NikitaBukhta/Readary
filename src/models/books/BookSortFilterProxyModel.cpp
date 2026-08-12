@@ -1,4 +1,5 @@
 #include "BookSortFilterProxyModel.hpp"
+
 #include "BookListModel.hpp"
 
 namespace readary::models {
@@ -20,20 +21,23 @@ void BookSortFilterProxyModel::addFilter(int role, const QVariant &value, Op op)
 }
 
 void BookSortFilterProxyModel::removeFilter(int role) {
-  if (_filters.remove(role) > 0)
+  if (_filters.remove(role) > 0) {
     invalidateFilter();
+  }
 }
 
 void BookSortFilterProxyModel::clearFilter() {
-  if (_filters.isEmpty())
+  if (_filters.isEmpty()) {
     return;
+  }
   _filters.clear();
   invalidateFilter();
 }
 
 void BookSortFilterProxyModel::setSortField(int role) {
-  if (sortRole() == role)
+  if (sortRole() == role) {
     return;
+  }
   setSortRole(role);
   invalidate();
   emit sortFieldChanged();
@@ -43,8 +47,9 @@ bool BookSortFilterProxyModel::sortDescending() const { return sortOrder() == Qt
 
 void BookSortFilterProxyModel::setSortDescending(bool descending) {
   auto order = descending ? Qt::DescendingOrder : Qt::AscendingOrder;
-  if (sortOrder() == order)
+  if (sortOrder() == order) {
     return;
+  }
   sort(0, order);
   emit sortDescendingChanged();
 }
@@ -65,8 +70,9 @@ bool BookSortFilterProxyModel::matches(const QVariant &cell, const Filter &filte
     bool okRhs = false;
     const double lhs = cell.toDouble(&okLhs);
     const double rhs = filter.value.toDouble(&okRhs);
-    if (!okLhs || !okRhs)
+    if (!okLhs || !okRhs) {
       return false;
+    }
     switch (filter.op) {
     case Op::Less:
       return lhs < rhs;
@@ -86,10 +92,12 @@ bool BookSortFilterProxyModel::matches(const QVariant &cell, const Filter &filte
 
 bool BookSortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
   const QAbstractItemModel *model = sourceModel();
-  if (!model)
+  if (model == nullptr) {
     return false;
-  if (_filters.isEmpty())
+  }
+  if (_filters.isEmpty()) {
     return true;
+  }
 
   const QModelIndex idx = model->index(sourceRow, 0, sourceParent);
 
@@ -104,8 +112,9 @@ bool BookSortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex
         break;
       }
     }
-    if (!anyMatch)
+    if (!anyMatch) {
       return false;
+    }
   }
   return true;
 }

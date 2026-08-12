@@ -1,10 +1,12 @@
-#ifndef BEELIBRARY_MODELS_BOOKSORTFILTERPROXYMODEL_HPP
-#define BEELIBRARY_MODELS_BOOKSORTFILTERPROXYMODEL_HPP
+#ifndef READARY_MODELS_BOOKS_BOOKSORTFILTERPROXYMODEL_HPP
+#define READARY_MODELS_BOOKS_BOOKSORTFILTERPROXYMODEL_HPP
 
 #include <QMultiHash>
 #include <QSortFilterProxyModel>
 #include <QVariant>
 #include <QtQml/qqmlregistration.h>
+
+#include <cstdint>
 
 namespace readary::models {
 
@@ -17,7 +19,7 @@ class BookSortFilterProxyModel : public QSortFilterProxyModel {
   Q_PROPERTY(bool sortDescending READ sortDescending WRITE setSortDescending NOTIFY sortDescendingChanged)
 
 public:
-  enum class Op {
+  enum class Op : std::uint8_t {
     Equal,
     NotEqual,
     Less,
@@ -61,4 +63,4 @@ private:
 
 } // namespace readary::models
 
-#endif // BEELIBRARY_MODELS_BOOKSORTFILTERPROXYMODEL_HPP
+#endif // READARY_MODELS_BOOKS_BOOKSORTFILTERPROXYMODEL_HPP

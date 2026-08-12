@@ -26,7 +26,8 @@ public:
   bool start() { return _server.listen(QHostAddress::LocalHost, 0); }
 
   QString endpoint(const QString &basePath = {}) const {
-    return QStringLiteral("http://127.0.0.1:%1%2").arg(_server.serverPort()).arg(basePath);
+    using Qt::StringLiterals::operator""_s;
+    return u"http://127.0.0.1:%1%2"_s.arg(_server.serverPort()).arg(basePath);
   }
 
   void setFailureStatus(const QByteArray &statusLine) { _failureStatus = statusLine; }

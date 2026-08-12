@@ -1,11 +1,13 @@
-#ifndef BEELIBRARY_MODELS_FONTMODEL_HPP
-#define BEELIBRARY_MODELS_FONTMODEL_HPP
+#ifndef READARY_MODELS_SETTINGS_FONTMODEL_HPP
+#define READARY_MODELS_SETTINGS_FONTMODEL_HPP
 
 #include <QHash>
 #include <QList>
 #include <QObject>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
+
+#include <cstdint>
 
 namespace readary::models {
 
@@ -19,7 +21,7 @@ class FontModel : public QObject {
   Q_PROPERTY(QString currentFamily READ currentFamily NOTIFY currentChanged FINAL)
 
 public:
-  enum class Code { NotoColorEmoji = 0, Count };
+  enum class Code : std::uint8_t { NotoColorEmoji = 0, Count };
   Q_ENUM(Code)
 
   explicit FontModel(QObject *parent = nullptr);
@@ -52,4 +54,4 @@ private:
 
 } // namespace readary::models
 
-#endif // BEELIBRARY_MODELS_FONTMODEL_HPP
+#endif // READARY_MODELS_SETTINGS_FONTMODEL_HPP

@@ -12,7 +12,7 @@
 #include <QTest>
 #include <QUrl>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 using readary::api::BookSearchFields;
 using readary::api::GoogleBooksSearchAPI;

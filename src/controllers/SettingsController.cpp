@@ -11,16 +11,15 @@ namespace readary::controllers {
 SettingsController *SettingsController::s_instance = nullptr;
 
 SettingsController::SettingsController(QObject *parent)
-    : QObject{parent}, _languageModel{new readary::models::LanguageModel{this}},
-      _fontModel{new readary::models::FontModel{this}} {
+    : QObject{parent}, _languageModel{new models::LanguageModel{this}}, _fontModel{new models::FontModel{this}} {
   qCInfo(lcSettings) << "SettingsController initialized";
 }
 
 SettingsController::~SettingsController() = default;
 
-readary::models::LanguageModel *SettingsController::languageModel() const { return _languageModel; }
+models::LanguageModel *SettingsController::languageModel() const { return _languageModel; }
 
-readary::models::FontModel *SettingsController::fontModel() const { return _fontModel; }
+models::FontModel *SettingsController::fontModel() const { return _fontModel; }
 
 void SettingsController::setInstance(SettingsController *instance) { s_instance = instance; }
 

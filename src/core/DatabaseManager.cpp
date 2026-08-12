@@ -7,14 +7,16 @@
 #include <QSqlRecord>
 #include <QVariantMap>
 
+using Qt::StringLiterals::operator""_s;
+
 namespace {
 Q_LOGGING_CATEGORY(lcDb, "readary.core.db")
 }
 
 namespace readary::core {
 
-DatabaseManager::DatabaseManager(const QString &dbName) {
-  _db = QSqlDatabase::addDatabase("QSQLITE", kConnectionName);
+DatabaseManager::DatabaseManager(const QString &dbName)
+    : _db{QSqlDatabase::addDatabase(u"QSQLITE"_s, kConnectionName)} {
   _db.setDatabaseName(dbName);
   qCInfo(lcDb) << "Database configured:" << dbName;
 }
@@ -63,8 +65,9 @@ bool DatabaseManager::clear(QString *error) {
 
   if (QFile::exists(path) && !QFile::remove(path)) {
     qCWarning(lcDb) << "clear: failed to remove database file:" << path;
-    if (error)
-      *error = QStringLiteral("Failed to remove database file: %1").arg(path);
+    if (error != nullptr) {
+      *error = u"Failed to remove database file: %1"_s.arg(path);
+    }
     open();
     return false;
   }
@@ -72,8 +75,9 @@ bool DatabaseManager::clear(QString *error) {
   qCInfo(lcDb) << "clear: removed database file:" << path;
 
   if (!open()) {
-    if (error)
-      *error = QStringLiteral("Failed to reopen database after clear");
+    if (error != nullptr) {
+      *error = u"Failed to reopen database after clear"_s;
+    }
     return false;
   }
   return true;
@@ -82,8 +86,9 @@ bool DatabaseManager::clear(QString *error) {
 QList<QVariantMap> DatabaseManager::select(const SqlQueryBuilder &builder, QString *error) {
   QSqlQuery query{_db};
 
-  if (!execPrepared(query, builder, error))
+  if (!execPrepared(query, builder, error)) {
     return {};
+  }
 
   return getDataFromQuery(query);
 }
@@ -93,8 +98,9 @@ int DatabaseManager::execute(const SqlQueryBuilder &builder, QString *error) {
 
   if (!_db.transaction()) {
     qCWarning(lcDb) << "Failed to begin transaction:" << _db.lastError().text();
-    if (error)
+    if (error != nullptr) {
       *error = _db.lastError().text();
+    }
     return -1;
   }
 
@@ -112,8 +118,9 @@ qint64 DatabaseManager::insert(const SqlQueryBuilder &builder, QString *error) {
 
   if (!_db.transaction()) {
     qCWarning(lcDb) << "Failed to begin transaction:" << _db.lastError().text();
-    if (error)
+    if (error != nullptr) {
       *error = _db.lastError().text();
+    }
     return -1;
   }
 
@@ -133,15 +140,17 @@ bool DatabaseManager::exec(const QString &sql, QString *error) {
 
   if (!_db.transaction()) {
     qCWarning(lcDb) << "Failed to begin transaction:" << _db.lastError().text();
-    if (error)
+    if (error != nullptr) {
       *error = _db.lastError().text();
+    }
     return false;
   }
 
   if (!query.exec(sql)) {
     qCWarning(lcDb) << "Query failed:" << query.lastError().text();
-    if (error)
+    if (error != nullptr) {
       *error = query.lastError().text();
+    }
     _db.rollback();
     return false;
   }
@@ -156,20 +165,23 @@ bool DatabaseManager::execPrepared(QSqlQuery &query, const SqlQueryBuilder &buil
 
   if (!query.prepare(sql)) {
     qCWarning(lcDb) << "Prepare failed:" << query.lastError().text() << "sql:" << sql;
-    if (error)
+    if (error != nullptr) {
       *error = query.lastError().text();
+    }
     return false;
   }
 
-  for (const auto &param : params)
+  for (const auto &param : params) {
     query.addBindValue(param);
+  }
 
   qCDebug(lcDb) << "Executing:" << sql << "params:" << params;
 
   if (!query.exec()) {
     qCWarning(lcDb) << "Query failed:" << query.lastError().text();
-    if (error)
+    if (error != nullptr) {
       *error = query.lastError().text();
+    }
     return false;
   }
 
@@ -181,22 +193,25 @@ void DatabaseManager::trimRun(QTextStream &script) {
 
   while (!script.atEnd()) {
     const QString line = script.readLine();
-    if (line.isEmpty() || line.startsWith("--"))
+    if (line.isEmpty() || line.startsWith(u"--"_s)) {
       continue;
+    }
 
-    if (line.startsWith(" ")) {
+    if (line.startsWith(u' ')) {
       auto trimmedLine = line.trimmed();
-      auto endIndex = trimmedLine.indexOf("--");
-      if (endIndex != -1)
-        currentCommand += trimmedLine.left(endIndex) + " ";
-      else
-        currentCommand += trimmedLine + " ";
+      auto endIndex = trimmedLine.indexOf(u"--"_s);
+      if (endIndex != -1) {
+        currentCommand += trimmedLine.left(endIndex) + u" "_s;
+      } else {
+        currentCommand += trimmedLine + u" "_s;
+      }
     } else {
-      currentCommand += line + " ";
-      if (line.trimmed().endsWith(";")) {
+      currentCommand += line + u" "_s;
+      if (line.trimmed().endsWith(u';')) {
         QString error;
-        if (!exec(currentCommand, &error))
+        if (!exec(currentCommand, &error)) {
           qCWarning(lcDb) << "Script statement failed:" << error;
+        }
         currentCommand.clear();
       }
     }
@@ -210,8 +225,9 @@ QList<QVariantMap> DatabaseManager::getDataFromQuery(QSqlQuery &query) {
 
   while (query.next()) {
     QVariantMap row;
-    for (int i = 0; i < fieldCount; ++i)
+    for (int i = 0; i < fieldCount; ++i) {
       row.insert(schema.fieldName(i), query.value(i));
+    }
     ret.emplaceBack(std::move(row));
   }
 

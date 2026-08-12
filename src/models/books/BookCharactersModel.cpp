@@ -13,14 +13,16 @@ BookCharactersModel::BookCharactersModel(std::shared_ptr<services::BookTable> bo
     : QAbstractListModel{parent}, _bookTable{std::move(bookTable)} {}
 
 int BookCharactersModel::rowCount(const QModelIndex &parent) const {
-  if (parent.isValid())
+  if (parent.isValid()) {
     return 0;
+  }
   return _visibleCount;
 }
 
 QVariant BookCharactersModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= _visibleCount)
+  if (!index.isValid() || index.row() < 0 || index.row() >= _visibleCount) {
     return {};
+  }
   const services::CharacterDTO &row = _allItems.at(index.row());
   switch (role) {
   case IdRole:
@@ -59,14 +61,15 @@ void BookCharactersModel::setBookIsbn(qint64 isbn) {
 }
 
 void BookCharactersModel::loadMore() {
-  if (!canLoadMore())
+  if (!canLoadMore()) {
     return;
+  }
 
   const int from = _visibleCount;
   const int newCount = std::min<int>(static_cast<int>(_allItems.size()), _visibleCount + kPageSize);
   const int to = newCount - 1;
 
-  beginInsertRows(QModelIndex(), from, to);
+  beginInsertRows({}, from, to);
   _visibleCount = newCount;
   endInsertRows();
 
@@ -75,14 +78,15 @@ void BookCharactersModel::loadMore() {
 }
 
 void BookCharactersModel::hide() {
-  if (!canHide())
+  if (!canHide()) {
     return;
+  }
 
   const int newCount = std::min<int>(static_cast<int>(_allItems.size()), kPageSize);
   const int from = newCount;
   const int to = _visibleCount - 1;
 
-  beginRemoveRows(QModelIndex(), from, to);
+  beginRemoveRows({}, from, to);
   _visibleCount = newCount;
   endRemoveRows();
 

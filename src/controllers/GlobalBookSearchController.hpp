@@ -1,7 +1,6 @@
-#ifndef LIBRARY_GLOBALBOOKSEARCHCONTROLLER_HPP
-#define LIBRARY_GLOBALBOOKSEARCHCONTROLLER_HPP
+#ifndef READARY_CONTROLLERS_GLOBALBOOKSEARCHCONTROLLER_HPP
+#define READARY_CONTROLLERS_GLOBALBOOKSEARCHCONTROLLER_HPP
 
-#include "BookDTOObject.hpp"
 #include "api/bookSearch/IBookSearchAPI.hpp"
 #include "api/translate/ITranslator.hpp"
 #include "models/books/GlobalBookSearchListModel.hpp"
@@ -95,4 +94,4 @@ private:
 
 } // namespace readary::controllers
 
-#endif // LIBRARY_GLOBALBOOKSEARCHCONTROLLER_HPP
+#endif // READARY_CONTROLLERS_GLOBALBOOKSEARCHCONTROLLER_HPP

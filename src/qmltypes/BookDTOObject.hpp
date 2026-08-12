@@ -1,16 +1,15 @@
-#ifndef BEELIBRARY_QMLTYPES_BOOKDTOOBJECT_HPP
-#define BEELIBRARY_QMLTYPES_BOOKDTOOBJECT_HPP
+#ifndef READARY_QMLTYPES_BOOKDTOOBJECT_HPP
+#define READARY_QMLTYPES_BOOKDTOOBJECT_HPP
 
 #include "services/BookDTO.hpp"
 
-#include <QObject>
-#include <QString>
-#include <QStringList>
 #include <QtQml/qqmlregistration.h>
+
+#include <utility>
 
 namespace readary::qmltypes {
 
-struct BookDTOObject : public readary::services::BookDTO {
+struct BookDTOObject : public services::BookDTO {
   Q_GADGET
   QML_VALUE_TYPE(bookDtoObject)
 
@@ -35,10 +34,10 @@ struct BookDTOObject : public readary::services::BookDTO {
 
 public:
   BookDTOObject() = default;
-  BookDTOObject(const readary::services::BookDTO &base) : readary::services::BookDTO(base) {}
-  BookDTOObject(readary::services::BookDTO &&base) noexcept : readary::services::BookDTO(std::move(base)) {}
+  explicit BookDTOObject(const services::BookDTO &base) : services::BookDTO{base} {}
+  explicit BookDTOObject(services::BookDTO &&base) noexcept : services::BookDTO{std::move(base)} {}
 };
 
 } // namespace readary::qmltypes
 
-#endif // BEELIBRARY_QMLTYPES_BOOKDTOOBJECT_HPP
+#endif // READARY_QMLTYPES_BOOKDTOOBJECT_HPP

@@ -1,5 +1,5 @@
-#ifndef LIBRARY_ITRANSLATOR_HPP
-#define LIBRARY_ITRANSLATOR_HPP
+#ifndef READARY_API_TRANSLATE_ITRANSLATOR_HPP
+#define READARY_API_TRANSLATE_ITRANSLATOR_HPP
 
 #include <QObject>
 #include <QString>
@@ -20,4 +20,4 @@ signals:
 
 } // namespace readary::api
 
-#endif // LIBRARY_ITRANSLATOR_HPP
+#endif // READARY_API_TRANSLATE_ITRANSLATOR_HPP

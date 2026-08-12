@@ -1,4 +1,5 @@
 #include "BookListModelBase.hpp"
+
 #include <QLoggingCategory>
 #include <algorithm>
 
@@ -11,14 +12,16 @@ namespace readary::models {
 BookListModelBase::BookListModelBase(QObject *parent) : QAbstractListModel{parent} {}
 
 int BookListModelBase::rowCount(const QModelIndex &parent) const {
-  if (parent.isValid())
+  if (parent.isValid()) {
     return 0;
+  }
   return static_cast<int>(_books.size());
 }
 
 QVariant BookListModelBase::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() >= _books.size())
+  if (!index.isValid() || index.row() < 0 || index.row() >= _books.size()) {
     return {};
+  }
 
   const auto &book = _books.at(index.row());
 
@@ -94,8 +97,9 @@ void BookListModelBase::setBooks(const QList<services::BookDTO> &books) {
 }
 
 void BookListModelBase::appendBooks(const QList<services::BookDTO> &books) {
-  if (books.isEmpty())
+  if (books.isEmpty()) {
     return;
+  }
   const int first = static_cast<int>(_books.size());
   beginInsertRows({}, first, first + static_cast<int>(books.size()) - 1);
   _books.append(books);

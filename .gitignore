@@ -72,6 +72,8 @@ CMakeLists.txt.user*
 .idea/
 *.iml
 cmake-build-*/
+# "Inspect Code" exports its report as ~40 MB of XML into ./clang-tidy.
+/clang-tidy/
 
 # MinGW generated files
 *.Debug

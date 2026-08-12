@@ -25,8 +25,9 @@ BookSearchProxyModel::BookSearchProxyModel(QObject *parent) : QSortFilterProxyMo
 QString BookSearchProxyModel::searchQuery() const { return _searchQuery; }
 
 void BookSearchProxyModel::setSearchQuery(const QString &query) {
-  if (_searchQuery == query)
+  if (_searchQuery == query) {
     return;
+  }
 
   _searchQuery = query;
   emit searchQueryChanged();
@@ -39,18 +40,20 @@ bool BookSearchProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &so
   }
 
   const QAbstractItemModel *model = sourceModel();
-  if (!model)
+  if (model == nullptr) {
     return false;
+  }
 
   const QModelIndex idx = model->index(sourceRow, 0, sourceParent);
-  if (!idx.isValid())
+  if (!idx.isValid()) {
     return false;
+  }
 
   const qint8 matchScore = calculateMatchScore(idx, _searchQuery);
-  const size_t localIndex = idx.row();
+  const auto localIndex = static_cast<size_t>(idx.row());
 
   if (localIndex >= _searchCache.size()) {
-    _searchCache.resize(model->rowCount() + 1, 0); // +1 to avoid zero size;
+    _searchCache.resize(static_cast<size_t>(model->rowCount()) + 1, 0); // +1 to avoid zero size;
   }
 
   _searchCache.at(localIndex) = matchScore;
@@ -71,8 +74,7 @@ qint8 BookSearchProxyModel::calculateMatchScore(const QModelIndex &index, const 
   return totalScore;
 }
 
-inline qint8 BookSearchProxyModel::scoreField(const QString &text, const QString &query, qint32 weight,
-                                              qsizetype matchIdx) {
+qint8 BookSearchProxyModel::scoreField(const QString &text, const QString &query, qint32 weight, qsizetype matchIdx) {
   const auto textSize = static_cast<double>(text.size());
   const auto querySize = static_cast<double>(query.size());
   const double positionFactor = 1.0 - (static_cast<double>(matchIdx) / textSize);
@@ -80,20 +82,22 @@ inline qint8 BookSearchProxyModel::scoreField(const QString &text, const QString
 }
 
 bool BookSearchProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const {
-  if (_searchQuery.size()) {
+  if (!_searchQuery.isEmpty()) {
     const qint8 leftScore = cachedScore(left.row());
     const qint8 rightScore = cachedScore(right.row());
 
-    if (leftScore != rightScore)
+    if (leftScore != rightScore) {
       return leftScore > rightScore;
+    }
   }
 
   return left.row() < right.row();
 }
 
 qint8 BookSearchProxyModel::cachedScore(int sourceRow) const {
-  if (sourceRow < 0 || static_cast<size_t>(sourceRow) >= _searchCache.size())
+  if (sourceRow < 0 || static_cast<size_t>(sourceRow) >= _searchCache.size()) {
     return 0;
+  }
   return _searchCache.at(sourceRow);
 }
 

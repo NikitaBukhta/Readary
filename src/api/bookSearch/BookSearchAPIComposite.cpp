@@ -1,11 +1,11 @@
-#include "BookSearchApiComposite.hpp"
+#include "BookSearchAPIComposite.hpp"
 
 #include "api/translate/LanguageDetector.hpp"
 
 #include <QLoggingCategory>
 #include <utility>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcComposite, "readary.api.composite")

@@ -1,8 +1,9 @@
-#ifndef LIBRARY_GOOGLETRANSLATOR_HPP
-#define LIBRARY_GOOGLETRANSLATOR_HPP
+#ifndef READARY_API_TRANSLATE_GOOGLETRANSLATOR_HPP
+#define READARY_API_TRANSLATE_GOOGLETRANSLATOR_HPP
 
 #include "ITranslator.hpp"
 
+#include <QHash>
 #include <QNetworkAccessManager>
 
 class QNetworkReply;
@@ -27,4 +28,4 @@ private:
 
 } // namespace readary::api
 
-#endif // LIBRARY_GOOGLETRANSLATOR_HPP
+#endif // READARY_API_TRANSLATE_GOOGLETRANSLATOR_HPP

@@ -275,9 +275,32 @@ positives on Qt code:
   ```
 - Use `Q_UNUSED(name)` for unused parameters in QML `create()` overrides
   (parameter names stay intact, matches the .hpp declaration).
-- Prefer `u"..."_s` from `Qt::StringLiterals` over the deprecated `_qs`.
+- Prefer `u"..."_s` from `Qt::StringLiterals` over the deprecated `_qs`. Use it
+  for every QString-typed literal; `"..."_L1` for ASCII constants that feed
+  `QAnyStringView`/`QLatin1StringView` APIs. Literals streamed into a
+  `qCInfo`/`qCWarning` message stay plain. Pull the operators in with
+  per-operator using-*declarations* — `using Qt::StringLiterals::operator""_s;`
+  (and/or `..._L1;`) — not `using namespace Qt::StringLiterals;`, which
+  `google-build-using-namespace` rejects. Declare only the operators the file
+  actually uses: `misc-unused-using-decls` fails the build on a spare one. In a
+  header, put the declaration inside the function that needs it.
 - Naming: private members `_xxx`, anonymous-namespace globals `g_xxx`,
+  class-scope compile-time constants `kXxx` (declare them `constexpr` —
+  a non-constexpr `static const QString` trips
+  `bugprone-throwing-static-initialization`), singleton instances `s_instance`,
   classes/structs/enums CamelCase, everything else camelBack.
+- Header guards: `READARY_<PATH>_<FILE>_HPP`, mirroring the path under `src/`.
+- Scoped enums carry an explicit `: std::uint8_t` underlying type; enumerators
+  are CamelCase. Unscoped Qt role enums (`Roles`) keep `Qt::UserRole`-based
+  values and so stay `int`-backed.
+- Refer to sibling namespaces relatively (`models::`, `services::`) inside
+  `readary::*`; only Q_PROPERTY/Q_INVOKABLE types QML resolves and code in
+  global-scope anonymous namespaces spell out `readary::`.
+- Same-directory headers are included by bare filename, everything else by a
+  path relative to `src/`.
+- `clang-format` owns brace placement (`InsertBraces: true`) and the trailing
+  newline, so every `if`/`else` body is braced — don't hand-write brace-less
+  bodies, they get expanded on the next `compile`.
 
 ## File map
 

@@ -18,7 +18,7 @@ struct StubRow {
 
 class StubBookModel : public QAbstractListModel {
 public:
-  using Roles = readary::models::BookListModel::RolesEnum;
+  using Roles = readary::models::BookListModel::Roles;
 
   explicit StubBookModel(QObject *parent = nullptr) : QAbstractListModel{parent} {}
 
@@ -29,8 +29,9 @@ public:
   }
 
   void updateRow(int index, StubRow row) {
-    if (index < 0 || index >= _rows.size())
+    if (index < 0 || index >= _rows.size()) {
       return;
+    }
     _rows[index] = std::move(row);
     const QModelIndex idx = createIndex(index, 0);
     emit dataChanged(idx, idx);
@@ -41,8 +42,9 @@ public:
   }
 
   QVariant data(const QModelIndex &index, int role) const override {
-    if (!index.isValid() || index.row() < 0 || index.row() >= _rows.size())
+    if (!index.isValid() || index.row() < 0 || index.row() >= _rows.size()) {
       return {};
+    }
     const auto &r = _rows.at(index.row());
     switch (role) {
     case Roles::IsbnRole:
@@ -65,8 +67,9 @@ private:
 QList<int> idsOf(const QAbstractItemModel &model) {
   QList<int> ids;
   ids.reserve(model.rowCount());
-  for (int i = 0; i < model.rowCount(); ++i)
+  for (int i = 0; i < model.rowCount(); ++i) {
     ids << model.data(model.index(i, 0), readary::models::BookListModel::IsbnRole).toInt();
+  }
   return ids;
 }
 

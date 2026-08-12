@@ -29,7 +29,7 @@ readary_add_test(controllers/GlobalBookSearchControllerTest.cpp)
 
 readary_add_test(api/LanguageDetectorTest.cpp)
 readary_add_test(api/LanguageConverterTest.cpp)
-readary_add_test(api/BookSearchApiCompositeTest.cpp)
+readary_add_test(api/BookSearchAPICompositeTest.cpp)
 
 # The network-backed clients are driven against a local QTcpServer stub.
 readary_add_test(api/GoogleTranslatorTest.cpp LIBS Qt6::Network)

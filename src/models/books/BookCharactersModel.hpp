@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_MODELS_BOOKCHARACTERSMODEL_HPP
-#define BEELIBRARY_MODELS_BOOKCHARACTERSMODEL_HPP
+#ifndef READARY_MODELS_BOOKS_BOOKCHARACTERSMODEL_HPP
+#define READARY_MODELS_BOOKS_BOOKCHARACTERSMODEL_HPP
 
 #include "services/BookTable.hpp"
 #include "services/CharacterDTO.hpp"
@@ -48,11 +48,11 @@ private:
   static constexpr int kPageSize = 5;
 
   std::shared_ptr<services::BookTable> _bookTable;
-  qint64 _bookIsbn = 0;
+  qint64 _bookIsbn{0};
   QList<services::CharacterDTO> _allItems;
-  int _visibleCount = 0;
+  int _visibleCount{0};
 };
 
 } // namespace readary::models
 
-#endif // BEELIBRARY_MODELS_BOOKCHARACTERSMODEL_HPP
+#endif // READARY_MODELS_BOOKS_BOOKCHARACTERSMODEL_HPP

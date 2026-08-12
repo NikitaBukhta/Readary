@@ -1,52 +1,54 @@
 #include "BookDTO.hpp"
 
+using Qt::StringLiterals::operator""_s;
+
 namespace readary::services {
 
 BookDTO BookDTO::fromMap(const QVariantMap &data) {
   BookDTO dto;
-  dto.isbn = data.value("isbn").toLongLong();
-  dto.name = data.value("name").toString();
-  dto.authorName = data.value("author").toString();
-  dto.year = data.value("year").toInt();
-  dto.publisherName = data.value("publisher").toString();
-  dto.description = data.value("description").toString();
-  dto.coverUrl = data.value("coverUrl").toString();
-  dto.isHardcover = data.value("isHardcover").toBool();
-  dto.typeName = data.value("type").toString();
-  dto.totalPages = data.value("totalPages").toInt();
-  dto.pagesRead = data.value("pagesRead").toInt();
-  dto.globalRating = data.value("globalRating").toDouble();
-  dto.localRating = data.value("localRating").toDouble();
-  dto.userRating = data.value("userRating").toInt();
-  dto.status = data.value("status").toInt();
-  dto.inWishList = data.value("inWishList").toBool();
-  dto.language = data.value("language").toString();
-  dto.workKey = data.value("workKey").toString();
-  dto.genres = data.value("genres").toStringList();
+  dto.isbn = data.value(u"isbn"_s).toLongLong();
+  dto.name = data.value(u"name"_s).toString();
+  dto.authorName = data.value(u"author"_s).toString();
+  dto.year = data.value(u"year"_s).toInt();
+  dto.publisherName = data.value(u"publisher"_s).toString();
+  dto.description = data.value(u"description"_s).toString();
+  dto.coverUrl = data.value(u"coverUrl"_s).toString();
+  dto.isHardcover = data.value(u"isHardcover"_s).toBool();
+  dto.typeName = data.value(u"type"_s).toString();
+  dto.totalPages = data.value(u"totalPages"_s).toInt();
+  dto.pagesRead = data.value(u"pagesRead"_s).toInt();
+  dto.globalRating = data.value(u"globalRating"_s).toDouble();
+  dto.localRating = data.value(u"localRating"_s).toDouble();
+  dto.userRating = data.value(u"userRating"_s).toInt();
+  dto.status = data.value(u"status"_s).toInt();
+  dto.inWishList = data.value(u"inWishList"_s).toBool();
+  dto.language = data.value(u"language"_s).toString();
+  dto.workKey = data.value(u"workKey"_s).toString();
+  dto.genres = data.value(u"genres"_s).toStringList();
   return dto;
 }
 
 QVariantMap BookDTO::toMap() const {
   return {
-      {"isbn", isbn},
-      {"name", name},
-      {"author", authorName},
-      {"year", year},
-      {"publisher", publisherName},
-      {"description", description},
-      {"coverUrl", coverUrl},
-      {"isHardcover", isHardcover},
-      {"type", typeName},
-      {"totalPages", totalPages},
-      {"pagesRead", pagesRead},
-      {"globalRating", globalRating},
-      {"localRating", localRating},
-      {"userRating", userRating},
-      {"status", status},
-      {"inWishList", inWishList},
-      {"language", language},
-      {"workKey", workKey},
-      {"genres", genres},
+      {u"isbn"_s, isbn},
+      {u"name"_s, name},
+      {u"author"_s, authorName},
+      {u"year"_s, year},
+      {u"publisher"_s, publisherName},
+      {u"description"_s, description},
+      {u"coverUrl"_s, coverUrl},
+      {u"isHardcover"_s, isHardcover},
+      {u"type"_s, typeName},
+      {u"totalPages"_s, totalPages},
+      {u"pagesRead"_s, pagesRead},
+      {u"globalRating"_s, globalRating},
+      {u"localRating"_s, localRating},
+      {u"userRating"_s, userRating},
+      {u"status"_s, status},
+      {u"inWishList"_s, inWishList},
+      {u"language"_s, language},
+      {u"workKey"_s, workKey},
+      {u"genres"_s, genres},
   };
 }
 

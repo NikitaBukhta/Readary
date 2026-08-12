@@ -2,7 +2,7 @@
 
 #include <QTest>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 using readary::services::BookDTO;
 using readary::services::BookFilterCriteria;

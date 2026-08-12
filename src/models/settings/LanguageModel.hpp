@@ -1,10 +1,12 @@
-#ifndef BEELIBRARY_MODELS_LANGUAGEMODEL_HPP
-#define BEELIBRARY_MODELS_LANGUAGEMODEL_HPP
+#ifndef READARY_MODELS_SETTINGS_LANGUAGEMODEL_HPP
+#define READARY_MODELS_SETTINGS_LANGUAGEMODEL_HPP
 
 #include <QList>
 #include <QObject>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
+
+#include <cstdint>
 
 class QTranslator;
 
@@ -19,7 +21,7 @@ class LanguageModel : public QObject {
   Q_PROPERTY(QList<int> available READ available CONSTANT FINAL)
 
 public:
-  enum class Code { English = 0, Russian = 1, Ukrainian = 2, Count };
+  enum class Code : std::uint8_t { English = 0, Russian, Ukrainian, Count };
   Q_ENUM(Code)
 
   explicit LanguageModel(QObject *parent = nullptr);
@@ -47,4 +49,4 @@ private:
 
 } // namespace readary::models
 
-#endif // BEELIBRARY_MODELS_LANGUAGEMODEL_HPP
+#endif // READARY_MODELS_SETTINGS_LANGUAGEMODEL_HPP

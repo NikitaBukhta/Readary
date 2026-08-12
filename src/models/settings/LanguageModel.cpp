@@ -6,37 +6,42 @@
 #include <QSettings>
 #include <QTranslator>
 
-#include <map>
+#include <algorithm>
+#include <array>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcLang, "readary.models.language")
 
+using Code = readary::models::LanguageModel::Code;
+
 struct LanguageInfo {
-  QString label;
-  QString localeCode;
+  QStringView label;
+  QStringView localeCode;
 };
 
-constexpr auto g_kSettingsKey = "ui/language";
-const std::map<readary::models::LanguageModel::Code, LanguageInfo> g_kLanguageInfoMap{
-    {readary::models::LanguageModel::Code::English, {.label = u"English"_s, .localeCode = u"en"_s}},
-    {readary::models::LanguageModel::Code::Russian, {.label = u"Русский"_s, .localeCode = u"ru"_s}},
-    {readary::models::LanguageModel::Code::Ukrainian, {.label = u"Українська"_s, .localeCode = u"uk"_s}},
-};
+constexpr auto g_settingsKey = "ui/language"_L1;
+constexpr std::array<LanguageInfo, static_cast<size_t>(Code::Count)> g_languageInfo{{
+    {.label = u"English", .localeCode = u"en"},
+    {.label = u"Русский", .localeCode = u"ru"},
+    {.label = u"Українська", .localeCode = u"uk"},
+}};
 
-QString localeCodeFor(readary::models::LanguageModel::Code code) {
-  static const QString defaultReturnValue = u"en"_s;
-
-  const auto it = g_kLanguageInfoMap.find(code);
-  return it != g_kLanguageInfoMap.end() ? it->second.localeCode : defaultReturnValue;
+const LanguageInfo *infoFor(Code code) {
+  const auto index = static_cast<size_t>(code);
+  return index < g_languageInfo.size() ? &g_languageInfo.at(index) : nullptr;
 }
 
-QString labelFor(readary::models::LanguageModel::Code code) {
-  static const QString defaultReturnValue = u"English"_s;
+QString localeCodeFor(Code code) {
+  const LanguageInfo *info = infoFor(code);
+  return (info != nullptr ? info->localeCode : g_languageInfo.front().localeCode).toString();
+}
 
-  const auto it = g_kLanguageInfoMap.find(code);
-  return it != g_kLanguageInfoMap.end() ? it->second.label : defaultReturnValue;
+QString labelFor(Code code) {
+  const LanguageInfo *info = infoFor(code);
+  return (info != nullptr ? info->label : g_languageInfo.front().label).toString();
 }
 
 } // namespace
@@ -46,12 +51,12 @@ namespace readary::models {
 LanguageModel::LanguageModel(QObject *parent)
     : QObject{parent}, _current{defaultCode()}, _translator{new QTranslator{this}} {
   const QSettings settings;
-  const auto stored = settings.value(g_kSettingsKey);
+  const auto stored = settings.value(g_settingsKey);
   if (stored.isValid()) {
     bool ok = false;
-    const int v = stored.toInt(&ok);
+    const int storedCode = stored.toInt(&ok);
     if (ok) {
-      _current = clamp(v);
+      _current = clamp(storedCode);
     }
   }
   qCInfo(lcLang) << "LanguageModel initialized, current:" << localeCodeFor(_current);
@@ -62,12 +67,13 @@ LanguageModel::~LanguageModel() = default;
 LanguageModel::Code LanguageModel::current() const { return _current; }
 
 void LanguageModel::setCurrent(Code code) {
-  if (_current == code)
+  if (_current == code) {
     return;
+  }
 
   _current = code;
   QSettings settings;
-  settings.setValue(g_kSettingsKey, static_cast<int>(_current));
+  settings.setValue(g_settingsKey, static_cast<int>(_current));
 
   applyCurrent();
   qCInfo(lcLang) << "Current language changed to" << localeCodeFor(_current);

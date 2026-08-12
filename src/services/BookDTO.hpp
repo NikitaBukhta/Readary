@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_SERVICES_BOOKDTO_HPP
-#define BEELIBRARY_SERVICES_BOOKDTO_HPP
+#ifndef READARY_SERVICES_BOOKDTO_HPP
+#define READARY_SERVICES_BOOKDTO_HPP
 
 #include <QVariantMap>
 #include <QtTypes>
@@ -33,4 +33,4 @@ struct BookDTO {
 
 } // namespace readary::services
 
-#endif // BEELIBRARY_SERVICES_BOOKDTO_HPP
+#endif // READARY_SERVICES_BOOKDTO_HPP

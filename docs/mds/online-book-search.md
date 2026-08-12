@@ -6,7 +6,7 @@ substring/ranking proxy is a separate thing, documented in
 [book-search.md](book-search.md).
 
 ```
-QML  →  GlobalBookSearchController  →  BookSearchAPIComposite  →  OpenLibrarySeachAPI   (primary)
+QML  →  GlobalBookSearchController  →  BookSearchAPIComposite  →  OpenLibrarySearchAPI   (primary)
                                                                ↘  GoogleBooksSearchAPI  (fallback)
                                               ↘ IBookNetSearchAPI (shared HTTP transport + retry)
 ```
@@ -15,7 +15,7 @@ QML  →  GlobalBookSearchController  →  BookSearchAPIComposite  →  OpenLibr
 
 | | Primary | Fallback |
 |---|---|---|
-| Class | `OpenLibrarySeachAPI` | `GoogleBooksSearchAPI` |
+| Class | `OpenLibrarySearchAPI` | `GoogleBooksSearchAPI` |
 | Endpoint | `https://openlibrary.org/search.json` | `https://www.googleapis.com/books/v1/volumes` |
 | Page size | 25 | 20 |
 | Auth | none | optional `key=` ([see below](#api-credentials)) |
@@ -62,7 +62,7 @@ one arrives while the composite is in `AwaitingFallback`, gets mistaken for the
 duplicated results in the model.
 
 Primary and fallback replies land in **separate slots**, each of which drops
-anything arriving in the wrong stage. `BookSearchApiCompositeTest::overlappingSearch_ignoresStalePrimaryReply_queriesFallbackOnce`
+anything arriving in the wrong stage. `BookSearchAPICompositeTest::overlappingSearch_ignoresStalePrimaryReply_queriesFallbackOnce`
 pins this down.
 
 ### Known limit
@@ -192,8 +192,8 @@ key (and the user's query text) out of the log file.
 |---|---|
 | `src/api/bookSearch/IBookSearchAPI.hpp` | interface + `BookSearchFields` |
 | `src/api/bookSearch/IBookNetSearchAPI.{hpp,cpp}` | HTTP transport, retry, `asFieldValue` |
-| `src/api/bookSearch/BookSearchApiComposite.{hpp,cpp}` | primary/fallback state machine |
-| `src/api/bookSearch/OpenLibrarySeachAPI.{hpp,cpp}` | primary source |
+| `src/api/bookSearch/BookSearchAPIComposite.{hpp,cpp}` | primary/fallback state machine |
+| `src/api/bookSearch/OpenLibrarySearchAPI.{hpp,cpp}` | primary source |
 | `src/api/bookSearch/GoogleBooksSearchAPI.{hpp,cpp}` | fallback source |
 | `cmake/ReadarySecrets.cmake` | env file → compile definitions |
 
@@ -201,5 +201,5 @@ Tests use a local `QTcpServer` stand-in rather than the real network; both API
 suites redirect the client with `setEndpoint()`, which exists for that purpose.
 
 ```bash
-ctest --test-dir build/debug -V -R "BookSearchApiComposite|GoogleBooksSearchAPI|OpenLibrarySearchAPI"
+ctest --test-dir build/debug -V -R "BookSearchAPIComposite|GoogleBooksSearchAPI|OpenLibrarySearchAPI"
 ```

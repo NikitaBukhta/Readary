@@ -16,7 +16,8 @@
 #include <QUrlQuery>
 #include <optional>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcGoogleBooks, "readary.api.googlebooks")

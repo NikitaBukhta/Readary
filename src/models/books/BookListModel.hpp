@@ -1,12 +1,10 @@
-#ifndef BEELIBRARY_MODELS_BOOKLISTMODEL_HPP
-#define BEELIBRARY_MODELS_BOOKLISTMODEL_HPP
+#ifndef READARY_MODELS_BOOKS_BOOKLISTMODEL_HPP
+#define READARY_MODELS_BOOKS_BOOKLISTMODEL_HPP
 
 #include "BookListModelBase.hpp"
 #include "services/BookDTO.hpp"
 #include "services/BookTable.hpp"
 
-#include <QAbstractListModel>
-#include <QList>
 #include <memory>
 
 namespace readary::models {
@@ -30,11 +28,10 @@ signals:
 private:
   void setErrorMessage(const QString &message);
 
-private:
   std::shared_ptr<services::BookTable> _bookTable;
   QString _errorMessage;
 };
 
 } // namespace readary::models
 
-#endif // BEELIBRARY_MODELS_BOOKLISTMODEL_HPP
+#endif // READARY_MODELS_BOOKS_BOOKLISTMODEL_HPP

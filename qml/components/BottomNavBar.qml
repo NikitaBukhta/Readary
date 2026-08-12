@@ -9,31 +9,31 @@ Rectangle {
     readonly property var _navItems: {
         return [
             {
-                id: NavigationController.MAIN_PAGE,
+                id: NavigationController.MainPage,
                 label: qsTr("Library"),
                 glyph: "📚",
                 source: ""
             },
             {
-                id: NavigationController.SEARCH_PAGE,
+                id: NavigationController.SearchPage,
                 label: qsTr("Search"),
                 glyph: "🔍",
                 source: ""
             },
             {
-                id: NavigationController.GOALS_PAGE,
+                id: NavigationController.GoalsPage,
                 label: qsTr("Goals"),
                 glyph: "🎯",
                 source: ""
             },
             {
-                id: NavigationController.CHALLENGES_PAGE,
+                id: NavigationController.ChallengesPage,
                 label: qsTr("Challenges"),
                 glyph: "🏆",
                 source: ""
             },
             {
-                id: NavigationController.PROFILE_PAGE,
+                id: NavigationController.ProfilePage,
                 label: qsTr("Profile"),
                 glyph: "👤",
                 source: ""

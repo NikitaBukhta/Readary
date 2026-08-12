@@ -8,7 +8,7 @@
 #include <QString>
 #include <QTest>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 using readary::api::GoogleTranslator;
 using readary::tests::FakeHttpServer;

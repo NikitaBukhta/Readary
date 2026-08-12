@@ -6,6 +6,9 @@
 #include <QString>
 #include <QTest>
 
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
+
 using readary::controllers::BookController;
 using readary::services::ReadingPhase;
 
@@ -15,7 +18,7 @@ namespace {
 // through a qint64 QML invokable parameter. These methods now take the ISBN
 // as a string precisely so that value survives the QML->C++ boundary; the
 // string round trip is the behaviour under test.
-const QString kIsbn = QStringLiteral("9780201616224");
+constexpr auto kIsbn = "9780201616224"_L1;
 
 } // namespace
 
@@ -73,8 +76,8 @@ void BookControllerSessionTest::clear_dropsSavedState() {
 }
 
 void BookControllerSessionTest::nonNumericIsbn_isIgnored() {
-  BookController::saveReadingSession(QStringLiteral("not-a-number"), 10, ReadingPhase::Running);
-  QVERIFY(BookController::takeReadingSession(QStringLiteral("not-a-number")).isEmpty());
+  BookController::saveReadingSession(u"not-a-number"_s, 10, ReadingPhase::Running);
+  QVERIFY(BookController::takeReadingSession(u"not-a-number"_s).isEmpty());
 }
 
 void BookControllerSessionTest::emptyIsbn_isIgnored() {

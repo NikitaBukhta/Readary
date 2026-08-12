@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP
-#define BEELIBRARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP
+#ifndef READARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP
+#define READARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP
 
 #include "services/BookFilterCriteria.hpp"
 
@@ -102,7 +102,7 @@ private:
   void setBound(int &bound, int value);
   static void toggle(QStringList &list, const QString &value);
 
-  static BookFilterController *g_s_instance;
+  static BookFilterController *s_instance;
 
   models::BookListModelBase *_libraryModel{nullptr};
   models::BookListModelBase *_searchModel{nullptr};
@@ -114,4 +114,4 @@ private:
 
 } // namespace readary::controllers
 
-#endif // BEELIBRARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP
+#endif // READARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP

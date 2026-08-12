@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_CONTROLLERS_SETTINGSCONTROLLER_HPP
-#define BEELIBRARY_CONTROLLERS_SETTINGSCONTROLLER_HPP
+#ifndef READARY_CONTROLLERS_SETTINGSCONTROLLER_HPP
+#define READARY_CONTROLLERS_SETTINGSCONTROLLER_HPP
 
 #include "models/settings/FontModel.hpp"
 #include "models/settings/LanguageModel.hpp"
@@ -23,8 +23,8 @@ public:
   explicit SettingsController(QObject *parent = nullptr);
   ~SettingsController() override;
 
-  readary::models::LanguageModel *languageModel() const;
-  readary::models::FontModel *fontModel() const;
+  models::LanguageModel *languageModel() const;
+  models::FontModel *fontModel() const;
 
   static SettingsController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
   static void setInstance(SettingsController *instance);
@@ -32,10 +32,10 @@ public:
 private:
   static SettingsController *s_instance;
 
-  readary::models::LanguageModel *_languageModel;
-  readary::models::FontModel *_fontModel;
+  models::LanguageModel *_languageModel;
+  models::FontModel *_fontModel;
 };
 
 } // namespace readary::controllers
 
-#endif // BEELIBRARY_CONTROLLERS_SETTINGSCONTROLLER_HPP
+#endif // READARY_CONTROLLERS_SETTINGSCONTROLLER_HPP

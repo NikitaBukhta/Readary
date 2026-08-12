@@ -41,7 +41,7 @@ through `QML_ELEMENT`, but only as type registrations (no instances).
    then `NavigationController`, then `SettingsController` (which
    constructs `LanguageModel` as its child). Wires:
    - `BookController::bookSaved` → `BookListModel::refresh`
-   - `BookController::bookOpenRequested` → `NavigationController::setCurrentPage(BOOK_DETAIL_PAGE)`
+   - `BookController::bookOpenRequested` → `NavigationController::setCurrentPage(BookDetailPage)`
      (so `BookController::openBook(id)` is the single entry to the detail
      page; the controllers don't include each other directly).
    - `LanguageModel::currentChanged` → `_engine->retranslate()` with

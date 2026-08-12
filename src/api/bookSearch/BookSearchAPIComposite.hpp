@@ -1,8 +1,11 @@
-#ifndef LIBRARY_BOOKSEARCHAPICOMPOSITE_HPP
-#define LIBRARY_BOOKSEARCHAPICOMPOSITE_HPP
+#ifndef READARY_API_BOOKSEARCH_BOOKSEARCHAPICOMPOSITE_HPP
+#define READARY_API_BOOKSEARCH_BOOKSEARCHAPICOMPOSITE_HPP
 
 #include "IBookSearchAPI.hpp"
+
 #include <QList>
+
+#include <cstdint>
 
 namespace readary::api {
 
@@ -17,11 +20,10 @@ public:
   void fetchDescription(const QString &workKey) override;
 
 private:
+  enum class Stage : std::uint8_t { Idle, AwaitingPrimary, AwaitingFallback };
+
   void handlePrimaryResult(const QList<services::BookDTO> &rawBooks, bool hasMore);
   void handleFallbackResult(const QList<services::BookDTO> &rawBooks, bool hasMore);
-
-  enum class Stage : uint8_t { Idle, AwaitingPrimary, AwaitingFallback };
-
   void initConnect();
   QList<services::BookDTO> applyCriteria(const QList<services::BookDTO> &books) const;
   void beginSearch(const BookSearchFields &params, bool byIsbn);
@@ -41,4 +43,4 @@ private:
 
 } // namespace readary::api
 
-#endif // LIBRARY_BOOKSEARCHAPICOMPOSITE_HPP
+#endif // READARY_API_BOOKSEARCH_BOOKSEARCHAPICOMPOSITE_HPP

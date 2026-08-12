@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 

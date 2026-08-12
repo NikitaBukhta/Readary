@@ -36,7 +36,7 @@ QStringList collectFacet(const readary::models::BookListModelBase *source, Extra
 
 namespace readary::controllers {
 
-BookFilterController *BookFilterController::g_s_instance = nullptr;
+BookFilterController *BookFilterController::s_instance = nullptr;
 
 BookFilterController::BookFilterController(QObject *parent) : QObject{parent} {}
 
@@ -225,11 +225,11 @@ QString BookFilterController::languageLabel(const QString &code) {
 BookFilterController *BookFilterController::create(QQmlEngine *engine, QJSEngine *scriptEngine) {
   Q_UNUSED(engine)
   Q_UNUSED(scriptEngine)
-  Q_ASSERT_X(g_s_instance, "BookFilterController::create", "setInstance() must be called before the QML engine loads");
-  QQmlEngine::setObjectOwnership(g_s_instance, QQmlEngine::CppOwnership);
-  return g_s_instance;
+  Q_ASSERT_X(s_instance, "BookFilterController::create", "setInstance() must be called before the QML engine loads");
+  QQmlEngine::setObjectOwnership(s_instance, QQmlEngine::CppOwnership);
+  return s_instance;
 }
 
-void BookFilterController::setInstance(BookFilterController *instance) { g_s_instance = instance; }
+void BookFilterController::setInstance(BookFilterController *instance) { s_instance = instance; }
 
 } // namespace readary::controllers

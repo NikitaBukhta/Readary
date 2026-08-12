@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_SERVICES_READINGPHASE_HPP
-#define BEELIBRARY_SERVICES_READINGPHASE_HPP
+#ifndef READARY_SERVICES_READINGPHASE_HPP
+#define READARY_SERVICES_READINGPHASE_HPP
 
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
@@ -25,4 +25,4 @@ public:
 
 } // namespace readary::services
 
-#endif // BEELIBRARY_SERVICES_READINGPHASE_HPP
+#endif // READARY_SERVICES_READINGPHASE_HPP

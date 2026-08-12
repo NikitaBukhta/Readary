@@ -1,4 +1,4 @@
-#include "api/bookSearch/OpenLibrarySeachAPI.hpp"
+#include "api/bookSearch/OpenLibrarySearchAPI.hpp"
 #include "services/BookDTO.hpp"
 #include "support/FakeHttpServer.hpp"
 #include "support/SearchCapture.hpp"
@@ -10,10 +10,10 @@
 #include <QString>
 #include <QTest>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 using readary::api::BookSearchFields;
-using readary::api::OpenLibrarySeachAPI;
+using readary::api::OpenLibrarySearchAPI;
 using readary::services::BookDTO;
 using readary::tests::FakeHttpServer;
 using readary::tests::runSearch;
@@ -61,7 +61,7 @@ void OpenLibrarySearchAPITest::searchQuotesMultiWordFields() {
   FakeHttpServer server{respond};
   QVERIFY(server.start());
 
-  OpenLibrarySeachAPI api;
+  OpenLibrarySearchAPI api;
   api.setEndpoint(server.endpoint());
 
   SearchResult result;
@@ -75,7 +75,7 @@ void OpenLibrarySearchAPITest::searchLeavesSingleWordFieldBare() {
   FakeHttpServer server{respond};
   QVERIFY(server.start());
 
-  OpenLibrarySeachAPI api;
+  OpenLibrarySearchAPI api;
   api.setEndpoint(server.endpoint());
 
   SearchResult result;
@@ -90,7 +90,7 @@ void OpenLibrarySearchAPITest::searchKeepsOnlyBooksWithIsbnAndPageCount() {
   FakeHttpServer server{respond};
   QVERIFY(server.start());
 
-  OpenLibrarySeachAPI api;
+  OpenLibrarySearchAPI api;
   api.setEndpoint(server.endpoint());
 
   SearchResult result;
@@ -112,7 +112,7 @@ void OpenLibrarySearchAPITest::networkErrorEmitsEmptyResult() {
   QVERIFY(server.start());
   server.setFailRequests(true);
 
-  OpenLibrarySeachAPI api;
+  OpenLibrarySearchAPI api;
   api.setEndpoint(server.endpoint());
 
   SearchResult result;
@@ -127,7 +127,7 @@ void OpenLibrarySearchAPITest::searchSendsCategoricalCriteriaButNotRanges() {
   FakeHttpServer server{respond};
   QVERIFY(server.start());
 
-  OpenLibrarySeachAPI api;
+  OpenLibrarySearchAPI api;
   api.setEndpoint(server.endpoint());
 
   BookSearchFields fields{.isbn = 0, .name = u"dune"_s, .author = u"dune"_s};
@@ -154,7 +154,7 @@ void OpenLibrarySearchAPITest::searchWithCriteriaButNoTextStillQueries() {
   FakeHttpServer server{respond};
   QVERIFY(server.start());
 
-  OpenLibrarySeachAPI api;
+  OpenLibrarySearchAPI api;
   api.setEndpoint(server.endpoint());
 
   BookSearchFields fields{.isbn = 0, .name = {}, .author = {}};

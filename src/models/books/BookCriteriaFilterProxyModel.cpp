@@ -20,18 +20,21 @@ void BookCriteriaFilterProxyModel::setCriteria(const services::BookFilterCriteri
 }
 
 void BookCriteriaFilterProxyModel::clearCriteria() {
-  if (_criteria.isEmpty())
+  if (_criteria.isEmpty()) {
     return;
+  }
   _criteria = {};
   invalidateFilter();
 }
 
 bool BookCriteriaFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
   const QAbstractItemModel *model = sourceModel();
-  if (model == nullptr)
+  if (model == nullptr) {
     return false;
-  if (_criteria.isEmpty())
+  }
+  if (_criteria.isEmpty()) {
     return true;
+  }
 
   const QModelIndex idx = model->index(sourceRow, 0, sourceParent);
 

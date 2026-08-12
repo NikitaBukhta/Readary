@@ -1,9 +1,10 @@
 #include "AppInitializer.hpp"
+
 #include "AppEnvironment.hpp"
 #include "DatabaseManager.hpp"
-#include "api/bookSearch/BookSearchApiComposite.hpp"
+#include "api/bookSearch/BookSearchAPIComposite.hpp"
 #include "api/bookSearch/GoogleBooksSearchAPI.hpp"
-#include "api/bookSearch/OpenLibrarySeachAPI.hpp"
+#include "api/bookSearch/OpenLibrarySearchAPI.hpp"
 #include "api/translate/GoogleTranslator.hpp"
 #include "controllers/BookController.hpp"
 #include "controllers/BookFilterController.hpp"
@@ -13,8 +14,13 @@
 #include "models/books/BookListModel.hpp"
 #include "models/settings/FontModel.hpp"
 #include "models/settings/LanguageModel.hpp"
+#include "services/BookTable.hpp"
 
-#include <QtQml>
+#include <QCoreApplication>
+#include <QLoggingCategory>
+#include <QQmlApplicationEngine>
+
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcInit, "readary.core.init")
@@ -49,7 +55,7 @@ void AppInitializer::initDatabase() {
   _db = std::make_shared<DatabaseManager>(AppEnvironment::databasePath());
   _db->open();
 
-  _db->runScript(":/db/init.sql");
+  _db->runScript(u":/db/init.sql"_s);
 
 #ifdef QT_DEBUG
   // _db->runScript(":/db/test_data.sql");
@@ -61,20 +67,19 @@ void AppInitializer::initDatabase() {
 }
 
 void AppInitializer::initModels() {
-  // Internal books init;
+  // Internal books init
   _bookListModel = new models::BookListModel{_bookTable, this};
   _bookController = new controllers::BookController{_bookTable, _bookListModel, this};
   connect(_bookController, &controllers::BookController::bookSaved, _bookListModel, &models::BookListModel::refresh);
 
-  // Context init;
+  // Context init
   _contextModel = new controllers::NavigationController{this};
-  connect(_bookController, &controllers::BookController::bookOpenRequested, _contextModel, [this](qint64) {
-    _contextModel->setCurrentPage(controllers::NavigationController::PageEnum::BOOK_DETAIL_PAGE);
-  });
+  connect(_bookController, &controllers::BookController::bookOpenRequested, _contextModel,
+          [this](qint64) { _contextModel->setCurrentPage(controllers::NavigationController::Page::BookDetailPage); });
 
-  // Global search init;
+  // Global search init
   _globalSearchController = new controllers::GlobalBookSearchController{this};
-  auto *openLibraryApi = new api::OpenLibrarySeachAPI{_globalSearchController};
+  auto *openLibraryApi = new api::OpenLibrarySearchAPI{_globalSearchController};
   auto *googleBooksApi = new api::GoogleBooksSearchAPI{_globalSearchController};
   QList<api::IBookSearchAPI *> searchApis{openLibraryApi};
   auto *searchComposite = new api::BookSearchAPIComposite{std::move(searchApis), _globalSearchController};
@@ -94,7 +99,7 @@ void AppInitializer::initModels() {
     _globalSearchController->setFilterCriteria(criteria);
   });
 
-  // Settings init;
+  // Settings init
   _settingsController = new controllers::SettingsController{this};
   _settingsController->languageModel()->applyCurrent();
   _globalSearchController->setLanguageModel(_settingsController->languageModel());

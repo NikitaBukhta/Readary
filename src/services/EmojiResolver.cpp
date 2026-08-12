@@ -4,14 +4,16 @@
 #include <QFileInfo>
 #include <QLoggingCategory>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcEmoji, "readary.services.emoji")
 
-constexpr uint g_kVariationSelector16 = 0xFE0F;
-constexpr auto g_kResourceRoot = ":/emoji";
-constexpr auto g_kUrlPrefix = "qrc:/emoji/";
+constexpr uint g_variationSelector16{0xFE0F};
+constexpr auto g_resourceRoot = ":/emoji"_L1;
+constexpr auto g_urlPrefix = "qrc:/emoji/"_L1;
+constexpr auto g_svgSuffix = ".svg"_L1;
 
 } // namespace
 
@@ -19,7 +21,9 @@ namespace readary::services {
 
 EmojiResolver::EmojiResolver(QObject *parent) : QObject{parent} { loadAvailableStems(); }
 
-EmojiResolver *EmojiResolver::create(QQmlEngine * /*engine*/, QJSEngine * /*scriptEngine*/) {
+EmojiResolver *EmojiResolver::create(QQmlEngine *engine, QJSEngine *scriptEngine) {
+  Q_UNUSED(engine)
+  Q_UNUSED(scriptEngine)
   return new EmojiResolver{};
 }
 
@@ -33,7 +37,7 @@ QString EmojiResolver::iconUrl(const QString &emoji) const {
     return {};
   }
 
-  return QLatin1String(g_kUrlPrefix) + key + u".svg"_s;
+  return g_urlPrefix + key + g_svgSuffix;
 }
 
 QString EmojiResolver::resolveKey(const QString &emoji) {
@@ -52,7 +56,7 @@ QString EmojiResolver::resolveKey(const QString &emoji) {
   result.reserve(codepoints.size() * 7);
   bool first = true;
   for (const uint cp : codepoints) {
-    if (cp == g_kVariationSelector16) {
+    if (cp == g_variationSelector16) {
       continue;
     }
     if (!first) {
@@ -69,7 +73,7 @@ void EmojiResolver::loadAvailableStems() {
   // O(1) hash lookup rather than a per-call QFile::exists trie walk. The
   // working set is ~4k stems (Twemoji), ~80 KB of QString — negligible.
   _availableStems.reserve(4096);
-  QDirIterator it(QLatin1String(g_kResourceRoot), {u"*.svg"_s}, QDir::Files);
+  QDirIterator it(g_resourceRoot, {u"*.svg"_s}, QDir::Files);
   while (it.hasNext()) {
     it.next();
     _availableStems.insert(it.fileInfo().completeBaseName());

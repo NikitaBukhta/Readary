@@ -230,7 +230,7 @@ Vertical scroll. Layout (top → bottom):
    `BookController.openBook(model.bookId)`.
 5. `CategoriesSection` — three categories. On click: sets
    `BookController.activeKind = categoryId` and
-   `NavigationController.currentPage = NavigationController.CATEGORY_LIST_PAGE`.
+   `NavigationController.currentPage = NavigationController.CategoryListPage`.
 
 ### `CategoryListPage.qml`
 

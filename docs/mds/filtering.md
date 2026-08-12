@@ -160,7 +160,7 @@ touch the DB, so no `DISTINCT` query exists or is needed. A language cell holdin
 | `qml/components/FilterChip.qml`, `FilterButton.qml`, `RangeField.qml` | controls |
 
 ```bash
-ctest --test-dir build/debug -V -R "BookFilterCriteria|BookSearchApiComposite"
+ctest --test-dir build/debug -V -R "BookFilterCriteria|BookSearchAPIComposite"
 ```
 
 `BookFilterCriteriaTest` is the one that matters — it pins the semantics both

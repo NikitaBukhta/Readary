@@ -1,5 +1,5 @@
-#ifndef LIBRARY_UTILS_ISBNVALIDATOR_HPP
-#define LIBRARY_UTILS_ISBNVALIDATOR_HPP
+#ifndef READARY_UTILS_ISBNVALIDATOR_HPP
+#define READARY_UTILS_ISBNVALIDATOR_HPP
 
 #include <QString>
 
@@ -13,9 +13,9 @@ public:
   static std::optional<qint64> convert(const QString &val);
 
 private:
-  static constexpr int maxDigits = 13;
-  static constexpr int checkX = 10;
-  using Digits = std::array<int, maxDigits>;
+  static constexpr int kMaxDigits = 13;
+  static constexpr int kCheckX = 10;
+  using Digits = std::array<int, kMaxDigits>;
 
   static std::optional<int> collectDigits(const QString &val, Digits &out);
   static std::optional<qint64> fromIsbn10(const Digits &digits);
@@ -24,4 +24,4 @@ private:
 
 } // namespace readary::utils
 
-#endif // LIBRARY_UTILS_ISBNVALIDATOR_HPP
+#endif // READARY_UTILS_ISBNVALIDATOR_HPP

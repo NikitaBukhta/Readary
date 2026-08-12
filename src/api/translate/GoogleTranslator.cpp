@@ -8,7 +8,8 @@
 #include <QUrl>
 #include <QUrlQuery>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcGoogleTranslate, "readary.api.googletranslate")

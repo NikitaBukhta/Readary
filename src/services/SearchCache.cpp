@@ -7,7 +7,7 @@
 #include <QLoggingCategory>
 #include <QSettings>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcSearchCache, "readary.services.searchCache")
@@ -44,16 +44,16 @@ std::optional<SearchCache::Entry> SearchCache::get(const QString &query, int max
   QSettings settings;
   settings.beginGroup(groupFor(query));
 
-  if (!settings.contains("books")) {
+  if (!settings.contains(u"books"_s)) {
     settings.endGroup();
     return std::nullopt;
   }
 
-  const QDateTime updatedAt = QDateTime::fromString(settings.value("updatedAt").toString(), Qt::ISODate);
-  const QString booksJson = settings.value("books").toString();
+  const QDateTime updatedAt = QDateTime::fromString(settings.value(u"updatedAt"_s).toString(), Qt::ISODate);
+  const QString booksJson = settings.value(u"books"_s).toString();
   Entry entry;
-  entry.nextPage = settings.value("nextPage", 1).toInt();
-  entry.hasMore = settings.value("hasMore", true).toBool();
+  entry.nextPage = settings.value(u"nextPage"_s, 1).toInt();
+  entry.hasMore = settings.value(u"hasMore"_s, true).toBool();
   settings.endGroup();
 
   if (!updatedAt.isValid() || updatedAt.daysTo(QDateTime::currentDateTimeUtc()) > maxAgeDays) {
@@ -69,10 +69,10 @@ std::optional<SearchCache::Entry> SearchCache::get(const QString &query, int max
 void SearchCache::put(const QString &query, const Entry &entry) {
   QSettings settings;
   settings.beginGroup(groupFor(query));
-  settings.setValue("books", serialize(entry.books));
-  settings.setValue("nextPage", entry.nextPage);
-  settings.setValue("hasMore", entry.hasMore);
-  settings.setValue("updatedAt", QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+  settings.setValue(u"books"_s, serialize(entry.books));
+  settings.setValue(u"nextPage"_s, entry.nextPage);
+  settings.setValue(u"hasMore"_s, entry.hasMore);
+  settings.setValue(u"updatedAt"_s, QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
   settings.endGroup();
   settings.sync();
   qCInfo(lcSearchCache) << "cache write for query:" << query << "books:" << entry.books.size();

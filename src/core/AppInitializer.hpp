@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_CORE_APPINITIALIZER_HPP
-#define BEELIBRARY_CORE_APPINITIALIZER_HPP
+#ifndef READARY_CORE_APPINITIALIZER_HPP
+#define READARY_CORE_APPINITIALIZER_HPP
 
 #include <QGuiApplication>
 #include <QObject>
@@ -58,4 +58,4 @@ private:
 
 } // namespace readary::core
 
-#endif // BEELIBRARY_CORE_APPINITIALIZER_HPP
+#endif // READARY_CORE_APPINITIALIZER_HPP

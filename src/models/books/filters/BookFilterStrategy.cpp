@@ -1,4 +1,5 @@
 #include "BookFilterStrategy.hpp"
+
 #include "models/books/BookListModel.hpp"
 #include "models/books/BookSortFilterProxyModel.hpp"
 #include "services/BookStatus.hpp"

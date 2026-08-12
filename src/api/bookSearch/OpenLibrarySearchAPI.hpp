@@ -1,14 +1,14 @@
-#ifndef LIBRARY_OPENLIBRARYSEACHAPI_H
-#define LIBRARY_OPENLIBRARYSEACHAPI_H
+#ifndef READARY_API_BOOKSEARCH_OPENLIBRARYSEARCHAPI_HPP
+#define READARY_API_BOOKSEARCH_OPENLIBRARYSEARCHAPI_HPP
 
 #include "IBookNetSearchAPI.hpp"
 
 namespace readary::api {
 
-class OpenLibrarySeachAPI : public IBookNetSearchAPI {
+class OpenLibrarySearchAPI : public IBookNetSearchAPI {
   Q_OBJECT
 public:
-  explicit OpenLibrarySeachAPI(QObject *parent = nullptr);
+  explicit OpenLibrarySearchAPI(QObject *parent = nullptr);
 
   // Overrides the API base (default: the live OpenLibrary endpoint). For tests.
   void setEndpoint(const QString &endpoint);
@@ -29,4 +29,4 @@ private:
 
 } // namespace readary::api
 
-#endif // LIBRARY_OPENLIBRARYSEACHAPI_H
+#endif // READARY_API_BOOKSEARCH_OPENLIBRARYSEARCHAPI_HPP

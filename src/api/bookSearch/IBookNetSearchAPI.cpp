@@ -5,7 +5,7 @@
 #include <QNetworkRequest>
 #include <QTimer>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcBookNet, "readary.api.net")

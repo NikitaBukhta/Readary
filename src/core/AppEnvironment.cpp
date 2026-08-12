@@ -1,27 +1,37 @@
 #include "AppEnvironment.hpp"
 
-#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QLoggingCategory>
-#include <QMutex>
 #include <QMutexLocker>
 #include <QStandardPaths>
 #include <QTextStream>
 #include <QtGlobal>
 
 #include <iostream>
+#include <memory>
 
 #ifdef Q_OS_ANDROID
 #include <android/log.h>
 #endif
 
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
+
 namespace {
 Q_LOGGING_CATEGORY(lcAppEnv, "readary.core.env")
 
-QFile *g_logFile = nullptr;
-QMutex g_logMutex;
+constexpr auto g_appDirName = "Readary"_L1;
+constexpr auto g_databaseFileName = "/readary.db"_L1;
+constexpr auto g_logFilePattern = "log_*.log"_L1;
+
+std::unique_ptr<QFile> g_logFile;
+
+QMutex &logMutex() {
+  static QMutex mutex;
+  return mutex;
+}
 } // namespace
 
 namespace readary::core {
@@ -30,9 +40,11 @@ QString AppEnvironment::ensureDataDir() {
   QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   QDir dir(path);
   dir.cdUp();
-  path = dir.absoluteFilePath("Readary");
+  path = dir.absoluteFilePath(g_appDirName);
 
-  QDir().mkpath(path);
+  if (!QDir().mkpath(path)) {
+    qCWarning(lcAppEnv) << "Cannot create data directory:" << path;
+  }
   return path;
 }
 
@@ -41,11 +53,11 @@ QString AppEnvironment::dataPath() {
   return path;
 }
 
-QString AppEnvironment::databasePath() { return dataPath() + "/readary.db"; }
+QString AppEnvironment::databasePath() { return dataPath() + g_databaseFileName; }
 
 QString AppEnvironment::logFilePath() {
-  const QString timestamp = QDateTime::currentDateTime().toString("dd.MM.yyyy-hh.mm.ss");
-  return dataPath() + "/log_" + timestamp + ".log";
+  const QString timestamp = QDateTime::currentDateTime().toString(u"dd.MM.yyyy-hh.mm.ss"_s);
+  return dataPath() + u"/log_"_s + timestamp + u".log"_s;
 }
 
 void AppEnvironment::installFileLogger() {
@@ -53,25 +65,23 @@ void AppEnvironment::installFileLogger() {
 
   const QString path = logFilePath();
 
-  g_logFile = new QFile{path};
-  if (!g_logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
-    delete g_logFile;
-    g_logFile = nullptr;
+  auto logFile = std::make_unique<QFile>(path);
+  if (!logFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
     qCWarning(lcAppEnv) << "Cannot open log file:" << path;
     return;
   }
 
+  g_logFile = std::move(logFile);
   qInstallMessageHandler(messageHandler);
 }
 
 void AppEnvironment::shutdownFileLogger() {
   qInstallMessageHandler(nullptr);
 
-  const QMutexLocker locker(&g_logMutex);
-  if (g_logFile) {
+  const QMutexLocker locker(&logMutex());
+  if (g_logFile != nullptr) {
     g_logFile->flush();
     g_logFile->close();
-    delete g_logFile;
     g_logFile = nullptr;
   }
 }
@@ -80,43 +90,42 @@ void AppEnvironment::cleanupOldLogs(int keepDays) {
   const QDir dir(dataPath());
   const QDateTime cutoff = QDateTime::currentDateTime().addDays(-keepDays);
 
-  const auto entries = dir.entryInfoList({"log_*.log"}, QDir::Files, QDir::Time);
+  const auto entries = dir.entryInfoList({g_logFilePattern}, QDir::Files, QDir::Time);
   for (const QFileInfo &info : entries) {
-    if (info.lastModified() < cutoff) {
-      if (QFile::remove(info.absoluteFilePath()))
-        qCInfo(lcAppEnv) << "Removed old log:" << info.fileName();
+    if (info.lastModified() < cutoff && QFile::remove(info.absoluteFilePath())) {
+      qCInfo(lcAppEnv) << "Removed old log:" << info.fileName();
     }
   }
 }
 
 void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  const char *level = nullptr;
+  QLatin1StringView level;
   switch (type) {
   case QtDebugMsg:
-    level = "DEBUG";
+    level = "DEBUG"_L1;
     break;
   case QtInfoMsg:
-    level = "INFO ";
+    level = "INFO "_L1;
     break;
   case QtWarningMsg:
-    level = "WARN ";
+    level = "WARN "_L1;
     break;
   case QtCriticalMsg:
-    level = "CRIT ";
+    level = "CRIT "_L1;
     break;
   case QtFatalMsg:
-    level = "FATAL";
+    level = "FATAL"_L1;
     break;
   }
 
   const QString timestamp = QDateTime::currentDateTime().toString(Qt::ISODateWithMs);
-  const QString category = context.category ? context.category : "default";
+  const QString category = context.category != nullptr ? QString::fromUtf8(context.category) : u"default"_s;
 
-  const QString line = QStringLiteral("%1 [%2] %3: %4\n").arg(timestamp, level, category, msg);
+  const QString line = u"%1 [%2] %3: %4\n"_s.arg(timestamp, level, category, msg);
 
-  if (g_logFile) {
-    const QMutexLocker locker(&g_logMutex);
-    QTextStream stream(g_logFile);
+  if (g_logFile != nullptr) {
+    const QMutexLocker locker(&logMutex());
+    QTextStream stream(g_logFile.get());
     stream << line;
     stream.flush();
   }
@@ -142,7 +151,7 @@ void AppEnvironment::messageHandler(QtMsgType type, const QMessageLogContext &co
     prio = ANDROID_LOG_FATAL;
     break;
   }
-  const QString body = QStringLiteral("[%1] %2").arg(category, msg);
+  const QString body = u"[%1] %2"_s.arg(category, msg);
   __android_log_write(prio, "Readary", body.toUtf8().constData());
 #elif !defined(QT_NO_DEBUG)
   std::cerr << line.toLocal8Bit().constData();

@@ -1,10 +1,13 @@
 #include "services/SearchCache.hpp"
 #include "services/BookDTO.hpp"
 
+#include <QCryptographicHash>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QString>
 #include <QTest>
+
+using Qt::StringLiterals::operator""_s;
 
 using readary::services::BookDTO;
 using readary::services::SearchCache;
@@ -15,11 +18,11 @@ BookDTO makeBook(qint64 isbn, const QString &name) {
   BookDTO book;
   book.isbn = isbn;
   book.name = name;
-  book.authorName = QStringLiteral("Author of %1").arg(name);
+  book.authorName = u"Author of %1"_s.arg(name);
   book.year = 1999;
   book.totalPages = 321;
-  book.coverUrl = QStringLiteral("https://covers/%1.jpg").arg(isbn);
-  book.workKey = QStringLiteral("/works/OL%1W").arg(isbn);
+  book.coverUrl = u"https://covers/%1.jpg"_s.arg(isbn);
+  book.workKey = u"/works/OL%1W"_s.arg(isbn);
   return book;
 }
 
@@ -27,16 +30,16 @@ BookDTO makeBook(qint64 isbn, const QString &name) {
 // White-box coupling, kept intentionally to exercise the TTL branch deterministically.
 QString groupFor(const QString &query) {
   const auto hash = QCryptographicHash::hash(query.toUtf8(), QCryptographicHash::Sha1).toHex();
-  return QStringLiteral("searchCache/%1").arg(QString::fromLatin1(hash));
+  return u"searchCache/%1"_s.arg(QString::fromLatin1(hash));
 }
 
 std::optional<SearchCache::Entry> putThenGetSample() {
   SearchCache::Entry in;
-  in.books = {makeBook(111, QStringLiteral("hobbit")), makeBook(222, QStringLiteral("lotr"))};
+  in.books = {makeBook(111, u"hobbit"_s), makeBook(222, u"lotr"_s)};
   in.nextPage = 3;
   in.hasMore = false;
-  SearchCache::put(QStringLiteral("tolkien"), in);
-  return SearchCache::get(QStringLiteral("tolkien"), 7);
+  SearchCache::put(u"tolkien"_s, in);
+  return SearchCache::get(u"tolkien"_s, 7);
 }
 
 } // namespace
@@ -73,7 +76,7 @@ void SearchCacheTest::init() {
 }
 
 void SearchCacheTest::get_missingQuery_returnsNullopt() {
-  QVERIFY(!SearchCache::get(QStringLiteral("never-searched"), 7).has_value());
+  QVERIFY(!SearchCache::get(u"never-searched"_s, 7).has_value());
 }
 
 void SearchCacheTest::put_thenGet_roundTripsPaging() {
@@ -94,24 +97,23 @@ void SearchCacheTest::put_thenGet_roundTripsBookFields() {
     return;
   }
   QCOMPARE(out->books.at(0).isbn, static_cast<qint64>(111));
-  QCOMPARE(out->books.at(0).name, QStringLiteral("hobbit"));
-  QCOMPARE(out->books.at(0).authorName, QStringLiteral("Author of hobbit"));
+  QCOMPARE(out->books.at(0).name, u"hobbit"_s);
+  QCOMPARE(out->books.at(0).authorName, u"Author of hobbit"_s);
   QCOMPARE(out->books.at(0).totalPages, 321);
-  QCOMPARE(out->books.at(0).workKey, QStringLiteral("/works/OL111W"));
-  QCOMPARE(out->books.at(1).coverUrl, QStringLiteral("https://covers/222.jpg"));
+  QCOMPARE(out->books.at(0).workKey, u"/works/OL111W"_s);
+  QCOMPARE(out->books.at(1).coverUrl, u"https://covers/222.jpg"_s);
 }
 
 void SearchCacheTest::get_isExactKey_normalizationIsCallersJob() {
-  SearchCache::put(QStringLiteral("tolkien"),
-                   {.books = {makeBook(1, QStringLiteral("a"))}, .nextPage = 1, .hasMore = true});
-  QVERIFY(SearchCache::get(QStringLiteral("tolkien"), 7).has_value());
+  SearchCache::put(u"tolkien"_s, {.books = {makeBook(1, u"a"_s)}, .nextPage = 1, .hasMore = true});
+  QVERIFY(SearchCache::get(u"tolkien"_s, 7).has_value());
   // SearchCache stores by the exact key; case-folding is the controller's responsibility.
-  QVERIFY(!SearchCache::get(QStringLiteral("Tolkien"), 7).has_value());
+  QVERIFY(!SearchCache::get(u"Tolkien"_s, 7).has_value());
 }
 
 void SearchCacheTest::get_staleEntry_returnsNullopt_freshEntry_hits() {
-  const QString query = QStringLiteral("aging");
-  SearchCache::put(query, {.books = {makeBook(1, QStringLiteral("a"))}, .nextPage = 1, .hasMore = true});
+  const QString query = u"aging"_s;
+  SearchCache::put(query, {.books = {makeBook(1, u"a"_s)}, .nextPage = 1, .hasMore = true});
 
   // Backdate the stored timestamp to 100 days ago.
   {
@@ -127,11 +129,9 @@ void SearchCacheTest::get_staleEntry_returnsNullopt_freshEntry_hits() {
 }
 
 void SearchCacheTest::put_overwritesExistingEntry() {
-  const QString query = QStringLiteral("q");
-  SearchCache::put(query, {.books = {makeBook(1, QStringLiteral("a"))}, .nextPage = 2, .hasMore = true});
-  SearchCache::put(
-      query,
-      {.books = {makeBook(2, QStringLiteral("b")), makeBook(3, QStringLiteral("c"))}, .nextPage = 5, .hasMore = false});
+  const QString query = u"q"_s;
+  SearchCache::put(query, {.books = {makeBook(1, u"a"_s)}, .nextPage = 2, .hasMore = true});
+  SearchCache::put(query, {.books = {makeBook(2, u"b"_s), makeBook(3, u"c"_s)}, .nextPage = 5, .hasMore = false});
 
   const auto out = SearchCache::get(query, 7);
   QVERIFY(out.has_value());
@@ -144,9 +144,9 @@ void SearchCacheTest::put_overwritesExistingEntry() {
 }
 
 void SearchCacheTest::roundTrip_withEmptyBookList() {
-  SearchCache::put(QStringLiteral("empty"), {.books = {}, .nextPage = 1, .hasMore = false});
+  SearchCache::put(u"empty"_s, {.books = {}, .nextPage = 1, .hasMore = false});
 
-  const auto out = SearchCache::get(QStringLiteral("empty"), 7);
+  const auto out = SearchCache::get(u"empty"_s, 7);
   QVERIFY(out.has_value());
   if (!out.has_value()) {
     return;
@@ -156,19 +156,17 @@ void SearchCacheTest::roundTrip_withEmptyBookList() {
 }
 
 void SearchCacheTest::distinctQueries_areIndependent() {
-  SearchCache::put(QStringLiteral("a"), {.books = {makeBook(1, QStringLiteral("x"))}, .nextPage = 1, .hasMore = true});
-  SearchCache::put(
-      QStringLiteral("b"),
-      {.books = {makeBook(2, QStringLiteral("y")), makeBook(3, QStringLiteral("z"))}, .nextPage = 1, .hasMore = true});
+  SearchCache::put(u"a"_s, {.books = {makeBook(1, u"x"_s)}, .nextPage = 1, .hasMore = true});
+  SearchCache::put(u"b"_s, {.books = {makeBook(2, u"y"_s), makeBook(3, u"z"_s)}, .nextPage = 1, .hasMore = true});
 
-  const auto a = SearchCache::get(QStringLiteral("a"), 7);
+  const auto a = SearchCache::get(u"a"_s, 7);
   QVERIFY(a.has_value());
   if (!a.has_value()) {
     return;
   }
   QCOMPARE(a->books.size(), 1);
 
-  const auto b = SearchCache::get(QStringLiteral("b"), 7);
+  const auto b = SearchCache::get(u"b"_s, 7);
   QVERIFY(b.has_value());
   if (!b.has_value()) {
     return;
@@ -179,7 +177,7 @@ void SearchCacheTest::distinctQueries_areIndependent() {
 void SearchCacheTest::specialCharacterQuery_roundTrips() {
   // Keys are hashed, so slashes / spaces / non-latin text must survive as valid storage keys.
   const QString query = QString::fromUtf8("Пушкин / война & мир");
-  SearchCache::put(query, {.books = {makeBook(1, QStringLiteral("x"))}, .nextPage = 1, .hasMore = true});
+  SearchCache::put(query, {.books = {makeBook(1, u"x"_s)}, .nextPage = 1, .hasMore = true});
   QVERIFY(SearchCache::get(query, 7).has_value());
 }
 

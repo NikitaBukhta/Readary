@@ -44,7 +44,7 @@ responsibilities deliberately, since both are book-scoped and small:
 | `takeReadingSession(bookIsbn)` | `Q_INVOKABLE static` | reads-and-clears the timer-state group via `ReadingSessionCache::takeState`. Returns `{}` if nothing saved |
 | `clearReadingSession(bookIsbn)` | `Q_INVOKABLE static` | drops the timer-state group |
 | `bookSaved` | signal | emitted after a successful save; wired to `BookListModel::refresh` |
-| `bookOpenRequested(qint64 id)` | signal | wired in `AppInitializer` to `NavigationController::setCurrentPage(BOOK_DETAIL_PAGE)` |
+| `bookOpenRequested(qint64 id)` | signal | wired in `AppInitializer` to `NavigationController::setCurrentPage(BookDetailPage)` |
 
 `ListKind` enum (`Q_ENUM`):
 
@@ -90,7 +90,7 @@ The signal is wired in [`AppInitializer::initModels`](../../src/core/AppInitiali
 ```cpp
 connect(_bookController, &BookController::bookOpenRequested, _contextModel,
         [this](qint64) {
-          _contextModel->setCurrentPage(NavigationController::PageEnum::BOOK_DETAIL_PAGE);
+          _contextModel->setCurrentPage(NavigationController::Page::BookDetailPage);
         });
 ```
 
@@ -184,36 +184,36 @@ BookController.activeKind = BookController.WantToBuy
 
 ## `NavigationController`
 
-Tiny stack-based router. Holds a `QStack<PageEnum>`; pushing a page that
+Tiny stack-based router. Holds a `QStack<Page>`; pushing a page that
 already sits below the top is rejected (no duplicate pushes). Levels enforce
 hierarchy — a higher-level page replaces lower-or-equal levels on push, so
-pushing `MAIN_PAGE` (level 1) over `CATEGORY_LIST_PAGE` (level 2) collapses
+pushing `MainPage` (level 1) over `CategoryListPage` (level 2) collapses
 back to the root.
 
 ### QML-visible API
 
 | Member | Kind | Purpose |
 |--------|------|---------|
-| `currentPage` | property (R/W, `PageEnum`) | top of the stack |
+| `currentPage` | property (R/W, `Page`) | top of the stack |
 | `currentPagePath` | property (RO, QUrl) | qrc URL of the QML for the top page |
 | `goBack()` | `Q_INVOKABLE` | pops one page; no-op if stack has 1 entry |
 
-`PageEnum`:
+`Page`:
 
 ```
-MAIN_PAGE          = 1   level 1   qrc:/qt/qml/Library/pages/mainPage/MainPage.qml
-CATEGORY_LIST_PAGE = 2   level 2   qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml
-SEARCH_PAGE        = 3   level 1   (placeholder — falls back to MAIN_PAGE)
-GOALS_PAGE         = 4   level 1   (placeholder — falls back to MAIN_PAGE)
-CHALLENGES_PAGE    = 5   level 1   (placeholder — falls back to MAIN_PAGE)
-PROFILE_PAGE       = 6   level 1   qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml
-BOOK_DETAIL_PAGE   = 7   level 3   qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml
+MainPage         = 1   level 1   qrc:/qt/qml/Library/pages/mainPage/MainPage.qml
+CategoryListPage = 2   level 2   qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml
+SearchPage       = 3   level 1   (placeholder — falls back to MainPage)
+GoalsPage        = 4   level 1   (placeholder — falls back to MainPage)
+ChallengesPage   = 5   level 1   (placeholder — falls back to MainPage)
+ProfilePage      = 6   level 1   qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml
+BookDetailPage   = 7   level 3   qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml
 ```
 
 The three remaining placeholder pages (Search/Goals/Challenges) are exposed
 so `BottomNavBar` can drive `currentPage` to them, but their `pageInfo()`
-entry maps to `MAIN_PAGE`'s URL — they'll get real implementations later.
-`PROFILE_PAGE` already routes to the
+entry maps to `MainPage`'s URL — they'll get real implementations later.
+`ProfilePage` already routes to the
 [Settings page](../../qml/pages/settingsPage/SettingsPage.qml) (language picker
 + future preferences).
 
@@ -224,7 +224,7 @@ Top-level `Main.qml` holds a `Loader` whose `source` is bound to
 `NavigationController.currentPage = …` (or calls `goBack()`).
 
 For book detail entry the canonical path is `BookController.openBook(id)`,
-not direct `currentPage = BOOK_DETAIL_PAGE` — see the section above.
+not direct `currentPage = BookDetailPage` — see the section above.
 
 ### File map
 

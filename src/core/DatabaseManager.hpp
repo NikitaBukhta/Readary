@@ -1,5 +1,5 @@
-#ifndef BEELIBRARY_CORE_DATABASEMANAGER_HPP
-#define BEELIBRARY_CORE_DATABASEMANAGER_HPP
+#ifndef READARY_CORE_DATABASEMANAGER_HPP
+#define READARY_CORE_DATABASEMANAGER_HPP
 
 #include "SqlQueryBuilder.hpp"
 
@@ -30,11 +30,11 @@ private:
   void trimRun(QTextStream &script);
   static QList<QVariantMap> getDataFromQuery(QSqlQuery &query);
 
-  static constexpr const char *kConnectionName = "Readary";
+  static constexpr QLatin1StringView kConnectionName{"Readary"};
 
   QSqlDatabase _db;
 };
 
 } // namespace readary::core
 
-#endif // BEELIBRARY_CORE_DATABASEMANAGER_HPP
+#endif // READARY_CORE_DATABASEMANAGER_HPP

@@ -79,7 +79,7 @@ Page {
                     Layout.rightMargin: root._sidePadding
                     onCategoryOpened: categoryId => {
                         BookController.activeKind = categoryId;
-                        NavigationController.currentPage = NavigationController.CATEGORY_LIST_PAGE;
+                        NavigationController.currentPage = NavigationController.CategoryListPage;
                     }
                 }
 

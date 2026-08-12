@@ -5,6 +5,8 @@
 #include <QStandardPaths>
 #include <QTest>
 
+using Qt::StringLiterals::operator""_s;
+
 using readary::services::ReadingPhase;
 using readary::services::ReadingSessionCache;
 
@@ -65,7 +67,7 @@ void ReadingSessionCacheTest::save_runningPhase_addsElapsedWallClock() {
   ReadingSessionCache::save(kIsbn, 100, ReadingPhase::Running);
   {
     QSettings settings;
-    settings.beginGroup(QStringLiteral("readingSession/%1").arg(kIsbn));
+    settings.beginGroup(u"readingSession/%1"_s.arg(kIsbn));
     settings.setValue("lastSyncAt", QDateTime::currentDateTimeUtc().addSecs(-30).toString(Qt::ISODate));
     settings.endGroup();
     settings.sync();

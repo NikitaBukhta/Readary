@@ -1,77 +1,81 @@
 #include "SqlQueryBuilder.hpp"
 
+using Qt::StringLiterals::operator""_s;
+
 namespace readary::core {
 
 SqlQueryBuilder &SqlQueryBuilder::select(const QStringList &columns) {
-  if (columns.isEmpty() || (columns.size() == 1 && columns.first().trimmed() == "*")) {
-    _query = "SELECT *";
+  if (columns.isEmpty() || (columns.size() == 1 && columns.first().trimmed() == u"*"_s)) {
+    _query = u"SELECT *"_s;
   } else {
-    _query = "SELECT " + columns.join(", ");
+    _query = u"SELECT "_s + columns.join(u", "_s);
   }
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::selectCount() {
-  _query = "SELECT COUNT(*)";
+  _query = u"SELECT COUNT(*)"_s;
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::insertInto(const QString &table, const QStringList &columns) {
-  return appendInsert("INSERT INTO ", table, columns);
+  return appendInsert(u"INSERT INTO "_s, table, columns);
 }
 
 SqlQueryBuilder &SqlQueryBuilder::insertOrIgnoreInto(const QString &table, const QStringList &columns) {
-  return appendInsert("INSERT OR IGNORE INTO ", table, columns);
+  return appendInsert(u"INSERT OR IGNORE INTO "_s, table, columns);
 }
 
 SqlQueryBuilder &SqlQueryBuilder::appendInsert(const QString &verb, const QString &table, const QStringList &columns) {
-  const QString placeholders = QStringList(columns.size(), QStringLiteral("?")).join(", ");
-  _query += verb + table + " (" + columns.join(", ") + ") VALUES (" + placeholders + ")";
+  const QString placeholders = QStringList(columns.size(), u"?"_s).join(u", "_s);
+  _query += verb + table + u" ("_s + columns.join(u", "_s) + u") VALUES ("_s + placeholders + u")"_s;
   _values.clear();
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::update(const QString &table) {
-  _query += "UPDATE " + table;
+  _query += u"UPDATE "_s + table;
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::from(const QString &table, const QString &alias) {
-  _query += " FROM " + table;
-  if (!alias.isEmpty())
-    _query += " " + alias;
+  _query += u" FROM "_s + table;
+  if (!alias.isEmpty()) {
+    _query += u" "_s + alias;
+  }
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::deleteFrom(const QString &table) {
-  _query += "DELETE FROM " + table;
+  _query += u"DELETE FROM "_s + table;
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::where(const QString &condition) {
-  _query += " WHERE " + condition;
+  _query += u" WHERE "_s + condition;
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::set(const QStringList &columns) {
-  _query += " SET " + columns.join(" = ?, ") + " = ?";
+  _query += u" SET "_s + columns.join(u" = ?, "_s) + u" = ?"_s;
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::leftJoin(const QString &table, const QString &alias) {
-  _query += " LEFT JOIN " + table;
-  if (!alias.isEmpty())
-    _query += " " + alias;
+  _query += u" LEFT JOIN "_s + table;
+  if (!alias.isEmpty()) {
+    _query += u" "_s + alias;
+  }
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::on(const QString &condition) {
-  _query += " ON " + condition;
+  _query += u" ON "_s + condition;
   return *this;
 }
 
 SqlQueryBuilder &SqlQueryBuilder::orderBy(const QString &column, const QString &order) {
-  _query += " ORDER BY " + column + " " + order;
+  _query += u" ORDER BY "_s + column + u" "_s + order;
   return *this;
 }
 

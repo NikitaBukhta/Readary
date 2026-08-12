@@ -1,4 +1,4 @@
-#include "OpenLibrarySeachAPI.hpp"
+#include "OpenLibrarySearchAPI.hpp"
 
 #include "api/translate/LanguageConverter.hpp"
 #include "utils/IsbnValidator.hpp"
@@ -14,7 +14,8 @@
 #include <QUrlQuery>
 #include <optional>
 
-using namespace Qt::StringLiterals;
+using Qt::StringLiterals::operator""_L1;
+using Qt::StringLiterals::operator""_s;
 
 namespace {
 Q_LOGGING_CATEGORY(lcOpenLibrary, "readary.api.openlibrary")
@@ -97,13 +98,13 @@ std::optional<readary::services::BookDTO> parseDoc(const QJsonObject &obj) {
 
 namespace readary::api {
 
-OpenLibrarySeachAPI::OpenLibrarySeachAPI(QObject *parent) : IBookNetSearchAPI{parent}, _endpoint{g_endpoint} {
-  connect(this, &IBookNetSearchAPI::responseReceived, this, &OpenLibrarySeachAPI::onResponseReceived);
+OpenLibrarySearchAPI::OpenLibrarySearchAPI(QObject *parent) : IBookNetSearchAPI{parent}, _endpoint{g_endpoint} {
+  connect(this, &IBookNetSearchAPI::responseReceived, this, &OpenLibrarySearchAPI::onResponseReceived);
 }
 
-void OpenLibrarySeachAPI::setEndpoint(const QString &endpoint) { _endpoint = endpoint; }
+void OpenLibrarySearchAPI::setEndpoint(const QString &endpoint) { _endpoint = endpoint; }
 
-QString OpenLibrarySeachAPI::generateQuery(const BookSearchFields &params) {
+QString OpenLibrarySearchAPI::generateQuery(const BookSearchFields &params) {
   QStringList terms;
   if (params.isbn != 0) {
     terms.append(u"isbn:"_s + QString::number(params.isbn));
@@ -141,7 +142,7 @@ QString OpenLibrarySeachAPI::generateQuery(const BookSearchFields &params) {
   return clauses.join(u" AND "_s);
 }
 
-void OpenLibrarySeachAPI::search(const BookSearchFields &params) {
+void OpenLibrarySearchAPI::search(const BookSearchFields &params) {
   const int page = params.page > 0 ? params.page : 1;
   const QString q = generateQuery(params);
   if (q.isEmpty()) {
@@ -162,9 +163,9 @@ void OpenLibrarySeachAPI::search(const BookSearchFields &params) {
   sendRequest(url);
 }
 
-void OpenLibrarySeachAPI::searchByISBN(qint64 isbn) { search(BookSearchFields{.isbn = isbn}); }
+void OpenLibrarySearchAPI::searchByISBN(qint64 isbn) { search(BookSearchFields{.isbn = isbn}); }
 
-void OpenLibrarySeachAPI::fetchDescription(const QString &workKey) {
+void OpenLibrarySearchAPI::fetchDescription(const QString &workKey) {
   if (!workKey.startsWith(g_workKeyPrefix)) {
     return;
   }
@@ -174,7 +175,7 @@ void OpenLibrarySeachAPI::fetchDescription(const QString &workKey) {
   sendRequest(url);
 }
 
-void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
+void OpenLibrarySearchAPI::onResponseReceived(QNetworkReply *reply) {
   if (reply == nullptr) {
     qCWarning(lcOpenLibrary) << "reply is not valid";
     return;
@@ -188,7 +189,7 @@ void OpenLibrarySeachAPI::onResponseReceived(QNetworkReply *reply) {
   }
 }
 
-void OpenLibrarySeachAPI::handleSearchResponse(QNetworkReply *reply) {
+void OpenLibrarySearchAPI::handleSearchResponse(QNetworkReply *reply) {
   const auto httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   if (reply->error()) {
     qCWarning(lcOpenLibrary) << "network error:" << reply->error() << reply->errorString()
@@ -218,7 +219,7 @@ void OpenLibrarySeachAPI::handleSearchResponse(QNetworkReply *reply) {
   emit searchListUpdated(books, hasMore);
 }
 
-void OpenLibrarySeachAPI::handleWorkResponse(QNetworkReply *reply) {
+void OpenLibrarySearchAPI::handleWorkResponse(QNetworkReply *reply) {
   QString workKey = reply->url().path();
   if (workKey.endsWith(g_jsonSuffix)) {
     workKey.chop(g_jsonSuffix.size());
