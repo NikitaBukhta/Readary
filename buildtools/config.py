@@ -15,6 +15,9 @@ JDK_FEATURE_VERSION = "17"  # Gradle 8.x requirement
 SUPPORTED_ANDROID_ABIS = ("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
 DEFAULT_ANDROID_ABIS: tuple[str, ...] = ("arm64-v8a",)
 
+# The only desktop triplet the project builds; mirrors CMakePresets.json.
+VCPKG_TRIPLET = "x64-windows"
+
 
 # aqt's Qt6 Android arch tokens mostly match the NDK ABI with `-`->`_`, EXCEPT
 # 32-bit ARM: the NDK ABI is `armeabi-v7a` but aqt's token (and install dir) is
@@ -201,7 +204,7 @@ class ProjectConfig:
 
     @property
     def _vcpkg_triplet_dir(self) -> Path:
-        base = self.deps_dir / "x64-windows"
+        base = self.deps_dir / VCPKG_TRIPLET
         if self.release:
             return base
         return base / "debug"
@@ -221,7 +224,11 @@ class ProjectConfig:
     @property
     def qt_tools_dir(self) -> Path:
         # vcpkg always exposes Qt6 host tools under tools/Qt6/bin, regardless of triplet.
-        return self.deps_dir / "x64-windows" / "tools" / "Qt6" / "bin"
+        return self.deps_dir / VCPKG_TRIPLET / "tools" / "Qt6" / "bin"
+
+    @property
+    def vcpkg_triplet(self) -> str:
+        return VCPKG_TRIPLET
 
     def vcpkg_executable(self) -> Path:
         exe = "vcpkg.exe" if self.is_windows else "vcpkg"

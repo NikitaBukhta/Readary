@@ -35,7 +35,10 @@ qml/
       CharacterRow.qml             Avatar + name/role; PressableSurface base
       CharactersListDelegate.qml   Wrapper around CharacterRow used as the inner ListView delegate (anchored side margins)
       CharactersListHeader.qml     "Characters" title + "+ Add" — used as ListView.header
-      CharactersToggle.qml         Show less / Show more pair — used as ListView.footer; centered, hidden when nothing to do
+      ReadingHistorySection.qml    ListView of finished reading sessions as a timeline (header + rows + paging toggle); collapses when the book was never read
+      ReadingHistoryListHeader.qml "Reading history" title — used as ListView.header
+      ReadingHistoryDelegate.qml   Wrapper around ReadingHistoryRow used as the inner ListView delegate (anchored side margins)
+      ReadingHistoryRow.qml        Timeline dot on a rail + stamp / page range + delta / duration / delete tile
       BookGenreTags.qml            Flow of TagPill for genres, sits below the characters ListView
   components/
     AppSearchField.qml             Pill-shaped text field with magnifier glyph
@@ -54,10 +57,11 @@ qml/
     BottomNavBar.qml               5-item nav bar driven by NavigationController
     BottomNavItem.qml              Single nav item
     CategoryRow.qml                "Want to read 4 books >" row
-    IconGlyph.qml                  Emoji/glyph or image renderer; collapses to 0×0 when empty
+    IconGlyph.qml                  Emoji/glyph or image renderer; collapses to 0×0 when empty; `tinted` colorizes the emoji SVG
     ProgressBar.qml                Linear bar (track + fill); height defaults to Styles.progressBar.sm
     ProgressRing.qml               Canvas-based circular progress
     SectionHeader.qml              "Title + trailing badge" header
+    PagedListToggle.qml            Show less / Show more pair for any model exposing canHide/canLoadMore — used as ListView.footer; centered, hidden when nothing to do
   theme/
     Theme.qml                      Singleton: forwards palette colors + global tokens (starColor, starColorEmpty)
     palettes/
@@ -65,6 +69,7 @@ qml/
   utils/
     Geometry.qml                   Singleton: spacing/radius/size sub-specs
     Styles.qml                     Singleton: font sizes, weights, elevation, opacity, duration, progressBar
+    Format.qml                     Singleton: locale-aware duration (h/m/s) and entry stamp formatting
 ```
 
 ## Base components
@@ -249,12 +254,13 @@ directly. (Characters are NOT in `_book` — they're owned by a separate
 model, see below.)
 
 The page is an outer `Flickable` (single scroll surface) holding a
-`ColumnLayout` with three top-level sections: a `BookDetailSummary`
-(everything about the book), a focused `ListView` for the character
-rows, and a `BookGenreTags` `Flow`. The character `ListView`'s only
-job is the rows — `header` is a `CharactersListHeader` ("Characters"
-title + "+ Add"), `footer` is a `CharactersToggle` (Show less / Show
-more), `delegate` is `CharactersListDelegate`. It runs with
+`ColumnLayout` with four top-level sections: a `BookDetailSummary`
+(everything about the book), a `ReadingHistorySection`, a focused
+`ListView` for the character rows, and a `BookGenreTags` `Flow`. The
+character `ListView`'s only job is the rows — `header` is a
+`CharactersListHeader` ("Characters" title + "+ Add"), `footer` is a
+`PagedListToggle` (Show less / Show more), `delegate` is
+`CharactersListDelegate`. It runs with
 `interactive: false` and `implicitHeight: contentHeight` so the outer
 `Flickable` owns the scroll; the C++-side model already caps `rowCount`
 at `_visibleCount` (5 by default), so only the buffered rows
@@ -264,7 +270,7 @@ The character model is `BookController.charactersModel`
 ([`BookCharactersModel`](../../src/models/books/BookCharactersModel.hpp)) —
 a `QAbstractListModel` that pulls all rows for the current book in one
 SQL query and exposes them in pages of 5 via internal `_visibleCount`.
-The `CharactersToggle` buttons are bound to `canHide` / `canLoadMore`
+The `PagedListToggle` buttons are bound to `canHide` / `canLoadMore`
 and call `hide()` / `loadMore()`; each click does the matching
 `beginInsertRows`/`endInsertRows` (or remove pair) on the changed page —
 no SQL, no model reset, no scroll jump.
@@ -289,17 +295,39 @@ Layout (top → bottom, all inside the page-level Flickable's ColumnLayout):
 1.4. Description — header + body text, hidden when description is empty.
 1.5. Three `ActionButton`s (PDF / Statistics / Favorite).
 
-**2. Characters `ListView`** (focused — only the rows live here):
+**2. `ReadingHistorySection`** — the `reading_sessions` journal for the
+current book, newest first, bound to `BookController.readingHistoryModel`
+([`ReadingHistoryModel`](../../src/models/books/ReadingHistoryModel.hpp)):
+- `header`: `ReadingHistoryListHeader` — "Reading history" title.
+- `delegate`: `ReadingHistoryDelegate` over `ReadingHistoryRow` — a timeline
+  dot on a vertical rail, the `d MMM, HH:mm` stamp, `p. from → to` with a
+  `· +N` pages delta (hidden when the session gained no pages), the duration,
+  and a delete tile. Stamps and durations come from the `Format` singleton
+  (`qml/utils/Format.qml`).
+- `spacing: 0` — deliberate: each row paints its own slice of the rail, so any
+  gap would break the line. The rail's ends are trimmed by
+  `railAbove: index > 0` / `railBelow: index < count - 1`.
+- `footer`: `PagedListToggle` — same five-at-a-time paging as the characters
+  list, backed by the same `canHide` / `canLoadMore` contract.
+- The whole section is `visible: totalCount > 0`, so a book that was never
+  read shows nothing (a `ColumnLayout` drops invisible items entirely).
+- The delete tile only asks: the row emits `deleteRequested(sessionId)`, the
+  section forwards it, and `BookDetailPage` confirms through a `ConfirmDialog`
+  before calling `BookController.deleteReadingSession`. The id travels as a
+  `string` the whole way — a QML signal cannot declare `qint64` and an `int`
+  would clip it.
+
+**3. Characters `ListView`** (focused — only the rows live here):
 - `header`: `CharactersListHeader` ("Characters" title + "+ Add" button).
 - `delegate`: `CharactersListDelegate` over `BookController.charactersModel`
   (the model exposes the first 5 rows, the rest stay buffered in C++).
-- `footer`: `CharactersToggle` — centered "Show less" (visible while
+- `footer`: `PagedListToggle` — centered "Show less" (visible while
   `canHide`) and "Show more" (visible while `canLoadMore`); each click
   shrinks/expands the model's visible window by one page.
 - `interactive: false`, `implicitHeight: contentHeight` so the page's
   outer `Flickable` owns the scroll.
 
-**3. `BookGenreTags`** — `Flow` of `TagPill`, hidden when empty.
+**4. `BookGenreTags`** — `Flow` of `TagPill`, hidden when empty.
 
 Status semantics: see [`BookStatus`](../../src/services/BookStatus.hpp).
 The page references `BookStatus.Finished` / `InProgress` directly — the
@@ -351,7 +379,7 @@ its original id.
 
 | Component | Notes |
 |-----------|-------|
-| `AppSearchField` | `text` is read/write; emits `textEdited` and `accepted` |
+| `AppSearchField` | `text` is read/write; emits `textEdited` and `accepted`. `accepted` fires on Enter, on the IME's Search key (`EnterKey.type`) and on a tap of the magnifier glyph; `submit()` drops focus first so a pending Android pre-edit is committed and the keyboard closes |
 | `BookListRow` | Cover + name/author + "type · year"; uses `coverSource: model.coverUrl ?? ""` |
 | `ReadingBookCard` | Cover spans the card width; rounded top corners via `MultiEffect` mask |
 | `BottomNavBar` | 5 items; clicking sets `NavigationController.currentPage` |
@@ -419,7 +447,9 @@ than untyped `QtObject`).
 | [qml/pages/settingsPage/SettingsPage.qml](../../qml/pages/settingsPage/SettingsPage.qml) | Language picker bound to `SettingsController.languageModel` |
 | [qml/pages/bookDetailPage/BookDetailPage.qml](../../qml/pages/bookDetailPage/BookDetailPage.qml) | Book detail page |
 | [qml/pages/bookDetailPage/ReadingProgressTimer.qml](../../qml/pages/bookDetailPage/ReadingProgressTimer.qml) | Stopwatch + end-session form, persists via `BookController` |
+| [qml/pages/bookDetailPage/ReadingHistorySection.qml](../../qml/pages/bookDetailPage/ReadingHistorySection.qml) | Finished-session journal for the current book |
 | [qml/components/](../../qml/components/) | Reusable widgets — base chassis (`SurfaceCard`, `PressableSurface`, `PaddedCard`, `TouchTarget`), buttons (`PrimaryButton`, `SecondaryButton`, `ActionButton`, `IconButton`, `TextButton`), atoms (`StarRating`, `TagPill`, `IconGlyph`, `ProgressBar`, `ProgressRing`) and rows |
 | [qml/theme/Theme.qml](../../qml/theme/Theme.qml) | Theme singleton |
 | [qml/utils/Geometry.qml](../../qml/utils/Geometry.qml) | Spacing / radius / size tokens |
 | [qml/utils/Styles.qml](../../qml/utils/Styles.qml) | Font / opacity / duration / progressBar / elevation tokens |
+| [qml/utils/Format.qml](../../qml/utils/Format.qml) | `duration()` / `stamp()` display helpers |

@@ -105,10 +105,11 @@ pattern) at construction time; see [models-and-filters.md](models-and-filters.md
 ```
 src/
   core/        AppEnvironment, AppInitializer, DatabaseManager, SqlQueryBuilder
-  services/    BookTable, BookDTO, CharacterDTO, BookStatus, ReadingPhase, ReadingSessionCache
+  services/    BookTable, BookDTO, CharacterDTO, ReadingSessionDTO, BookStatus, ReadingPhase, ReadingSessionCache
   qmltypes/    BookDTOObject (Q_GADGET wrapper over BookDTO, exposed by BookController to QML)
   models/
-    books/     BookListModel, BookSearchProxyModel, BookSortFilterProxyModel, BookCharactersModel
+    books/     BookListModel, BookSearchProxyModel, BookSortFilterProxyModel, BookCharactersModel,
+               ReadingHistoryModel
       filters/ BookFilterStrategy + 4 concrete strategies
     settings/  LanguageModel
   controllers/ BookController, NavigationController, SettingsController
@@ -118,12 +119,12 @@ qml/
   pages/
     mainPage/         MainPage + sections (Currently reading, Categories, …)
     categoryListPage/ CategoryListPage (vertical book list per category)
-    bookDetailPage/   BookDetailPage + header / progress / ratings / characters cards
+    bookDetailPage/   BookDetailPage + header / progress / ratings / reading-history / characters cards
   components/  Reusable UI: SurfaceCard / PressableSurface / PaddedCard / TouchTarget
                 base components, plus rows, buttons, search field, nav bar,
                 progress widgets, StarRating, TagPill
   theme/       Theme singleton + palettes (Pink/Blue/Yellow/Purple)
-  utils/       Geometry, Styles (singletons with named-component sub-specs)
+  utils/       Geometry, Styles, Format (singletons: tokens + display formatting)
 db/
   db_scripts.qrc  Resource manifest for SQL scripts
   init.sql        Schema (books + side tables: genres, book_genres,

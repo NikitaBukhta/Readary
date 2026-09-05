@@ -3,6 +3,7 @@
 
 #include "BookDTO.hpp"
 #include "CharacterDTO.hpp"
+#include "ReadingSessionDTO.hpp"
 #include "core/DatabaseManager.hpp"
 
 #include <QHash>
@@ -24,9 +25,11 @@ public:
   bool setGenres(qint64 bookIsbn, const QStringList &genres);
 
   QList<CharacterDTO> getCharacters(qint64 bookIsbn) const;
+  QList<ReadingSessionDTO> getReadingSessions(qint64 bookIsbn) const;
 
   bool updatePagesRead(qint64 bookIsbn, int pagesRead);
   qint64 insertReadingSession(qint64 bookIsbn, int pagesFrom, int pagesTo, int durationSeconds);
+  bool deleteReadingSession(qint64 sessionId);
 
 private:
   QHash<qint64, QStringList> getGenresByBook() const;

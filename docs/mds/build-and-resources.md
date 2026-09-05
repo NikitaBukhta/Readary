@@ -161,6 +161,37 @@ cmake --build build --target BookSearchProxyModelTest
 ctest --test-dir build -V -R BookSearchProxy
 ```
 
+### Qt host tools and a half-installed vcpkg tree
+
+The Qt host tools live in `<deps>/x64-windows/tools/Qt6/bin`: `rcc`/`moc`/`uic`
+from qtbase, the `qml*` tools (including **qmlformat**, which `compile` runs
+before building) from qtdeclarative, and `lupdate`/`lrelease` from qttools.
+They are not optional — Qt's own CMake package imports them by absolute path
+(`Qt6QmlToolsTargets.cmake` -> `Qt6::qmlformat`), so a missing one fails the
+configure, not just the formatting step.
+
+They can go missing while vcpkg still lists the port as installed: vcpkg
+removes a port's files before rebuilding it, so an install interrupted in
+between leaves the registration without the files — and an MSVC upgrade
+queues that rebuild for every port, because a new compiler changes each
+port's ABI hash. vcpkg trusts its own listing, so a plain `install` reports
+success and changes nothing.
+
+`bootstrap` repairs this before it configures: if qmlformat is gone from
+*vcpkg's own* tools directory while `qtdeclarative` is still registered, it
+drops the registration
+(`vcpkg remove --classic`) so the configure's `vcpkg install` re-extracts the
+port — at the version [`vcpkg.json`](../../vcpkg.json) pins, which a
+classic-mode `install` would not honour. Restoring from the vcpkg binary
+cache takes seconds; a cold cache means a from-source Qt rebuild. See
+`BootstrapCommand._repair_qmlformat_port`, and
+`buildtools/tests/test_qmlformat_repair.py` for the covered cases.
+
+The gate asks `QmlFormatProvider.vcpkg_tool_path()`, not `locate()`: the
+latter accepts any qmlformat on `PATH` — a system Qt, Qt Creator or `aqt`
+install — which formats fine but is not the path CMake imports, so trusting it
+would skip the repair on exactly the machines that need it.
+
 ## Static analysis
 
 `compile` gates the build through **MSVC `/analyze`** and **clang-tidy**

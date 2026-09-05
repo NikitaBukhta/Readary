@@ -32,6 +32,32 @@ class VcpkgProvider(ToolProvider):
         self._clone_and_bootstrap()
         return candidate
 
+    def is_port_installed(self, port: str) -> bool:
+        """True when the install tree registers `port`, files present or not.
+
+        vcpkg records one `<port>_<version>_<triplet>.list` per installed port;
+        that listing, not the files on disk, is what `install` consults.
+        """
+        info_dir = self.config.deps_dir / "vcpkg" / "info"
+        return any(info_dir.glob(f"{port}_*_{self.config.vcpkg_triplet}.list"))
+
+    def remove_port(self, port: str) -> None:
+        """Unregister `port` so the next manifest install re-extracts it.
+
+        Removing only the registration keeps the restore on the manifest path,
+        where the version stays the one vcpkg.json pins — a classic-mode
+        `install` resolves against the registry baseline instead and would drop
+        a newer Qt beside the pinned qtbase.
+        """
+        vcpkg = self.ensure()
+        # `--classic` keeps the project's vcpkg.json from putting the CLI into
+        # manifest mode, where `remove` is rejected outright.
+        self.shell.run([
+            vcpkg, "remove", f"{port}:{self.config.vcpkg_triplet}",
+            "--recurse", "--classic",
+            f"--x-install-root={self.config.deps_dir.as_posix()}",
+        ])
+
     def _clone_and_bootstrap(self) -> None:
         vcpkg_dir = self.config.vcpkg_dir
         print(f"Cloning vcpkg into {vcpkg_dir}...")

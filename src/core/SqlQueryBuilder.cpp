@@ -75,7 +75,10 @@ SqlQueryBuilder &SqlQueryBuilder::on(const QString &condition) {
 }
 
 SqlQueryBuilder &SqlQueryBuilder::orderBy(const QString &column, const QString &order) {
-  _query += u" ORDER BY "_s + column + u" "_s + order;
+  // Chained calls extend the same clause. Tracked in a flag rather than searched
+  // for in the query text, which a subquery's own ORDER BY would fool.
+  _query += (_hasOrderBy ? u", "_s : u" ORDER BY "_s) + column + u" "_s + order;
+  _hasOrderBy = true;
   return *this;
 }
 

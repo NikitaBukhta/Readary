@@ -75,6 +75,22 @@ Read these before non-trivial work in the corresponding area — they are kept c
 | `docs/mds/build-and-resources.md` | qrc bundling, static-analysis details, logging |
 | `docs/mds/qml.md` | QML component conventions |
 
+## Skills
+
+Project skills live in `.claude/skills/`. Invoke with `/<name>`; they also
+trigger on their own when the task matches.
+
+| Skill | Use it for |
+|-------|-----------|
+| `verify` | The definition-of-done gate: format → analysis build → qmllint → tests. Run before calling any change complete. |
+| `fix-gate` | Triaging `/analyze` + clang-tidy warnings-as-errors. |
+| `add-test` | Writing, registering and running a single Qt Test. |
+| `add-feature` | Anything spanning layers — new controller/model/service/API client. |
+| `qml-component` | Any work under `qml/`. |
+| `db-change` | Schema changes (there is no migration runner — read it first). |
+| `sync-docs` | Keeping `docs/mds/*.md` in step with the code. |
+| `commit` | Staging and committing in this repo's style. |
+
 ## Things that bite
 
 - **Static-lib resource init**: qrc resources in the `ReadaryCore` static lib can be stripped by the linker. `main.cpp` calls `Q_INIT_RESOURCE(db_scripts)` to force it; do the same for any new static-lib qrc.

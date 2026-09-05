@@ -127,6 +127,8 @@ class BootstrapCommand(Command):
         path_key = next((k for k in env if k.upper() == "PATH"), "PATH")
         env[path_key] = f"{host_dll_dir}{os.pathsep}{env.get(path_key, '')}"
 
+        self._repair_qmlformat_port()
+
         wrapper_script = (self.config.project_dir / "buildtools"
                           / "clang_tidy_wrapper.py")
         print(f"\n=== Configuring ({self.config.build_type}) ===")
@@ -160,6 +162,37 @@ class BootstrapCommand(Command):
         print(f"  Virtual env  : {self.config.venv_dir}")
         flag = " --release" if self.config.release else ""
         print(f"Run `python bootstrap.py compile{flag}` to build the project.")
+
+    def _repair_qmlformat_port(self) -> None:
+        """Unregister a Qt port whose host tools have gone missing from disk.
+
+        Qt's CMake package imports its tools by absolute path
+        (Qt6QmlToolsTargets.cmake -> Qt6::qmlformat), and vcpkg trusts its own
+        status database over the files, so a port listed as installed with its
+        tools gone is skipped by `vcpkg install` and fails the configure below.
+        Dropping the registration makes the install re-extract the port at the
+        version vcpkg.json pins.
+
+        An install interrupted between removing a port and rebuilding it leaves
+        exactly this state, and an MSVC upgrade queues that rebuild for every
+        port by changing its ABI hash. A fresh machine has nothing registered,
+        so the normal install handles it.
+
+        The check is on vcpkg's own copy of the tool rather than on `locate()`:
+        any other Qt on PATH satisfies `locate()` while leaving the path CMake
+        imports empty.
+        """
+        if self.qml_format.vcpkg_tool_path().exists():
+            return
+
+        port = self.qml_format.vcpkg_port
+        if not self.vcpkg.is_port_installed(port):
+            return
+
+        print(f"\n=== Restoring Qt6 host tools ({port}) ===")
+        print(f"  qmlformat is missing from {self.config.qt_tools_dir}")
+        print(f"  vcpkg lists {port} as installed, so it would skip it")
+        self.vcpkg.remove_port(port)
 
     # (slug, CMake build type, pretty label) for each variant we emit.
     _BUILD_TYPES = (

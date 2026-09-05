@@ -256,6 +256,32 @@ QList<CharacterDTO> BookTable::getCharacters(qint64 bookIsbn) const {
   return result;
 }
 
+QList<ReadingSessionDTO> BookTable::getReadingSessions(qint64 bookIsbn) const {
+  core::SqlQueryBuilder query;
+  QString error;
+
+  // A row with ended_at IS NULL is still in flight — owned by the timer cache
+  // until the user saves it.
+  query.select({u"id"_s, u"started_at"_s, u"ended_at"_s, u"pages_from"_s, u"pages_to"_s})
+      .from(u"reading_sessions"_s)
+      .where(u"book_isbn = ? AND ended_at IS NOT NULL"_s)
+      .orderBy(u"started_at"_s, u"DESC"_s)
+      .orderBy(u"id"_s, u"DESC"_s)
+      .values({bookIsbn});
+
+  auto rows = _db->select(query, &error);
+  if (!error.isEmpty()) {
+    qCWarning(lcBookTable) << "Failed to load reading sessions for book isbn:" << bookIsbn << "error:" << error;
+  }
+
+  QList<ReadingSessionDTO> result;
+  result.reserve(rows.size());
+  for (const auto &row : std::as_const(rows)) {
+    result.emplaceBack(ReadingSessionDTO::fromMap(row));
+  }
+  return result;
+}
+
 bool BookTable::updatePagesRead(qint64 bookIsbn, int pagesRead) {
   core::SqlQueryBuilder query;
   QString error;
@@ -294,6 +320,30 @@ qint64 BookTable::insertReadingSession(qint64 bookIsbn, int pagesFrom, int pages
     qCWarning(lcBookTable) << "insertReadingSession failed for book isbn:" << bookIsbn << "error:" << error;
   }
   return id;
+}
+
+bool BookTable::deleteReadingSession(qint64 sessionId) {
+  core::SqlQueryBuilder query;
+  QString error;
+
+  // Only the journal entry goes away: books.pagesRead is the reading position,
+  // not a sum over the log.
+  query.deleteFrom(u"reading_sessions"_s).where(u"id = ?"_s).values({sessionId});
+  const int affected = _db->execute(query, &error);
+
+  if (affected < 0) {
+    qCWarning(lcBookTable) << "deleteReadingSession failed for id:" << sessionId << "error:" << error;
+    return false;
+  }
+
+  if (affected == 0) {
+    // The row is already gone — a cascade from deleting the book, or a second
+    // confirm on the same entry. The caller's end state holds either way.
+    qCWarning(lcBookTable) << "deleteReadingSession: no session with id:" << sessionId;
+  } else {
+    qCInfo(lcBookTable) << "Deleted reading session id:" << sessionId;
+  }
+  return true;
 }
 
 } // namespace readary::services

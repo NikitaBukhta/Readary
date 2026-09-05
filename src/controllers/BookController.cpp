@@ -23,7 +23,8 @@ BookController::BookController(std::shared_ptr<services::BookTable> bookTable, m
     : QObject{parent}, _bookTable{std::move(bookTable)}, _listModel{listModel},
       _searchProxy{new models::BookSearchProxyModel{this}},
       _criteriaProxy{new models::BookCriteriaFilterProxyModel{this}},
-      _charactersModel{new models::BookCharactersModel{_bookTable, this}} {
+      _charactersModel{new models::BookCharactersModel{_bookTable, this}},
+      _readingHistoryModel{new models::ReadingHistoryModel{_bookTable, this}} {
   _listModel->refresh();
 
   _proxies.insert(ListKind::WantToRead, buildProxy(_listModel, models::filters::WantToReadFilterStrategy{}));
@@ -33,9 +34,13 @@ BookController::BookController(std::shared_ptr<services::BookTable> bookTable, m
 
   applyActiveSourceToSearchProxy();
 
-  QObject::connect(this, &BookController::currentBookIsbnChanged, this,
-                   [this] { _charactersModel->setBookIsbn(_currentBookIsbn); });
+  QObject::connect(this, &BookController::currentBookIsbnChanged, this, [this] {
+    _charactersModel->setBookIsbn(_currentBookIsbn);
+    _readingHistoryModel->setBookIsbn(_currentBookIsbn);
+  });
 
+  // bookSaved refreshes the list model (wired in AppInitializer) and that reset
+  // lands here, which is what re-reads a session appended to the journal.
   QObject::connect(_listModel, &QAbstractItemModel::modelReset, this, [this] {
     if (!_cacheValid) {
       return;
@@ -276,9 +281,30 @@ void BookController::updateReadingProgress(int pageNumber, int durationSeconds) 
   emit bookSaved();
 }
 
+void BookController::deleteReadingSession(const QString &sessionId) {
+  // A string rather than qint64: 64-bit values lose their magnitude crossing the
+  // QML boundary, as with the ISBN the timer invokables above take.
+  bool parsed = false;
+  const qint64 id = sessionId.toLongLong(&parsed);
+  if (!parsed || id <= 0) {
+    qCWarning(lcBook) << "Ignoring delete of reading session with invalid id:" << sessionId;
+    return;
+  }
+
+  if (!_bookTable->deleteReadingSession(id)) {
+    setErrorMessage(tr("Failed to delete the reading session."));
+    return;
+  }
+
+  // Same ISBN: keeps however far the list was expanded.
+  _readingHistoryModel->setBookIsbn(_currentBookIsbn);
+}
+
 models::BookSearchProxyModel *BookController::searchModel() const { return _searchProxy; }
 
 models::BookCharactersModel *BookController::charactersModel() const { return _charactersModel; }
+
+models::ReadingHistoryModel *BookController::readingHistoryModel() const { return _readingHistoryModel; }
 
 models::BookSortFilterProxyModel *BookController::buildProxy(models::BookListModel *source,
                                                              const models::filters::BookFilterStrategy &strategy) {

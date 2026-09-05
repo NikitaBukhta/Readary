@@ -7,6 +7,7 @@ PressableSurface {
     property string iconGlyph: ""
     property url iconSource
     property color iconColor: Theme.primaryContent
+    property bool iconTinted: false
     property int diameter: Geometry.size.avatarSm
 
     implicitWidth: diameter
@@ -24,6 +25,7 @@ PressableSurface {
         glyph: root.iconGlyph
         source: root.iconSource
         color: root.iconColor
+        tinted: root.iconTinted
         size: Geometry.size.iconMd
     }
 }

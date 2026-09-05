@@ -5,6 +5,7 @@
 #include "models/books/BookCriteriaFilterProxyModel.hpp"
 #include "models/books/BookSearchProxyModel.hpp"
 #include "models/books/BookSortFilterProxyModel.hpp"
+#include "models/books/ReadingHistoryModel.hpp"
 #include "qmltypes/BookDTOObject.hpp"
 #include "services/BookTable.hpp"
 
@@ -37,6 +38,7 @@ class BookController : public QObject {
   Q_PROPERTY(ListKind activeKind READ activeKind WRITE setActiveKind NOTIFY activeKindChanged)
   Q_PROPERTY(readary::models::BookSearchProxyModel *searchModel READ searchModel CONSTANT)
   Q_PROPERTY(readary::models::BookCharactersModel *charactersModel READ charactersModel CONSTANT)
+  Q_PROPERTY(readary::models::ReadingHistoryModel *readingHistoryModel READ readingHistoryModel CONSTANT)
 
 public:
   enum class ListKind : uint8_t {
@@ -76,9 +78,11 @@ public:
   Q_INVOKABLE void restoreCachedProgress();
   Q_INVOKABLE void discardCachedProgress() const;
   Q_INVOKABLE void updateReadingProgress(int pageNumber, int durationSeconds);
+  Q_INVOKABLE void deleteReadingSession(const QString &sessionId);
 
   models::BookSearchProxyModel *searchModel() const;
   models::BookCharactersModel *charactersModel() const;
+  models::ReadingHistoryModel *readingHistoryModel() const;
 
   static BookController *create(QQmlEngine *engine, QJSEngine *scriptEngine);
   static void setInstance(BookController *instance);
@@ -104,6 +108,7 @@ private:
   models::BookSearchProxyModel *_searchProxy;
   models::BookCriteriaFilterProxyModel *_criteriaProxy;
   models::BookCharactersModel *_charactersModel;
+  models::ReadingHistoryModel *_readingHistoryModel;
 
   QHash<ListKind, models::BookSortFilterProxyModel *> _proxies;
   ListKind _activeKind{ListKind::WantToRead};

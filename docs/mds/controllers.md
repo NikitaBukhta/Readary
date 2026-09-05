@@ -5,7 +5,8 @@ the C++ instance is created by `AppInitializer`, registered via
 `setInstance()`, and the QML factory `create()` returns the prepared instance
 with `QQmlEngine::CppOwnership`.
 
-- `BookController` — book form/list state, character model, reading-timer entry points.
+- `BookController` — book form/list state, character model, reading-history
+  model, reading-timer entry points.
 - `NavigationController` — page stack and routing.
 - `SettingsController` — façade for user preferences. Owns
   `LanguageModel` (and any future settings models). See
@@ -30,6 +31,8 @@ responsibilities deliberately, since both are book-scoped and small:
 | `activeKind` | property (R/W, `ListKind`) | which category is currently active |
 | `searchModel` | property (RO, `BookSearchProxyModel*`) | what QML lists bind to |
 | `charactersModel` | property (RO, `BookCharactersModel*`) | per-current-book character list with paged exposure (`canLoadMore` / `loadMore()` to expand by 5; `canHide` / `hide()` to collapse back to first page); auto-syncs when `currentBookId` changes |
+| `deleteReadingSession(sessionId)` | `Q_INVOKABLE` | drops one `reading_sessions` row and reloads the history model. The id comes in as a `QString` — 64-bit values do not survive the QML boundary, same reason as the timer invokables below. Idempotent: an id that matches no row is not an error. Leaves `books.pagesRead` alone — the journal is not the reading position. QML confirms first |
+| `readingHistoryModel` | property (RO, `ReadingHistoryModel*`) | per-current-book journal of finished reading sessions, newest first, paged the same way as `charactersModel`. Re-reads whenever `currentBookIsbn` changes — which covers a saved session too, since `bookSaved` refreshes the list model and that reset re-emits the signal |
 | `getSortFilterProxyForKind(kind)` | `Q_INVOKABLE` | proxy for a specific kind |
 | `openBook(id)` | `Q_INVOKABLE` | sets `currentBookId` and emits `bookOpenRequested(id)` for the router to pick up |
 | `updateReadingProgress(pageNumber, durationSeconds)` | `Q_INVOKABLE` | persists current reading position in `books.pagesRead` and logs a row in `reading_sessions`; emits `bookSaved` so the list refreshes |

@@ -84,6 +84,7 @@ endforeach()
 
 set_source_files_properties(qml/utils/Geometry.qml             PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/utils/Styles.qml               PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/utils/Format.qml               PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/theme/Theme.qml                PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/ToastService.qml    PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 

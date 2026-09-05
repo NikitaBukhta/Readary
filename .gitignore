@@ -98,7 +98,10 @@ build/
 /venv/
 /staging/
 /dist/
-/.claude/
+# Local Claude Code state stays out; the shared project skills are tracked.
+# (Excluding the directory itself would make the negation below unreachable.)
+/.claude/*
+!/.claude/skills/
 /ai_context/
 .vscode/
 .clang-format

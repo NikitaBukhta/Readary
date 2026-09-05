@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import Library
 
 Item {
@@ -9,6 +11,8 @@ Item {
     property url source
     property int size: Geometry.size.iconMd
     property color color: Theme.textPrimary
+    // Emoji render as Twemoji SVGs, so `color` has no effect unless tinted.
+    property bool tinted: false
 
     // Emoji codepoints are rendered as SVGs from the vendored Twemoji set so
     // they look identical on every platform (Qt's text engine on Android
@@ -31,6 +35,12 @@ Item {
         visible: source.toString().length > 0
         sourceSize.width: root.size
         sourceSize.height: root.size
+
+        layer.enabled: root.tinted
+        layer.effect: MultiEffect {
+            colorization: 1.0
+            colorizationColor: root.color
+        }
     }
 
     Label {

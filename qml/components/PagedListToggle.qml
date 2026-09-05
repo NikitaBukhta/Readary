@@ -5,9 +5,10 @@ import Library
 Item {
     id: root
 
-    property var charactersModel
+    // Any model exposing canLoadMore / canHide + loadMore() / hide().
+    property var pagedModel
 
-    readonly property bool _show: root.charactersModel && (root.charactersModel.canLoadMore || root.charactersModel.canHide)
+    readonly property bool _show: root.pagedModel && (root.pagedModel.canLoadMore || root.pagedModel.canHide)
 
     visible: root._show
     implicitHeight: root._show ? row.implicitHeight : 0
@@ -21,22 +22,22 @@ Item {
 
         TextButton {
             id: showLessButton
-            visible: root.charactersModel && root.charactersModel.canHide
+            visible: root.pagedModel && root.pagedModel.canHide
             label: qsTr("Show less")
             labelColor: Theme.primary
             labelSize: Styles.fontSize.body
             labelWeight: Styles.fontWeight.semibold
-            onClicked: root.charactersModel.hide()
+            onClicked: root.pagedModel.hide()
         }
 
         TextButton {
             id: showMoreButton
-            visible: root.charactersModel && root.charactersModel.canLoadMore
+            visible: root.pagedModel && root.pagedModel.canLoadMore
             label: qsTr("Show more")
             labelColor: Theme.primary
             labelSize: Styles.fontSize.body
             labelWeight: Styles.fontWeight.semibold
-            onClicked: root.charactersModel.loadMore()
+            onClicked: root.pagedModel.loadMore()
         }
     }
 }

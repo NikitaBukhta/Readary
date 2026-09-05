@@ -11,6 +11,8 @@ Page {
     readonly property int _sidePadding: Geometry.spacing.xxl
     readonly property var _book: BookController.currentBookData
 
+    property string _pendingSessionId: ""
+
     Flickable {
         id: scroll
         anchors.fill: parent
@@ -64,10 +66,21 @@ Page {
                 }
             }
 
+            ReadingHistorySection {
+                id: historyList
+                Layout.fillWidth: true
+                Layout.topMargin: Geometry.spacing.lg
+                sidePadding: root._sidePadding
+                onDeleteRequested: sessionId => {
+                    root._pendingSessionId = sessionId;
+                    deleteSessionDialog.open();
+                }
+            }
+
             ListView {
                 id: charactersList
                 Layout.fillWidth: true
-                Layout.topMargin: Geometry.spacing.sm
+                Layout.topMargin: Geometry.spacing.lg
                 implicitHeight: contentHeight
                 interactive: false
                 spacing: Geometry.spacing.md
@@ -92,9 +105,9 @@ Page {
                     onOpenRequested: characterId => console.log(root._logTag, "Open character id", characterId)
                 }
 
-                footer: CharactersToggle {
+                footer: PagedListToggle {
                     width: charactersList.width
-                    charactersModel: BookController.charactersModel
+                    pagedModel: BookController.charactersModel
                 }
             }
 
@@ -120,6 +133,18 @@ Page {
             summary.stopReading();
             BookController.moveInProgressToWantToRead();
         }
+    }
+
+    ConfirmDialog {
+        id: deleteSessionDialog
+        title: qsTr("Delete this session?")
+        message: qsTr("The entry disappears from your reading history. Your current page stays where it is.")
+        confirmLabel: qsTr("Delete")
+        onConfirmed: {
+            BookController.deleteReadingSession(root._pendingSessionId);
+            root._pendingSessionId = "";
+        }
+        onCancelled: root._pendingSessionId = ""
     }
 
     ConfirmDialog {

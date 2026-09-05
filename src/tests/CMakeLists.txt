@@ -16,6 +16,7 @@ endfunction()
 readary_add_test(models/BookSearchProxyModelTest.cpp)
 readary_add_test(models/LanguageModelTest.cpp)
 readary_add_test(models/FontModelTest.cpp)
+readary_add_test(models/ReadingHistoryModelTest.cpp)
 
 readary_add_test(services/EmojiResolverTest.cpp)
 readary_add_test(services/SearchCacheTest.cpp)

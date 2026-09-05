@@ -33,6 +33,7 @@ private:
 
   QString _query;
   QVariantList _values;
+  bool _hasOrderBy = false;
 };
 
 } // namespace readary::core

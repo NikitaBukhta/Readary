@@ -49,6 +49,11 @@ QtObject {
         readonly property int readingCardWidth: 140
         readonly property int readingCoverHeight: 190
 
+        readonly property int timelineGutter: 24
+        readonly property int timelineDot: 12
+        readonly property int timelineRail: 2
+        readonly property int iconTile: 36
+
         readonly property int categoryRowHeight: 72
         readonly property int categoryIconBox: 48
 

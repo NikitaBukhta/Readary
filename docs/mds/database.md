@@ -124,16 +124,25 @@ book with its author/publisher/type names already resolved.
 | `deleteBook(id)` | DELETE by id |
 | `getGenres(bookId) const` | `QStringList` of genre names for one book |
 | `getCharacters(bookId) const` | `QList<CharacterDTO>` (`id`, `name`, `role`) for one book; consumed by `BookCharactersModel` |
+| `getReadingSessions(bookId) const` | `QList<ReadingSessionDTO>` of *closed* sessions (`ended_at IS NOT NULL`) for one book, newest first; consumed by `ReadingHistoryModel` |
 | `updatePagesRead(bookId, pagesRead)` | Targeted `UPDATE books SET pagesRead = ?`; called by `BookController::updateReadingProgress` after a session ends |
+| `deleteReadingSession(sessionId)` | Deletes one journal row; `books.pagesRead` is deliberately untouched. Idempotent — an id that matches nothing reports success, since only a failed statement is a failure |
 | `insertReadingSession(bookId, pagesFrom, pagesTo, durationSeconds)` | Inserts one row in `reading_sessions` with `started_at = now − duration` |
 
-Side-table reads (`getGenres`, `getCharacters`) are intentionally NOT folded
+`ReadingSessionDTO` (`services/ReadingSessionDTO.hpp`) carries the raw row
+(`id`, `startedAt`, `endedAt`, `pagesFrom`, `pagesTo`) and derives
+`pagesRead()` / `durationSeconds()` on read — the journal stores no totals, so
+there is nothing to keep in sync. Timestamps come back as TEXT and are parsed
+with `Qt::ISODate`, then normalized to local time for display.
+
+Side-table reads (`getGenres`, `getCharacters`, `getReadingSessions`) are intentionally NOT folded
 into `getAllBooks()` — list views don't need them, and joining them on every
 list refresh would multiply rows. `getGenres` is pulled on demand by
 `BookController::currentBookData()` and assigned onto the cached `BookDTO`
 per `currentBookId`. `getCharacters` is pulled by `BookCharactersModel`
 (owned by `BookController`) on every `setBookId` and held in memory for
-paged exposure to QML.
+paged exposure to QML. `getReadingSessions` works the same way through
+`ReadingHistoryModel`.
 
 ## Schema overview
 

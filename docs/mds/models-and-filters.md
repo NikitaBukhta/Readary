@@ -127,6 +127,28 @@ book_characters WHERE book_id = ?` is sub-millisecond on SQLite, and
 keeping all rows in memory costs single-digit KB. Multiple round-trips
 would only add latency.
 
+## `ReadingHistoryModel`
+
+Same shape as `BookCharactersModel`, over
+`QList<services::ReadingSessionDTO>`: one `BookTable::getReadingSessions(isbn)`
+SELECT (closed sessions only, newest first), all rows kept in memory, the first
+5 exposed through `_visibleCount`, and the identical `loadMore()` / `hide()` /
+`canLoadMore` / `canHide` paging contract — so QML drives both lists with the
+same `PagedListToggle` component.
+
+Roles: `id`, `startedAt`, `endedAt`, `pagesFrom`, `pagesTo`, `pagesRead`,
+`durationSeconds` (the last two derived by the DTO, not stored).
+
+Two things differ from the characters model:
+
+- `totalCount` (`Q_PROPERTY`, `summaryChanged`) describes the whole journal
+  rather than the visible window; the detail page uses it to hide the section
+  for a book that was never read.
+- `setBookIsbn(isbn)` with the ISBN *already* in place keeps however far the
+  list was expanded; only switching books collapses back to the first page.
+  `BookController` re-sets the same ISBN after `bookSaved` (a saved session
+  appends a row), and a reload must not yank an expanded list shut.
+
 ## Strategy pattern
 
 Configuration of the four sort/filter proxies (one per `ListKind`) is done
@@ -193,4 +215,5 @@ context/state lifecycle that didn't exist here.
 | [src/models/books/BookSortFilterProxyModel.hpp](../../src/models/books/BookSortFilterProxyModel.hpp) / [.cpp](../../src/models/books/BookSortFilterProxyModel.cpp) | Generic filter/sort proxy with `addFilter`/`Op` API |
 | [src/models/books/BookSearchProxyModel.hpp](../../src/models/books/BookSearchProxyModel.hpp) / [.cpp](../../src/models/books/BookSearchProxyModel.cpp) | Search + relevance ranking — see [book-search.md](book-search.md) |
 | [src/models/books/BookCharactersModel.hpp](../../src/models/books/BookCharactersModel.hpp) / [.cpp](../../src/models/books/BookCharactersModel.cpp) | Per-book characters list with windowed reveal |
+| [src/models/books/ReadingHistoryModel.hpp](../../src/models/books/ReadingHistoryModel.hpp) / [.cpp](../../src/models/books/ReadingHistoryModel.cpp) | Per-book reading-session journal with windowed reveal |
 | [src/models/books/filters/BookFilterStrategy.hpp](../../src/models/books/filters/BookFilterStrategy.hpp) / [.cpp](../../src/models/books/filters/BookFilterStrategy.cpp) | Strategy interface + 4 concrete strategies |
