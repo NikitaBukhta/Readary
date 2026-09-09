@@ -80,6 +80,26 @@ QString GlobalBookSearchController::cacheKey(const QString &normalizedQuery) con
 
 models::GlobalBookSearchListModel *GlobalBookSearchController::resultsModel() const { return _resultsModel; }
 
+bool GlobalBookSearchController::isSearching() const { return _searching; }
+
+bool GlobalBookSearchController::canLoadMore() const { return _canLoadMore; }
+
+void GlobalBookSearchController::setSearching(bool searching) {
+  if (_searching == searching) {
+    return;
+  }
+  _searching = searching;
+  emit searchingChanged();
+}
+
+void GlobalBookSearchController::setCanLoadMore(bool canLoadMore) {
+  if (_canLoadMore == canLoadMore) {
+    return;
+  }
+  _canLoadMore = canLoadMore;
+  emit canLoadMoreChanged();
+}
+
 void GlobalBookSearchController::search(const QString &query) {
   const QString text = normalizeKey(query);
   if (text.isEmpty() && !_criteria.hasCatalogTerms()) {
@@ -90,6 +110,7 @@ void GlobalBookSearchController::search(const QString &query) {
   _activeQuery = text;
   _activeKey = key;
   _autoPagesFetched = 0;
+  setCanLoadMore(false);
 
   if (tryServeFromMemoryCache(key) || tryServeFromDiskCache(key)) {
     return;
@@ -106,7 +127,9 @@ bool GlobalBookSearchController::tryServeFromMemoryCache(const QString &key) {
   }
   qCInfo(lcGlobalSearch) << "memory cache hit — returning" << cached->books.size()
                          << "cached result(s), hasMore:" << cached->hasMore;
+  setSearching(false);
   _resultsModel->setBooks(cached->books);
+  setCanLoadMore(cached->hasMore);
   return true;
 }
 
@@ -119,19 +142,21 @@ bool GlobalBookSearchController::tryServeFromDiskCache(const QString &key) {
                          << "cached result(s), hasMore:" << persisted->hasMore;
   _searchCache.insert(
       key, CachedSearch{.books = persisted->books, .nextPage = persisted->nextPage, .hasMore = persisted->hasMore});
+  setSearching(false);
   _resultsModel->setBooks(persisted->books);
+  setCanLoadMore(persisted->hasMore);
   return true;
 }
 
 void GlobalBookSearchController::startFreshSearch(const QString &key) {
   _searchCache.insert(key, CachedSearch{});
-  _loading = true;
+  setSearching(true);
   _resultsModel->setBooks({});
   requestPage(_activeQuery, 1);
 }
 
 void GlobalBookSearchController::loadMore() {
-  if (_activeKey.isEmpty() || _loading) {
+  if (_activeKey.isEmpty() || _searching || !_canLoadMore) {
     return;
   }
   const auto it = _searchCache.constFind(_activeKey);
@@ -146,11 +171,11 @@ void GlobalBookSearchController::loadMore() {
 void GlobalBookSearchController::requestPage(const QString &query, int page) {
   if (_bookSearchAPI == nullptr) {
     qCWarning(lcGlobalSearch) << "search aborted — book search API not set";
-    _loading = false;
+    setSearching(false);
     return;
   }
 
-  _loading = true;
+  setSearching(true);
   _pendingKey = cacheKey(query);
   _pendingPage = page;
 
@@ -176,7 +201,7 @@ std::optional<qint64> GlobalBookSearchController::queryAsIsbn(const QString &que
 }
 
 void GlobalBookSearchController::onSearchResults(const QList<services::BookDTO> &books, bool hasMore) {
-  _loading = false;
+  setSearching(false);
   if (_pendingKey.isEmpty()) {
     return;
   }
@@ -188,6 +213,9 @@ void GlobalBookSearchController::onSearchResults(const QList<services::BookDTO> 
     return;
   }
   showPage(books, _pendingPage <= 1);
+  // hasMore only reports a full *raw* page; everything without an ISBN or a page
+  // count is dropped after, so a page can arrive full and still yield no rows.
+  setCanLoadMore(hasMore && !books.isEmpty());
   maybeFetchMorePages(entry, hasMore);
 }
 

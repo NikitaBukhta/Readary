@@ -7,6 +7,7 @@
 #include <QAbstractItemModel>
 #include <QList>
 #include <QSettings>
+#include <QSignalSpy>
 #include <QStandardPaths>
 #include <QString>
 #include <QTest>
@@ -76,6 +77,9 @@ private slots:
   void repeatSearch_isCaseInsensitive();
   void loadMore_fetchesNextPage_andAppends();
   void loadMore_whenNoMorePages_doesNothing();
+  void searching_tracksRequestInFlight();
+  void canLoadMore_followsHasMore_andRetiresOnEmptyPage();
+  void canLoadMore_isRestoredFromCacheHit();
   void loadMore_withoutActiveQuery_doesNothing();
   void isbnQuery_routesToSearchByIsbn();
   void emptyQuery_isIgnored();
@@ -176,6 +180,66 @@ void GlobalBookSearchControllerTest::loadMore_whenNoMorePages_doesNothing() {
 
   ctrl.loadMore();
   QCOMPARE(api.searchCalls, 1); // no further page requested
+}
+
+void GlobalBookSearchControllerTest::searching_tracksRequestInFlight() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+  QSignalSpy spy(&ctrl, &GlobalBookSearchController::searchingChanged);
+
+  QVERIFY(!ctrl.isSearching());
+  ctrl.search(u"tolkien"_s);
+  QVERIFY(ctrl.isSearching());
+  QCOMPARE(spy.count(), 1);
+
+  api.deliver({makeBook(1, u"a"_s)}, true);
+  QVERIFY(!ctrl.isSearching());
+  QCOMPARE(spy.count(), 2);
+
+  ctrl.loadMore();
+  QVERIFY(ctrl.isSearching()); // a further page keeps the indicator up
+  api.deliver({makeBook(2, u"b"_s)}, true);
+  QVERIFY(!ctrl.isSearching());
+}
+
+void GlobalBookSearchControllerTest::canLoadMore_followsHasMore_andRetiresOnEmptyPage() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+
+  QVERIFY(!ctrl.canLoadMore()); // nothing searched yet
+  ctrl.search(u"tolkien"_s);
+  QVERIFY(!ctrl.canLoadMore()); // still in flight
+
+  api.deliver({makeBook(1, u"a"_s)}, true);
+  QVERIFY(ctrl.canLoadMore());
+
+  ctrl.loadMore();
+  api.deliver({}, true); // page brought nothing back despite the catalog's hasMore
+  QVERIFY(!ctrl.canLoadMore());
+  ctrl.loadMore();
+  QCOMPARE(api.searchCalls, 2); // button gone → no further request
+
+  ctrl.search(u"dune"_s); // a new search revives it
+  api.deliver({makeBook(2, u"b"_s)}, true);
+  QVERIFY(ctrl.canLoadMore());
+}
+
+void GlobalBookSearchControllerTest::canLoadMore_isRestoredFromCacheHit() {
+  GlobalBookSearchController ctrl(nullptr);
+  FakeSearchApi api;
+  ctrl.setBookSearchAPI(&api);
+
+  ctrl.search(u"a"_s);
+  api.deliver({makeBook(1, u"a1"_s)}, true);
+  ctrl.search(u"b"_s);
+  api.deliver({makeBook(2, u"b1"_s)}, false);
+  QVERIFY(!ctrl.canLoadMore());
+
+  ctrl.search(u"a"_s); // memory cache hit — the button comes back with it
+  QVERIFY(ctrl.canLoadMore());
+  QVERIFY(!ctrl.isSearching());
 }
 
 void GlobalBookSearchControllerTest::loadMore_withoutActiveQuery_doesNothing() {

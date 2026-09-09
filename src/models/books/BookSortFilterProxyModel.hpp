@@ -56,6 +56,9 @@ private:
     Op op;
   };
 
+  void beginFilterUpdate();
+  void endFilterUpdate();
+
   static bool matches(const QVariant &cell, const Filter &filter);
 
   QMultiHash<int, Filter> _filters;

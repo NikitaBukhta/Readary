@@ -15,16 +15,32 @@ BookCriteriaFilterProxyModel::BookCriteriaFilterProxyModel(QObject *parent) : QS
 const services::BookFilterCriteria &BookCriteriaFilterProxyModel::criteria() const { return _criteria; }
 
 void BookCriteriaFilterProxyModel::setCriteria(const services::BookFilterCriteria &criteria) {
+  beginFilterUpdate();
   _criteria = criteria;
-  invalidateFilter();
+  endFilterUpdate();
 }
 
 void BookCriteriaFilterProxyModel::clearCriteria() {
   if (_criteria.isEmpty()) {
     return;
   }
+  beginFilterUpdate();
   _criteria = {};
+  endFilterUpdate();
+}
+
+void BookCriteriaFilterProxyModel::beginFilterUpdate() {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  beginFilterChange();
+#endif
+}
+
+void BookCriteriaFilterProxyModel::endFilterUpdate() {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  endFilterChange();
+#else
   invalidateFilter();
+#endif
 }
 
 bool BookCriteriaFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {

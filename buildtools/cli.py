@@ -95,7 +95,9 @@ class CommandRegistry:
             "run": RunCommand(
                 self.config, self.shell, self._jdk, self._android_sdk,
             ),
-            "test": TestCommand(self.config, self.shell, self._cmake),
+            "test": TestCommand(
+                self.config, self.shell, self._cmake, self._msvc,
+            ),
             "translate": TranslateCommand(
                 self.config, self.shell, self._venv_mgr, self._linguist,
             ),
@@ -209,10 +211,36 @@ class CLI:
             help="Create installer (Inno Setup)",
         )
 
-        subs.add_parser(
+        p_test = subs.add_parser(
             "test", parents=[help_parser, release_parser],
             add_help=False,
-            help="Run unit tests",
+            help="Build and run the autotests",
+        )
+        p_test.add_argument(
+            "-k", "--filter", dest="test_filter", default=None,
+            metavar="REGEX",
+            help="Only run tests whose CTest name matches REGEX "
+                 "(e.g. -k BookTable). Names drop the `Test` suffix.",
+        )
+        p_test.add_argument(
+            "-l", "--list", dest="list_tests", action="store_true",
+            help="List the registered tests without running them",
+        )
+        p_test.add_argument(
+            "--no-build", dest="skip_test_build", action="store_true",
+            help="Run whatever is already built instead of building first",
+        )
+        p_test.add_argument(
+            "-j", "--jobs", type=int, default=None,
+            help="Parallel build jobs for the build step",
+        )
+        p_test.add_argument(
+            "--python", dest="python_tests", action="store_true",
+            help="Also run the buildtools' own unittest suite",
+        )
+        p_test.add_argument(
+            "--python-only", dest="test_python_only", action="store_true",
+            help="Run only the buildtools' unittest suite (no build, no CTest)",
         )
 
         subs.add_parser(
@@ -285,6 +313,20 @@ class CLI:
             kwargs["skip_analyze"] = True
         if getattr(args, "clean_cache_deep", False):
             kwargs["clean_cache_deep"] = True
+        test_filter = getattr(args, "test_filter", None)
+        if test_filter:
+            kwargs["test_filter"] = test_filter
+        if getattr(args, "list_tests", False):
+            kwargs["list_tests"] = True
+        if getattr(args, "skip_test_build", False):
+            kwargs["skip_test_build"] = True
+        # --python-only implies --python: one flag decides whether the suite
+        # runs, the other whether anything else does.
+        if getattr(args, "test_python_only", False):
+            kwargs["python_tests"] = True
+            kwargs["test_python_only"] = True
+        elif getattr(args, "python_tests", False):
+            kwargs["python_tests"] = True
 
         command_name = args.command or "help"
 

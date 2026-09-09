@@ -71,12 +71,39 @@ pins this down.
 fallback pays one wasted primary round trip per extra page. Correct, just
 chatty — remembering the winning source per query would fix it.
 
-A second source of duplicate traffic is fixed: `startFreshSearch` clears the
-results model, the QML list re-evaluates its end-of-list trigger on that reset
-and calls `loadMore()` **synchronously** — previously before `requestPage()` had
-set `_loading`, so every fresh search asked for page 1 twice (visible in the log
-as `loadMore — page: 1` right after `search query`, then `dropping stale primary
-reply`). The controller now claims `_loading` before touching the model.
+A second source of duplicate traffic is gone: pagination used to be driven by
+the QML list's end-of-list trigger, and `startFreshSearch` clearing the results
+model made the list re-evaluate that trigger and call `loadMore()`
+**synchronously** — before `requestPage()` had claimed the in-flight flag, so
+every fresh search asked for page 1 twice (visible in the log as `loadMore —
+page: 1` right after `search query`, then `dropping stale primary reply`). The
+trigger is now an explicit *Load more* button ([see below](#progress-and-pagination-state)),
+and `startFreshSearch` still claims `_searching` before touching the model.
+
+## Progress and pagination state
+
+The controller exposes the two bits the discovery UI needs, both notifying:
+
+| Property | |
+|---|---|
+| `searching` | a page request is in flight — `SearchPage` shows a `LoadingSpinner` (centred while the list is still empty, in the list footer while a further page loads) and swaps the search field's magnifier for one |
+| `canLoadMore` | there is a next page worth asking for — the footer's *Load more* button is bound to it |
+
+`searching` is set by `requestPage()` and cleared by `onSearchResults()`; an
+auto-fetched page ([filtering.md](filtering.md#consequences-worth-knowing)) re-arms it
+inside the same call, so the indicator stays up for the whole top-up run.
+
+`canLoadMore` is `hasMore && !books.isEmpty()` for the page that just landed,
+and false for everything else — before the first page resolves, after a page
+that brought nothing back, and on the empty result of a failed search. It is
+recomputed on a cache hit from the cached `hasMore`, so returning to an earlier
+query resumes pagination with the button in the right state.
+
+The `!books.isEmpty()` half matters: `hasMore` only reports that the catalog
+returned a *full raw page*, and every result lacking an ISBN or a page count is
+dropped afterwards, so a full page can yield no rows at all. Leaving the button
+up in that case offers a round trip that again produces nothing. `loadMore()`
+guards on `canLoadMore` too, so a stale binding can't re-open that door.
 
 ## Language filter
 

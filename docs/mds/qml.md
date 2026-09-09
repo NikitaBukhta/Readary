@@ -379,13 +379,14 @@ its original id.
 
 | Component | Notes |
 |-----------|-------|
-| `AppSearchField` | `text` is read/write; emits `textEdited` and `accepted`. `accepted` fires on Enter, on the IME's Search key (`EnterKey.type`) and on a tap of the magnifier glyph; `submit()` drops focus first so a pending Android pre-edit is committed and the keyboard closes |
+| `AppSearchField` | `text` is read/write; emits `textEdited` and `accepted`. `accepted` fires on Enter, on the IME's Search key (`EnterKey.type`) and on a tap of the magnifier glyph; `submit()` drops focus first so a pending Android pre-edit is committed and the keyboard closes. `busy: bool` swaps the magnifier for a `LoadingSpinner` |
 | `BookListRow` | Cover + name/author + "type · year"; uses `coverSource: model.coverUrl ?? ""` |
 | `ReadingBookCard` | Cover spans the card width; rounded top corners via `MultiEffect` mask |
 | `BottomNavBar` | 5 items; clicking sets `NavigationController.currentPage` |
 | `IconGlyph` | Image when `source` is set, else `glyph` text in `Segoe UI Emoji`. Collapses to 0×0 implicit size when both empty. |
 | `ProgressBar` | Linear; `progress` 0…1; `trackColor` / `progressColor`. Default height `Styles.progressBar.sm`; callers may override (`md` in `ReadingBookCard`, `lg` in `ReadingProgressCard`). |
 | `ProgressRing` | Canvas-based circular progress; configurable `strokeWidth` |
+| `LoadingSpinner` | Indeterminate spinner — a `ProgressRing` arc under a `RotationAnimator`. `running` also drives `visible`; size via `diameter` |
 | `CategoryRow` | Card row with rounded icon box, title, subtitle, chevron |
 | `SectionHeader` | Title with optional trailing accent text (count badge) |
 | `StarRating` | `value: real` rounded to int via `Math.round`; `total: int`. Renders ★/☆ in `Theme.starColor` / `Theme.starColorEmpty`. |
@@ -407,14 +408,15 @@ tokens: `starColor` (#F59E0B amber) and `starColorEmpty` (35% alpha amber)
 - New `SizeSpec` tokens: `iconHuge: 36`, `bookDetailCoverWidth: 100`,
   `bookDetailCoverHeight: 140`, `actionButtonHeight: 56`,
   `pillButtonHeight: 52`, `characterRowHeight: 64`,
-  `dialogPrimaryWidth: 160`.
+  `dialogPrimaryWidth: 160`, `spinner: 28`, `spinnerStroke: 3`.
 
 Wrapping nested QtObjects in named components keeps qmlls' type info accurate
 (it lets the language server resolve `Geometry.size.foo` as `int` rather
 than untyped `QtObject`).
 
 `Styles` (singleton): `fontSize`, `fontWeight`, `elevation`, `opacity`,
-`duration`, `progressBar`. The `elevation` spec now exposes
+`duration`, `progressBar`. `duration` carries `fast/normal/slow` plus `spin`
+(one `LoadingSpinner` revolution). The `elevation` spec now exposes
 `subtleOffset/Blur`, `cardOffset/Blur`, `heroOffset/Blur` (used by
 `SurfaceCard` callers to pick a shadow level). `progressBar` exposes
 `sm: 4`, `md: 5`, `lg: 6`.

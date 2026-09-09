@@ -73,14 +73,16 @@ Commit the regenerated `.ts`/`.qm` together with the strings.
 ### 5. Tests
 
 ```bash
-python bootstrap.py test
+python bootstrap.py test                    # builds the tests, then runs them all
 ```
 
-or, to keep the output readable / target one suite:
+or, to target one suite while iterating:
 
 ```bash
-./venv/Scripts/ctest.exe --test-dir build/debug -C Debug --output-on-failure
-./venv/Scripts/ctest.exe --test-dir build/debug -C Debug -R BookSearchProxy --output-on-failure
+python bootstrap.py test -k BookSearchProxy # CTest name = file name minus `Test`
+python bootstrap.py test -l                 # list the registered suites, run none
+python bootstrap.py test --no-build         # rerun what is already built
+python bootstrap.py test --python           # also run the buildtools unittest suite
 ```
 
 A Qt Test binary prints `Totals: N passed, M failed, K skipped`. Read that

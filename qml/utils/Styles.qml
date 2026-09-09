@@ -41,6 +41,7 @@ QtObject {
         readonly property int fast: 120
         readonly property int normal: 200
         readonly property int slow: 320
+        readonly property int spin: 900
     }
 
     component ProgressBarSpec: QtObject {

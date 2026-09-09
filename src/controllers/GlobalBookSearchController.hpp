@@ -24,6 +24,8 @@ class GlobalBookSearchController : public QObject {
   QML_SINGLETON
 
   Q_PROPERTY(readary::models::GlobalBookSearchListModel *resultsModel READ resultsModel CONSTANT)
+  Q_PROPERTY(bool searching READ isSearching NOTIFY searchingChanged)
+  Q_PROPERTY(bool canLoadMore READ canLoadMore NOTIFY canLoadMoreChanged)
 public:
   explicit GlobalBookSearchController(QObject *parent);
   void setBookSearchAPI(api::IBookSearchAPI *api);
@@ -33,6 +35,8 @@ public:
   void setFilterCriteria(const services::BookFilterCriteria &criteria);
 
   models::GlobalBookSearchListModel *resultsModel() const;
+  bool isSearching() const;
+  bool canLoadMore() const;
 
   Q_INVOKABLE void search(const QString &query);
   Q_INVOKABLE void setPendingQuery(const QString &text);
@@ -44,6 +48,8 @@ public:
 
 signals:
   void bookImportRequested(services::BookDTO book);
+  void searchingChanged();
+  void canLoadMoreChanged();
 
 private:
   struct CachedSearch {
@@ -56,6 +62,9 @@ private:
   static std::optional<qint64> queryAsIsbn(const QString &query);
 
   QString cacheKey(const QString &normalizedQuery) const;
+
+  void setSearching(bool searching);
+  void setCanLoadMore(bool canLoadMore);
 
   bool tryServeFromMemoryCache(const QString &key);
   bool tryServeFromDiskCache(const QString &key);
@@ -85,7 +94,8 @@ private:
   QString _pendingKey;
   int _pendingPage{1};
   int _autoPagesFetched{0};
-  bool _loading{false};
+  bool _searching{false};
+  bool _canLoadMore{false};
 
   services::BookDTO _pendingImport;
   quint64 _nextTranslateId{0};

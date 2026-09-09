@@ -81,8 +81,15 @@ retry and timeout paths).
 ## 5. Build and run just this suite
 
 ```bash
+python bootstrap.py test -k SearchCache
+```
+
+That builds first, then runs only the matching suite. To skip the build (or to
+reach for Qt Test flags CTest hides):
+
+```bash
+python bootstrap.py test -k SearchCache --no-build
 ./venv/Scripts/cmake.exe --build build/debug --config Debug --target SearchCacheTest
-./venv/Scripts/ctest.exe --test-dir build/debug -C Debug -R SearchCache --output-on-failure
 ```
 
 The binary is at `build/debug/Debug/SearchCacheTest.exe` and takes Qt Test
@@ -90,7 +97,7 @@ flags directly (`-v2`, `-functions`, `-o out.txt,txt`) when you need detail
 CTest swallows. Read the `Totals: N passed, M failed, K skipped` line — a
 suite that ran zero functions is a failure, not a pass.
 
-Whole suite: `python bootstrap.py test`.
+Whole suite: `python bootstrap.py test`. `python bootstrap.py test -l` lists what is registered.
 
 ## 6. Style notes
 

@@ -16,7 +16,7 @@
 
 ## Conventions
 
-- Code is C++17 / Qt 6.8 with QML.
+- Code is C++17 / Qt 6 with QML.
 - Namespaces: `bl::core`, `bl::services`, `bl::models`, `bl::models::filters`,
   `bl::controllers`.
 - QML module URI: `Library`. Singleton entry points (controllers, theme,

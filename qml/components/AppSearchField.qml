@@ -7,6 +7,7 @@ FocusScope {
 
     property alias text: input.text
     property string placeholderText: qsTr("Search...")
+    property bool busy: false
 
     signal textEdited(string text)
     signal accepted(string text)
@@ -44,6 +45,15 @@ FocusScope {
             size: Geometry.size.iconMd
             glyph: "🔍"
             color: Theme.textMuted
+            visible: !root.busy
+        }
+
+        LoadingSpinner {
+            id: busySpinner
+            width: icon.width
+            height: icon.height
+            diameter: Geometry.size.iconMd
+            running: root.busy
         }
     }
 

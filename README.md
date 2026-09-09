@@ -1,6 +1,6 @@
 # Readary
 
-Qt 6.8 QML desktop application for managing a personal book library.
+Qt 6 QML desktop application for managing a personal book library.
 
 ## Prerequisites
 
@@ -93,6 +93,12 @@ operating system itself is downloaded automatically:
 
 Everything lands under `~/vcpkg_install_deps/android/` so it never
 mixes with the desktop vcpkg tree.
+
+The two Qt builds are pinned separately and need not match: the desktop one
+comes from vcpkg and its version lives in [`vcpkg.json`](vcpkg.json); the
+Android one comes from `aqtinstall` and is pinned by `ANDROID_QT_VERSION` in
+[`buildtools/config.py`](buildtools/config.py). `CMakeLists.txt` only asks for
+a floor (`QT_MINIMUM_VERSION`), so bumping either side is a one-line change.
 
 ### Host requirements
 

@@ -20,6 +20,13 @@ Shared test scaffolding sits in `src/tests/support/` and is reachable as
 |---|---|
 | [FakeHttpServer.hpp](../../src/tests/support/FakeHttpServer.hpp) | Loopback HTTP stub for the network-backed API clients — a responder callback per request, plus canned failures for the retry paths |
 | [SearchCapture.hpp](../../src/tests/support/SearchCapture.hpp) | Captures `searchListUpdated` (a `QList<BookDTO>` payload can't go through `QSignalSpy`) |
+| [TempLibrary.hpp](../../src/tests/support/TempLibrary.hpp) | An in-memory database carrying the real `:/db/init.sql` schema, plus a `BookTable` over it and a `makeBook()` factory whose defaults satisfy every schema CHECK |
+
+`TempLibrary` has one rule: `DatabaseManager` registers a single fixed Qt SQL
+connection name, so only one instance may be alive at a time — `open()` from
+`init()`, `close()` from `cleanup()`. A test that reads `:/db/init.sql` also
+needs `Q_INIT_RESOURCE(db_scripts)` in `initTestCase()`, for the same reason
+`main.cpp` does.
 
 ## CMakeLists overview
 

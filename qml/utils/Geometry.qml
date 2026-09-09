@@ -45,6 +45,8 @@ QtObject {
         readonly property int goalRing: 64
         readonly property int goalRingInner: goalRing - 2 * goalRingStroke
         readonly property int goalRingStroke: 4
+        readonly property int spinner: 28
+        readonly property int spinnerStroke: 3
 
         readonly property int readingCardWidth: 140
         readonly property int readingCoverHeight: 190

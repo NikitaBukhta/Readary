@@ -134,6 +134,13 @@ class ProjectConfig:
     # derived from `release`. Set by the `--all` matrix; None for normal runs.
     build_type_override: str | None = None
 
+    # `test` options.
+    test_filter: str | None = None  # CTest name regex (ctest -R)
+    list_tests: bool = False
+    skip_test_build: bool = False
+    python_tests: bool = False
+    test_python_only: bool = False
+
     venv_dir: Path = field(init=False)
     deps_dir: Path = field(init=False)
     vcpkg_dir: Path = field(init=False)

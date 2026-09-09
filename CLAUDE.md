@@ -4,20 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Readary — a Qt 6.8 / QML application for managing a personal book library (desktop + Android). C++ backing layer, QML frontend, SQLite storage, and an online book-discovery feature that fans out across public catalog APIs.
+Readary — a Qt 6 / QML application for managing a personal book library (desktop + Android). C++ backing layer, QML frontend, SQLite storage, and an online book-discovery feature that fans out across public catalog APIs.
 
 ## Build & run
 
 All workflows go through the `bootstrap.py` wrapper (never invoke CMake/vcpkg directly for routine work — the wrapper manages the vcpkg toolchain, presets, and analysis gate):
 
 ```bash
-python bootstrap.py bootstrap          # one-time: install deps (CMake, vcpkg, Qt 6.8)
+python bootstrap.py bootstrap          # one-time: install deps (CMake, vcpkg, Qt)
 python bootstrap.py translate          # generate translations/library_<lang>.{ts,qm}
 python bootstrap.py compile            # configure + build (Debug, WITH static-analysis gate)
 python bootstrap.py compile --skip-analyze   # fast iteration — skip clang-tidy + /analyze
 python bootstrap.py run                # launch the app
 python bootstrap.py analyze            # standalone clang-tidy pass, no compile
-python bootstrap.py test               # build + run all unit tests
+python bootstrap.py test               # build + run all autotests
+python bootstrap.py test -k BookTable  # only suites matching a regex
+python bootstrap.py test -l            # list registered suites, run none
 python bootstrap.py package            # build an Inno Setup installer
 ```
 
@@ -27,12 +29,14 @@ python bootstrap.py package            # build an Inno Setup installer
 
 ### Running a single test
 
-Tests are Qt Test executables under `src/tests/`, registered with CTest.
+Tests are Qt Test executables under `src/tests/`, registered with CTest. The
+CTest name is the file name without the `Test` suffix.
 
 ```bash
-cmake --build build/debug --target BookSearchProxyModelTest
-ctest --test-dir build/debug -V -R BookSearchProxyModel
-# or run build/debug/.../BookSearchProxyModelTest.exe directly
+python bootstrap.py test -k BookSearchProxyModel   # build + run one suite
+python bootstrap.py test -k BookSearchProxyModel --no-build
+python bootstrap.py test --python                  # + the buildtools unittest suite
+# or run build/debug/.../BookSearchProxyModelTest.exe directly for Qt Test flags
 ```
 
 ## Static-analysis gate (important)

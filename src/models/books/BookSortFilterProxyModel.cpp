@@ -16,22 +16,41 @@ BookSortFilterProxyModel::BookSortFilterProxyModel(QObject *parent) : QSortFilte
 }
 
 void BookSortFilterProxyModel::addFilter(int role, const QVariant &value, Op op) {
+  beginFilterUpdate();
   _filters.insert(role, Filter{.value = value, .op = op});
-  invalidateFilter();
+  endFilterUpdate();
 }
 
 void BookSortFilterProxyModel::removeFilter(int role) {
-  if (_filters.remove(role) > 0) {
-    invalidateFilter();
+  if (!_filters.contains(role)) {
+    return;
   }
+  beginFilterUpdate();
+  _filters.remove(role);
+  endFilterUpdate();
 }
 
 void BookSortFilterProxyModel::clearFilter() {
   if (_filters.isEmpty()) {
     return;
   }
+  beginFilterUpdate();
   _filters.clear();
+  endFilterUpdate();
+}
+
+void BookSortFilterProxyModel::beginFilterUpdate() {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  beginFilterChange();
+#endif
+}
+
+void BookSortFilterProxyModel::endFilterUpdate() {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+  endFilterChange();
+#else
   invalidateFilter();
+#endif
 }
 
 void BookSortFilterProxyModel::setSortField(int role) {

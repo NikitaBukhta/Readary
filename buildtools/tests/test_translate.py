@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import unittest
 import xml.etree.ElementTree as ET
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -122,7 +123,18 @@ public:
         )
 
     def test_split_namespace_components(self):
-        src = "namespace bl { namespace models { class LanguageModel : public QObject {}; } }"
+        # Nested namespaces, each opened on its own line — the shape the
+        # scanner's line-anchored regexes are written for.
+        src = """
+namespace bl {
+namespace models {
+class LanguageModel : public QObject {
+public:
+  void foo() { tr("hi"); }
+};
+}
+}
+"""
         self.assertEqual(
             _cpp_context(Path("LanguageModel.cpp"), src),
             "bl::models::LanguageModel",
@@ -260,12 +272,36 @@ class ReadExistingTests(unittest.TestCase):
 # ---- .ts XML writing --------------------------------------------------------
 class WriteTsTests(unittest.TestCase):
     def _round_trip(self, contexts, translations):
-        with TemporaryDirectory() as tmp:
-            project = Path(tmp)
-            ts_path = project / "translations" / "library_ru.ts"
-            ts_path.parent.mkdir()
-            _write_ts(ts_path, "ru_RU", contexts, translations, project)
-            return ts_path.read_text(encoding="utf-8"), ts_path
+        # The directory outlives the helper: callers read the .ts back through
+        # `_read_existing`, which answers "nothing translated" for a missing
+        # file rather than raising.
+        tmp = TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+
+        project = Path(tmp.name)
+        ts_path = project / "translations" / "library_ru.ts"
+        ts_path.parent.mkdir()
+        _write_ts(ts_path, "ru_RU", self._anchor(contexts, project),
+                  translations, project)
+        return ts_path.read_text(encoding="utf-8"), ts_path
+
+    @staticmethod
+    def _anchor(contexts, project: Path):
+        """Rebase the fixtures' locations onto the temporary project root.
+
+        The scanner always hands `_write_ts` absolute paths, and `_write_ts`
+        turns them back into project-relative ones. Fixtures spell the
+        locations relative because that reads better; anchoring them here is
+        what makes them the shape the writer is given in a real run.
+        """
+        return {
+            ctx: [
+                replace(msg, locations=[(project / loc, line)
+                                        for loc, line in msg.locations])
+                for msg in messages
+            ]
+            for ctx, messages in contexts.items()
+        }
 
     def test_emits_well_formed_xml(self):
         key = _MessageKey(context="BookController", source="Hello", comment="")
