@@ -1,8 +1,8 @@
-#include "BookFilterStrategy.hpp"
+#include "models/books/filters/BookFilterStrategy.hpp"
 
-#include "models/books/BookListModel.hpp"
-#include "models/books/BookSortFilterProxyModel.hpp"
-#include "services/BookStatus.hpp"
+#include "models/books/list/BookListModel.hpp"
+#include "models/books/proxy/BookSortFilterProxyModel.hpp"
+#include "services/dto/BookStatus.hpp"
 
 namespace readary::models::filters {
 

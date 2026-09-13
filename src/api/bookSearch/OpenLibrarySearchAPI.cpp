@@ -1,4 +1,4 @@
-#include "OpenLibrarySearchAPI.hpp"
+#include "api/bookSearch/OpenLibrarySearchAPI.hpp"
 
 #include "api/translate/LanguageConverter.hpp"
 #include "utils/IsbnValidator.hpp"

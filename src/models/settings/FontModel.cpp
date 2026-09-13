@@ -1,4 +1,4 @@
-#include "FontModel.hpp"
+#include "models/settings/FontModel.hpp"
 
 #include <QFontDatabase>
 #include <QLoggingCategory>

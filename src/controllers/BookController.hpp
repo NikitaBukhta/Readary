@@ -1,15 +1,15 @@
 #ifndef READARY_CONTROLLERS_BOOKCONTROLLER_HPP
 #define READARY_CONTROLLERS_BOOKCONTROLLER_HPP
 
-#include "models/books/BookCharactersModel.hpp"
-#include "models/books/BookCriteriaFilterProxyModel.hpp"
-#include "models/books/BookSearchProxyModel.hpp"
-#include "models/books/BookSortFilterProxyModel.hpp"
-#include "models/books/ReadingHistoryModel.hpp"
+#include "models/books/details/BookCharactersModel.hpp"
+#include "models/books/details/ReadingHistoryModel.hpp"
+#include "models/books/proxy/BookCriteriaFilterProxyModel.hpp"
+#include "models/books/proxy/BookSearchProxyModel.hpp"
+#include "models/books/proxy/BookSortFilterProxyModel.hpp"
 #include "qmltypes/BookDTOObject.hpp"
-#include "services/BookFileStore.hpp"
-#include "services/BookTable.hpp"
-#include "services/PdfDocumentInfo.hpp"
+#include "services/pdf/PdfDocumentInfo.hpp"
+#include "services/storage/BookFileStore.hpp"
+#include "services/storage/BookTable.hpp"
 
 #include <QHash>
 #include <QObject>

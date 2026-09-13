@@ -1,4 +1,4 @@
-#include "NavigationController.hpp"
+#include "controllers/NavigationController.hpp"
 
 #include <QLoggingCategory>
 #include <QQmlEngine>

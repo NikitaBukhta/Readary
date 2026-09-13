@@ -73,11 +73,11 @@ InProgress = 3   // status == 2 (used by "Currently reading" section)
 QML accesses values as `BookController.WantToRead`, etc.
 
 For the `status` enum used on the detail page (`BookStatus.Finished`,
-`BookStatus.InProgress`, …), see [`BookStatus`](../../src/services/BookStatus.hpp)
+`BookStatus.InProgress`, …), see [`BookStatus`](../../src/services/dto/BookStatus.hpp)
 — it's a separate Q_GADGET to avoid name clashes with `ListKind` members.
 
 For the reading-timer phase (`ReadingPhase.Stopped` / `Running` / `Paused`),
-see [`ReadingPhase`](../../src/services/ReadingPhase.hpp) — also Q_GADGET,
+see [`ReadingPhase`](../../src/services/dto/ReadingPhase.hpp) — also Q_GADGET,
 single source of truth shared between `ReadingSessionCache` (C++) and
 `ReadingProgressTimer` (QML).
 
@@ -119,7 +119,7 @@ void BookController::openBook(qint64 id) {
 }
 ```
 
-The signal is wired in [`AppInitializer::initModels`](../../src/core/AppInitializer.cpp):
+The signal is wired in [`AppInitializer::initModels`](../../src/core/app/AppInitializer.cpp):
 
 ```cpp
 connect(_bookController, &BookController::bookOpenRequested, _contextModel,
@@ -147,7 +147,7 @@ NOTIFY signal — semantically slightly fuzzy but functionally correct.
 
 ### `charactersModel`
 
-A [`BookCharactersModel`](../../src/models/books/BookCharactersModel.hpp)
+A [`BookCharactersModel`](../../src/models/books/details/BookCharactersModel.hpp)
 (`QAbstractListModel`) owned by the controller and auto-synced to
 `currentBookId` via the same `currentBookIdChanged` signal: on every
 emit the model calls `setBookId(currentBookId)` which reloads the full
@@ -163,7 +163,7 @@ button visibility.
 
 The `ReadingProgressTimer` QML component drives a stopwatch over the current
 reading session. State (`seconds`, `phase`) is persisted via
-[`ReadingSessionCache`](../../src/services/ReadingSessionCache.hpp) (QSettings
+[`ReadingSessionCache`](../../src/services/caching/ReadingSessionCache.hpp) (QSettings
 under `readingSession/<bookId>/`) so it survives app restarts.
 
 Two distinct paths through `BookController`:
@@ -235,14 +235,14 @@ back to the root.
 `Page`:
 
 ```
-MainPage         = 1   level 1   qrc:/qt/qml/Library/pages/mainPage/MainPage.qml
-CategoryListPage = 2   level 2   qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml
-SearchPage       = 3   level 1   qrc:/qt/qml/Library/pages/searchPage/SearchPage.qml
+MainPage         = 1   level 1   qrc:/qt/qml/pages/mainPage/MainPage.qml
+CategoryListPage = 2   level 2   qrc:/qt/qml/pages/categoryListPage/CategoryListPage.qml
+SearchPage       = 3   level 1   qrc:/qt/qml/pages/searchPage/SearchPage.qml
 GoalsPage        = 4   level 1   (placeholder — falls back to MainPage)
 ChallengesPage   = 5   level 1   (placeholder — falls back to MainPage)
-ProfilePage      = 6   level 1   qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml
-AddBookPage      = 7   level 3   qrc:/qt/qml/Library/pages/addBookPage/AddBookPage.qml
-BookDetailPage   = 8   level 3   qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml
+ProfilePage      = 6   level 1   qrc:/qt/qml/pages/settingsPage/SettingsPage.qml
+AddBookPage      = 7   level 3   qrc:/qt/qml/pages/addBookPage/AddBookPage.qml
+BookDetailPage   = 8   level 3   qrc:/qt/qml/pages/bookDetailPage/BookDetailPage.qml
 ```
 
 The two remaining placeholder pages (Goals/Challenges) are exposed so

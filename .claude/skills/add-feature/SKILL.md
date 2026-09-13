@@ -12,7 +12,7 @@ QML (module URI `Library`)
   └─ Controllers (QML singletons)   src/controllers/   readary::controllers
        └─ Models (QAbstractItemModel, proxies)  src/models/   readary::models
             └─ Services (DTOs, table access, caches)  src/services/  readary::services
-                 └─ Core (DatabaseManager, SqlQueryBuilder)  src/core/  readary::core
+                 └─ Core (DatabaseManager, SqlQueryBuilder)  src/core/db/  readary::core
        ↘ src/qmltypes/ — Q_GADGET value wrappers at the controller↔QML boundary
          src/api/ — network catalog clients (readary::api)
 ```
@@ -21,6 +21,27 @@ QML (module URI `Library`)
 directly; a controller exposes it as a read-only `Q_PROPERTY`. Never let a
 lower layer include a higher one, and never let `src/services` or `src/core`
 pull in Qt Quick/QML — tests depend on that.
+
+Inside a layer, files sit in a role sub-folder — and the sub-folder adds **no**
+namespace level:
+
+```
+src/core/      app/ db/
+src/services/  dto/ storage/ caching/ pdf/ filtering/ emoji/
+src/models/    books/{list,proxy,filters,details}/ settings/
+src/api/       bookSearch/ translate/
+```
+
+Put a new file in the folder whose role it shares; add a new sub-folder only
+when a genuinely new role arrives. Include headers by their path below `src`:
+
+```cpp
+#include "services/dto/BookDTO.hpp"
+#include "models/books/proxy/BookSearchProxyModel.hpp"
+```
+
+CMake globs each layer recursively, so a new file or sub-folder needs no build
+edit — a new *test* file still has to be registered in `src/tests/CMakeLists.txt`.
 
 ## 1. Decide the layer before writing anything
 
@@ -72,7 +93,7 @@ Gotcha: Qt prefers a **default constructor** over `create()` when one exists.
 Keep singleton classes free of default-argument constructors that make them
 default-constructible, or QML will build a second, unwired instance.
 
-Then in [`AppInitializer`](../../../src/core/AppInitializer.cpp) (the composition root):
+Then in [`AppInitializer`](../../../src/core/app/AppInitializer.cpp) (the composition root):
 
 - construct it in `initModels()`, **parented to `this`** (no manual `delete`);
 - register it in `registerQmlTypes()` via `FooController::setInstance(_fooController);`.

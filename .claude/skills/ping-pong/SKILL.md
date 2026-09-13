@@ -92,7 +92,7 @@ never leave a header banner over an obvious function. If a comment is the only
 thing making a block readable, rename or extract instead — then delete the
 comment.
 
-[`BookSearchProxyModel.hpp:40`](../../../src/models/books/BookSearchProxyModel.hpp)
+[`BookSearchProxyModel.hpp:40`](../../../src/models/books/proxy/BookSearchProxyModel.hpp)
 is the house exemplar: it documents a real Qt trap (the score cache is keyed by
 source row and Qt does not re-run the filter on insert/remove), the symptom to
 look for, and the fix — none of which is readable from the code.

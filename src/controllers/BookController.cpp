@@ -1,14 +1,14 @@
-#include "BookController.hpp"
+#include "controllers/BookController.hpp"
 
-#include "models/books/BookListModel.hpp"
-#include "models/books/BookSearchProxyModel.hpp"
-#include "models/books/BookSortFilterProxyModel.hpp"
 #include "models/books/filters/BookFilterStrategy.hpp"
-#include "services/BookStatus.hpp"
-#include "services/PdfMetadataReader.hpp"
-#include "services/PdfSource.hpp"
-#include "services/ReadingProgressCache.hpp"
-#include "services/ReadingSessionCache.hpp"
+#include "models/books/list/BookListModel.hpp"
+#include "models/books/proxy/BookSearchProxyModel.hpp"
+#include "models/books/proxy/BookSortFilterProxyModel.hpp"
+#include "services/caching/ReadingProgressCache.hpp"
+#include "services/caching/ReadingSessionCache.hpp"
+#include "services/dto/BookStatus.hpp"
+#include "services/pdf/PdfMetadataReader.hpp"
+#include "services/pdf/PdfSource.hpp"
 #include "utils/IsbnValidator.hpp"
 
 #include <QBuffer>

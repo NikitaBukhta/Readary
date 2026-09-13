@@ -1,5 +1,5 @@
-#include "core/AppEnvironment.hpp"
-#include "core/AppInitializer.hpp"
+#include "core/app/AppEnvironment.hpp"
+#include "core/app/AppInitializer.hpp"
 
 #include <QGuiApplication>
 #include <QLoggingCategory>

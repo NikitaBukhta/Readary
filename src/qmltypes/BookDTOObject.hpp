@@ -1,7 +1,7 @@
 #ifndef READARY_QMLTYPES_BOOKDTOOBJECT_HPP
 #define READARY_QMLTYPES_BOOKDTOOBJECT_HPP
 
-#include "services/BookDTO.hpp"
+#include "services/dto/BookDTO.hpp"
 
 #include <QtQml/qqmlregistration.h>
 

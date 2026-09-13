@@ -1,7 +1,7 @@
-#include "BookFilterController.hpp"
+#include "controllers/BookFilterController.hpp"
 
 #include "api/translate/LanguageConverter.hpp"
-#include "models/books/BookListModelBase.hpp"
+#include "models/books/list/BookListModelBase.hpp"
 #include "models/settings/LanguageModel.hpp"
 
 #include <QLocale>

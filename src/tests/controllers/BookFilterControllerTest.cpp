@@ -1,6 +1,6 @@
 #include "controllers/BookFilterController.hpp"
-#include "models/books/GlobalBookSearchListModel.hpp"
-#include "services/BookDTO.hpp"
+#include "models/books/list/GlobalBookSearchListModel.hpp"
+#include "services/dto/BookDTO.hpp"
 
 #include <QLocale>
 #include <QSignalSpy>

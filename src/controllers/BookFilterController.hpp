@@ -1,7 +1,7 @@
 #ifndef READARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP
 #define READARY_CONTROLLERS_BOOKFILTERCONTROLLER_HPP
 
-#include "services/BookFilterCriteria.hpp"
+#include "services/filtering/BookFilterCriteria.hpp"
 
 #include <QObject>
 #include <QQmlEngine>

@@ -33,7 +33,7 @@ A brand-new subsystem gets its own `docs/mds/<topic>.md` **and** a row in the
 - Keep the existing structure — prose + tables + fenced code, not a changelog.
   Rewrite the affected paragraph; never append an "Update:" note.
 - Source references are **relative links** back into the tree, e.g.
-  `[BookTable](../../src/services/BookTable.hpp)` from a file in `docs/mds/`.
+  `[BookTable](../../src/services/storage/BookTable.hpp)` from a file in `docs/mds/`.
   If you move or rename a file, fix the links that point at it.
 - `qml.md` carries a literal tree of `qml/` with a one-line description per
   file — add/remove/rename the line, keep the column alignment.

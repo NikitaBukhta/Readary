@@ -1,8 +1,8 @@
 #ifndef READARY_API_BOOKSEARCH_IBOOKSEARCHAPI_HPP
 #define READARY_API_BOOKSEARCH_IBOOKSEARCHAPI_HPP
 
-#include "services/BookDTO.hpp"
-#include "services/BookFilterCriteria.hpp"
+#include "services/dto/BookDTO.hpp"
+#include "services/filtering/BookFilterCriteria.hpp"
 
 #include <QList>
 

@@ -1,5 +1,5 @@
 #include "api/bookSearch/GoogleBooksSearchAPI.hpp"
-#include "services/BookDTO.hpp"
+#include "services/dto/BookDTO.hpp"
 #include "support/FakeHttpServer.hpp"
 #include "support/SearchCapture.hpp"
 

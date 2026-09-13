@@ -125,7 +125,7 @@ A NOTE with the same content lives next to `_searchCache` in
 
 ## Tests
 
-`src/tests/models/BookSearchProxyModelTest.cpp` — Qt Test.
+`src/tests/models/books/proxy/BookSearchProxyModelTest.cpp` — Qt Test.
 
 Covered scenarios:
 
@@ -161,10 +161,10 @@ or run `BookSearchProxyModelTest.exe` directly from the build directory.
 
 | File | Purpose |
 |------|---------|
-| [src/models/books/BookSearchProxyModel.hpp](../../src/models/books/BookSearchProxyModel.hpp) | Model and cache declaration |
-| [src/models/books/BookSearchProxyModel.cpp](../../src/models/books/BookSearchProxyModel.cpp) | Filter, scoring and sorting implementation |
+| [src/models/books/proxy/BookSearchProxyModel.hpp](../../src/models/books/proxy/BookSearchProxyModel.hpp) | Model and cache declaration |
+| [src/models/books/proxy/BookSearchProxyModel.cpp](../../src/models/books/proxy/BookSearchProxyModel.cpp) | Filter, scoring and sorting implementation |
 | [src/controllers/BookController.cpp](../../src/controllers/BookController.cpp) | Owns `_searchProxy`, binds it to the active list |
-| [qml/components/AppSearchField.qml](../../qml/components/AppSearchField.qml) | Search input UI component |
+| [qml/components/input/AppSearchField.qml](../../qml/components/input/AppSearchField.qml) | Search input UI component |
 | [qml/pages/mainPage/MainPage.qml](../../qml/pages/mainPage/MainPage.qml) | Search on the main page |
 | [qml/pages/categoryListPage/CategoryListPage.qml](../../qml/pages/categoryListPage/CategoryListPage.qml) | Search inside a category list |
-| [src/tests/models/BookSearchProxyModelTest.cpp](../../src/tests/models/BookSearchProxyModelTest.cpp) | Unit tests |
+| [src/tests/models/books/proxy/BookSearchProxyModelTest.cpp](../../src/tests/models/books/proxy/BookSearchProxyModelTest.cpp) | Unit tests |

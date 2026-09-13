@@ -1,7 +1,7 @@
-#include "GlobalBookSearchController.hpp"
+#include "controllers/GlobalBookSearchController.hpp"
 
 #include "api/translate/LanguageDetector.hpp"
-#include "services/SearchCache.hpp"
+#include "services/caching/SearchCache.hpp"
 #include "utils/IsbnValidator.hpp"
 
 #include <QLoggingCategory>

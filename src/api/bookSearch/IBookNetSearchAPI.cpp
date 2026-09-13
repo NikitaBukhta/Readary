@@ -1,4 +1,4 @@
-#include "IBookNetSearchAPI.hpp"
+#include "api/bookSearch/IBookNetSearchAPI.hpp"
 
 #include <QLoggingCategory>
 #include <QNetworkReply>

@@ -11,7 +11,7 @@ SQLite via Qt SQL. Three pieces:
 - `ReadingSessionCache` — `QSettings`-backed per-book timer-state store
   (cross-launch persistence). Static-only, called by `BookController`.
 
-All three live in `src/core/` and `src/services/`. The DB layer **does not
+All three live in `src/core/db/` and `src/services/storage/`. The DB layer **does not
 depend on Qt Quick or QML** — it can run from tests or other non-UI code.
 
 ## `DatabaseManager`
@@ -105,13 +105,13 @@ shim; data-layer code (BookListModel, BookTable) keeps using the bare
 `BookDTO`.
 
 `status` is plain `int` in storage; the QML-visible enum lives in
-[`BookStatus`](../../src/services/BookStatus.hpp) (Q_GADGET, `QML_ELEMENT`),
+[`BookStatus`](../../src/services/dto/BookStatus.hpp) (Q_GADGET, `QML_ELEMENT`),
 so QML compares as `BookStatus.Finished` instead of magic literal `3`.
 Filter strategies (see [models-and-filters.md](models-and-filters.md))
 still use raw int values internally.
 
 The three rating fields are deliberately distinct, not duplicates —
-see [`BookSortFilterProxyModel::lessThan`](../../src/models/books/BookSortFilterProxyModel.cpp)
+see [`BookSortFilterProxyModel::lessThan`](../../src/models/books/proxy/BookSortFilterProxyModel.cpp)
 for the comparison policy (year/totalPages/pagesRead as int, ratings as
 double).
 
@@ -197,7 +197,7 @@ It gates deletion: `BookController::deleteCurrentBook` refuses a catalog book
 
 `pdfPath` / `pdfSource` describe the book's attached PDF. The source is not
 just provenance, it carries a rule — see
-[`PdfSource`](../../src/services/PdfSource.hpp):
+[`PdfSource`](../../src/services/pdf/PdfSource.hpp):
 
 | Value | Meaning |
 |-------|---------|
@@ -220,7 +220,7 @@ derived metrics formulas (julianday for duration, etc.).
 
 ## `BookFileStore` (files on disk)
 
-[`BookFileStore`](../../src/services/BookFileStore.cpp) owns everything a book
+[`BookFileStore`](../../src/services/storage/BookFileStore.cpp) owns everything a book
 keeps outside the database — its PDF and the cover rendered from it — under one
 root the caller supplies: `AppEnvironment::bookFilesPath()`
 (`<dataPath>/books`) in the app, a `QTemporaryDir` in tests.
@@ -243,10 +243,10 @@ out again by `nextLocalKey()` would land on the previous book's files, so
 
 ## `PdfMetadataReader` (Qt PDF)
 
-[`PdfMetadataReader`](../../src/services/PdfMetadataReader.cpp) is what makes an
+[`PdfMetadataReader`](../../src/services/pdf/PdfMetadataReader.cpp) is what makes an
 attached PDF worth attaching: one static `read()` over `QPdfDocument` (PDFium,
 from the vcpkg `qtwebengine[pdf]` port) returning a
-[`PdfDocumentInfo`](../../src/services/PdfDocumentInfo.hpp).
+[`PdfDocumentInfo`](../../src/services/pdf/PdfDocumentInfo.hpp).
 
 | Field | Where it comes from | Reliability |
 |-------|---------------------|-------------|
@@ -289,7 +289,7 @@ builds, [`main.cpp`](../../src/main.cpp) sets
 QSettings instance is constructed.
 
 The QML-visible enum that mirrors the integer `phase` column is
-[`ReadingPhase`](../../src/services/ReadingPhase.hpp) (Q_GADGET):
+[`ReadingPhase`](../../src/services/dto/ReadingPhase.hpp) (Q_GADGET):
 
 ```cpp
 enum Value {
@@ -328,13 +328,13 @@ wiring and the `Q_INIT_RESOURCE` quirk in `main.cpp`.
 
 | File | Purpose |
 |------|---------|
-| [src/core/DatabaseManager.hpp](../../src/core/DatabaseManager.hpp) / [.cpp](../../src/core/DatabaseManager.cpp) | Connection, transactions, script runner |
-| [src/core/SqlQueryBuilder.hpp](../../src/core/SqlQueryBuilder.hpp) / [.cpp](../../src/core/SqlQueryBuilder.cpp) | Fluent query builder |
-| [src/services/BookDTO.hpp](../../src/services/BookDTO.hpp) / [.cpp](../../src/services/BookDTO.cpp) | DTO, `toMap`/`fromMap` |
-| [src/services/BookStatus.hpp](../../src/services/BookStatus.hpp) | Q_GADGET enum-namespace mirroring `status` for QML |
-| [src/services/BookTable.hpp](../../src/services/BookTable.hpp) / [.cpp](../../src/services/BookTable.cpp) | CRUD + genres/characters readers + reading-progress writers |
-| [src/services/ReadingPhase.hpp](../../src/services/ReadingPhase.hpp) | Q_GADGET enum-namespace shared by C++ cache and QML timer |
-| [src/services/ReadingSessionCache.hpp](../../src/services/ReadingSessionCache.hpp) / [.cpp](../../src/services/ReadingSessionCache.cpp) | Per-book reading-timer state via QSettings (cross-launch) |
+| [src/core/db/DatabaseManager.hpp](../../src/core/db/DatabaseManager.hpp) / [.cpp](../../src/core/db/DatabaseManager.cpp) | Connection, transactions, script runner |
+| [src/core/db/SqlQueryBuilder.hpp](../../src/core/db/SqlQueryBuilder.hpp) / [.cpp](../../src/core/db/SqlQueryBuilder.cpp) | Fluent query builder |
+| [src/services/dto/BookDTO.hpp](../../src/services/dto/BookDTO.hpp) / [.cpp](../../src/services/dto/BookDTO.cpp) | DTO, `toMap`/`fromMap` |
+| [src/services/dto/BookStatus.hpp](../../src/services/dto/BookStatus.hpp) | Q_GADGET enum-namespace mirroring `status` for QML |
+| [src/services/storage/BookTable.hpp](../../src/services/storage/BookTable.hpp) / [.cpp](../../src/services/storage/BookTable.cpp) | CRUD + genres/characters readers + reading-progress writers |
+| [src/services/dto/ReadingPhase.hpp](../../src/services/dto/ReadingPhase.hpp) | Q_GADGET enum-namespace shared by C++ cache and QML timer |
+| [src/services/caching/ReadingSessionCache.hpp](../../src/services/caching/ReadingSessionCache.hpp) / [.cpp](../../src/services/caching/ReadingSessionCache.cpp) | Per-book reading-timer state via QSettings (cross-launch) |
 | [db/init.sql](../../db/init.sql) | Schema |
 | [db/test_data.sql](../../db/test_data.sql) | Seed (debug only) |
 | [db/db_scripts.qrc](../../db/db_scripts.qrc) | Resource manifest |

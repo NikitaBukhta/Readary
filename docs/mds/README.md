@@ -16,16 +16,22 @@
 
 ## Conventions
 
-- Code is C++17 / Qt 6 with QML.
-- Namespaces: `bl::core`, `bl::services`, `bl::models`, `bl::models::filters`,
-  `bl::controllers`.
+- Code is C++20 / Qt 6 with QML.
+- One namespace per layer, matching the top-level folder under `src/`:
+  `readary::core`, `readary::services`, `readary::models`,
+  `readary::models::filters`, `readary::controllers`, `readary::api`,
+  `readary::qmltypes`, `readary::utils`. Sub-folders inside a layer group
+  files by role and add no namespace level — see the directory map in
+  [architecture.md](architecture.md#top-level-directory-map).
+- Headers are included by their path below `src/`
+  (`#include "services/dto/BookDTO.hpp"`).
 - QML module URI: `Library`. Singleton entry points (controllers, theme,
   geometry, styles) are accessed by class name from QML.
 - Naming (enforced by [`.clang-tidy`](../../.clang-tidy)):
   - Private members: `_xxx` (e.g. `_searchProxy`).
   - Anonymous-namespace globals in .cpp: `g_xxx` (e.g. `g_logFile`).
   - Classes, structs, enums: `CamelCase`. Everything else: `camelBack`.
-- `Q_LOGGING_CATEGORY(lcXxx, "bl.<area>.<topic>")` for runtime logs — wrap
+- `Q_LOGGING_CATEGORY(lcXxx, "readary.<area>.<topic>")` for runtime logs — wrap
   in `namespace { ... }` so it gets internal linkage.
 - Static analysis (clang-tidy + MSVC `/analyze`) gates every build by
   default. See [build-and-resources.md](build-and-resources.md#static-analysis)

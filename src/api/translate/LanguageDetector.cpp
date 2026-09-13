@@ -1,4 +1,4 @@
-#include "LanguageDetector.hpp"
+#include "api/translate/LanguageDetector.hpp"
 
 #include <algorithm>
 

@@ -2,7 +2,7 @@
 #include "controllers/BookFilterController.hpp"
 #include "controllers/NavigationController.hpp"
 #include "controllers/SettingsController.hpp"
-#include "models/books/BookListModel.hpp"
+#include "models/books/list/BookListModel.hpp"
 #include "support/TempLibrary.hpp"
 
 #include <QMetaMethod>

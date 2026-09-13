@@ -7,7 +7,7 @@ catalog search. Text search is a separate concern —
 
 ## One criteria object, two lists
 
-`services::BookFilterCriteria` (`src/services/BookFilterCriteria.hpp`) is a plain
+`services::BookFilterCriteria` (`src/services/filtering/BookFilterCriteria.hpp`) is a plain
 struct — languages, genres, author, publisher, page range, year range, minimum
 rating, statuses, edition types — with one method that matters:
 
@@ -153,11 +153,11 @@ touch the DB, so no `DISTINCT` query exists or is needed. A language cell holdin
 
 | File | |
 |---|---|
-| `src/services/BookFilterCriteria.{hpp,cpp}` | the criteria and `matches()` |
-| `src/models/books/BookCriteriaFilterProxyModel.{hpp,cpp}` | local filter layer |
+| `src/services/filtering/BookFilterCriteria.{hpp,cpp}` | the criteria and `matches()` |
+| `src/models/books/proxy/BookCriteriaFilterProxyModel.{hpp,cpp}` | local filter layer |
 | `src/controllers/BookFilterController.{hpp,cpp}` | draft/apply state, facets |
-| `qml/components/FilterSheet.qml` | the panel (ConfirmDialog's Popup recipe) |
-| `qml/components/FilterChip.qml`, `FilterButton.qml`, `RangeField.qml` | controls |
+| `qml/components/overlays/FilterSheet.qml` | the panel (ConfirmDialog's Popup recipe) |
+| `qml/components/display/FilterChip.qml`, `FilterButton.qml`, `RangeField.qml` | controls |
 
 ```bash
 ctest --test-dir build/debug -V -R "BookFilterCriteria|BookSearchAPIComposite"

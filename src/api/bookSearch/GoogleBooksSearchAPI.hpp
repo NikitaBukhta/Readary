@@ -1,7 +1,7 @@
 #ifndef READARY_API_BOOKSEARCH_GOOGLEBOOKSSEARCHAPI_HPP
 #define READARY_API_BOOKSEARCH_GOOGLEBOOKSSEARCHAPI_HPP
 
-#include "IBookNetSearchAPI.hpp"
+#include "api/bookSearch/IBookNetSearchAPI.hpp"
 
 namespace readary::api {
 

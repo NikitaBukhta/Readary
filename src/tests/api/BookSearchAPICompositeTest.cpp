@@ -1,6 +1,6 @@
 #include "api/bookSearch/BookSearchAPIComposite.hpp"
 #include "api/bookSearch/IBookSearchAPI.hpp"
-#include "services/BookDTO.hpp"
+#include "services/dto/BookDTO.hpp"
 #include "support/SearchCapture.hpp"
 
 #include <QList>

@@ -59,9 +59,26 @@ QML (Library module)  →  Controllers (singletons)  →  Models  →  Services 
 
 - **Controllers** (`src/controllers/`) are QML singletons and the only QML-visible entry points: `BookController` (book form/list state, characters, reading timer), `NavigationController` (stack router), `SettingsController` (owns `LanguageModel` + `FontModel`), `BookDiscoveryController` (online search/import). Models are exposed as read-only properties on controllers.
 - **Singleton wiring pattern**: C++ instance is constructed by `AppInitializer`, registered via `setInstance()`; the QML `create()` factory returns that instance with `CppOwnership`. (Note: Qt prefers a default ctor over `create()` — keep singleton classes free of default-arg ctors.)
-- **`AppInitializer`** (`src/core/`) is the composition root: `initDatabase()` → `initModels()` → `registerQmlTypes()`. All QObjects are parented to it. **Connect-placement rule**: intra-domain connects live inside the owning controller; cross-domain connects live in `AppInitializer` (so controllers don't include each other).
+- **`AppInitializer`** (`src/core/app/`) is the composition root: `initDatabase()` → `initModels()` → `registerQmlTypes()`. All QObjects are parented to it. **Connect-placement rule**: intra-domain connects live inside the owning controller; cross-domain connects live in `AppInitializer` (so controllers don't include each other).
 - **Book list data flow**: one `BookListModel` (DB source) → four `BookSortFilterProxyModel` (one per `ListKind`, configured by a filter Strategy) → `BookSearchProxyModel` (free-text + relevance ranking) → QML. The active category's proxy is swapped in as the search proxy's source.
 - **`src/qmltypes/`** holds Q_GADGET value types (e.g. `BookDTOObject`) that adapt plain service DTOs for QML — keeps the data layer free of moc.
+
+### Where files live
+
+Each top-level folder under `src/` is one layer **and** one namespace (`readary::core`, `::services`, `::models`, `::controllers`, `::api`, `::qmltypes`, `::utils`). Sub-folders group by role and add **no** namespace level:
+
+```
+src/core/        app/ (AppEnvironment, AppInitializer)  db/ (DatabaseManager, SqlQueryBuilder)
+src/services/    dto/  storage/  caching/  pdf/  filtering/  emoji/
+src/models/      books/{list,proxy,filters,details}/  settings/
+src/api/         bookSearch/  translate/
+src/tests/       mirrors the layout above; shared helpers in support/
+qml/components/  base/ buttons/ input/ display/ feedback/ lists/ navigation/ overlays/
+```
+
+- **Includes are path-qualified from `src`**: `#include "services/dto/BookDTO.hpp"`, not a bare basename. `src` is the only public include dir; CMake adds each header folder privately as well, because moc emits bare-basename includes into `qmltyperegistrations.cpp`. Tests also get `src/tests`, hence `#include "support/TempLibrary.hpp"`.
+- **Adding a folder needs no CMake edit** — the layer globs are `GLOB_RECURSE` and the private include list is derived from them. Registering a new *test* file does (`src/tests/CMakeLists.txt`).
+- **QML sub-folders are cosmetic**: every `.qml` under `qml/` lands in the one `Library` module URI under its file name, so components are used as `SurfaceCard { }` wherever they sit. Only the page URLs in `NavigationController` name a path.
 
 Read these before non-trivial work in the corresponding area — they are kept current:
 

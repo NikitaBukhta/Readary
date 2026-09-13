@@ -63,10 +63,13 @@ endif()
 # ---------------------------------------------------------------------------
 # Core library (shared between app and tests) + QML module backing target
 # ---------------------------------------------------------------------------
+# Every layer is globbed recursively, so a new sub-folder inside a layer
+# (src/services/pdf/, src/models/books/proxy/, ...) is picked up without
+# touching this list. AppInitializer is the one exception: it belongs to the
+# executable, not the library — see _APP_SOURCES below.
 file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS
-    src/core/AppEnvironment.cpp src/core/AppEnvironment.hpp
-    src/core/DatabaseManager.cpp src/core/DatabaseManager.hpp
-    src/core/SqlQueryBuilder.cpp src/core/SqlQueryBuilder.hpp
+    src/core/app/AppEnvironment.cpp src/core/app/AppEnvironment.hpp
+    src/core/db/*.cpp src/core/db/*.hpp
     src/services/*.cpp src/services/*.hpp
     src/utils/*.cpp src/utils/*.hpp
     src/qmltypes/*.cpp src/qmltypes/*.hpp
@@ -86,18 +89,29 @@ set_source_files_properties(qml/utils/Geometry.qml             PROPERTIES QT_QML
 set_source_files_properties(qml/utils/Styles.qml               PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/utils/Format.qml               PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/theme/Theme.qml                PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
-set_source_files_properties(qml/components/ToastService.qml    PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/components/feedback/ToastService.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_library(ReadaryCore STATIC ${LIB_SOURCES})
-target_include_directories(ReadaryCore PUBLIC
-    src
-    src/qmltypes
-    src/services
-    src/utils
-    src/controllers
-    src/models/books
-    src/models/settings
-)
+# Single include root: every header is included by its path below src/
+# (#include "services/dto/BookDTO.hpp"), so the layer a header belongs to is
+# visible at the include site and no two layers can shadow each other.
+target_include_directories(ReadaryCore PUBLIC src)
+
+# ...with one concession to Qt: moc records only the basename of a header, so
+# the generated qmltyperegistrations.cpp emits `#include <BookController.hpp>`
+# for every QML-exposed type. Those bare names have to resolve, so each folder
+# holding a header goes on the *private* include path as well. Derived from
+# LIB_SOURCES, so a new sub-folder needs no edit here — and our own code still
+# includes by full path, which is what keeps the layering readable.
+set(_LIB_HEADER_DIRS "")
+foreach(_header IN LISTS LIB_SOURCES)
+    if(_header MATCHES "\.hpp$")
+        get_filename_component(_dir ${_header} DIRECTORY)
+        list(APPEND _LIB_HEADER_DIRS ${_dir})
+    endif()
+endforeach()
+list(REMOVE_DUPLICATES _LIB_HEADER_DIRS)
+target_include_directories(ReadaryCore PRIVATE ${_LIB_HEADER_DIRS})
 target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg Qt6::Network Qt6::Pdf)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ReadarySecrets.cmake)
@@ -164,8 +178,8 @@ endif()
 # ---------------------------------------------------------------------------
 set(_APP_SOURCES
     src/main.cpp
-    src/core/AppInitializer.cpp
-    src/core/AppInitializer.hpp
+    src/core/app/AppInitializer.cpp
+    src/core/app/AppInitializer.hpp
 )
 
 if(WIN32 AND NOT ANDROID)

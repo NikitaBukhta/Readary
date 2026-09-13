@@ -8,7 +8,7 @@ description: Change Readary's SQLite schema safely — edit init.sql and test_da
 Layout: [`db/init.sql`](../../../db/init.sql) (schema, always run at startup),
 [`db/test_data.sql`](../../../db/test_data.sql) (debug builds only), both
 bundled through `db/db_scripts.qrc`. Code: `DatabaseManager` +
-`SqlQueryBuilder` in `src/core/`, typed CRUD in `src/services/BookTable.*`.
+`SqlQueryBuilder` in `src/core/db/`, typed CRUD in `src/services/storage/BookTable.*`.
 Design notes: [`docs/mds/database.md`](../../../docs/mds/database.md).
 
 ## ⚠️ There is no migration runner
@@ -41,7 +41,7 @@ explicitly** — it lives at
    comment above any integer-coded enum column mapping the values.
 2. **`db/test_data.sql`** — seed rows for the new shape, or existing INSERTs
    break on a `NOT NULL` addition. Debug builds run it every launch.
-3. **The DTO** (`src/services/BookDTO.hpp`, `ReadingSessionDTO.hpp`, …) — add
+3. **The DTO** (`src/services/dto/BookDTO.hpp`, `ReadingSessionDTO.hpp`, …) — add
    the field with an in-class initialiser (`QString subtitle;` /
    `qint64 id = 0;`).
 4. **`BookTable`** — the read mapper, the insert/update column lists, and any

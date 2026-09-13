@@ -1,4 +1,4 @@
-#include "SettingsController.hpp"
+#include "controllers/SettingsController.hpp"
 
 #include <QLoggingCategory>
 

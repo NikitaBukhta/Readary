@@ -3,9 +3,9 @@
 
 #include "api/bookSearch/IBookSearchAPI.hpp"
 #include "api/translate/ITranslator.hpp"
-#include "models/books/GlobalBookSearchListModel.hpp"
+#include "models/books/list/GlobalBookSearchListModel.hpp"
 #include "models/settings/LanguageModel.hpp"
-#include "services/BookDTO.hpp"
+#include "services/dto/BookDTO.hpp"
 
 #include <QHash>
 #include <QJSEngine>

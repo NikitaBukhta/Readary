@@ -26,13 +26,13 @@ return a typed gadget that QML reads members directly off.
 
 QML never reaches into models or services directly — controllers are the only
 QML-visible entry points (singletons). Models are exposed as properties on the
-controllers. Two Q_GADGET enum-namespaces — [`BookStatus`](../../src/services/BookStatus.hpp)
-and [`ReadingPhase`](../../src/services/ReadingPhase.hpp) — are also QML-visible
+controllers. Two Q_GADGET enum-namespaces — [`BookStatus`](../../src/services/dto/BookStatus.hpp)
+and [`ReadingPhase`](../../src/services/dto/ReadingPhase.hpp) — are also QML-visible
 through `QML_ELEMENT`, but only as type registrations (no instances).
 
 ## Object lifecycle
 
-`AppInitializer` (in `src/core/`) wires everything up at startup:
+`AppInitializer` (in `src/core/app/`) wires everything up at startup:
 
 1. `initDatabase()` — opens SQLite via `DatabaseManager`, runs `:/db/init.sql`,
    and in debug builds also `:/db/test_data.sql`. Creates `BookTable`.
@@ -102,19 +102,39 @@ pattern) at construction time; see [models-and-filters.md](models-and-filters.md
 
 ## Top-level directory map
 
+Each top-level folder under `src/` is one layer and one namespace
+(`readary::core`, `::services`, `::models`, `::controllers`, `::api`,
+`::qmltypes`, `::utils`). Sub-folders inside a layer group files by role and
+do **not** add namespace levels.
+
 ```
 src/
-  core/        AppEnvironment, AppInitializer, DatabaseManager, SqlQueryBuilder
-  services/    BookTable, BookDTO, CharacterDTO, ReadingSessionDTO, BookStatus, ReadingPhase, ReadingSessionCache,
-               BookFileStore (per-book files on disk), PdfMetadataReader + PdfDocumentInfo (Qt PDF), PdfSource
+  main.cpp
+  core/
+    app/       AppEnvironment (paths, file logger), AppInitializer (composition root)
+    db/        DatabaseManager, SqlQueryBuilder
+  services/
+    dto/       BookDTO, CharacterDTO, ReadingSessionDTO + the BookStatus / ReadingPhase enums
+    storage/   BookTable (CRUD over BookDTO), BookFileStore (per-book files on disk)
+    caching/   SearchCache, ReadingProgressCache, ReadingSessionCache
+    pdf/       PdfMetadataReader, PdfDocumentInfo, PdfSource (Qt PDF)
+    filtering/ BookFilterCriteria (the multi-criteria value object)
+    emoji/     EmojiResolver (emoji char → vendored Twemoji SVG)
   qmltypes/    BookDTOObject (Q_GADGET wrapper over BookDTO, exposed by BookController to QML)
   models/
-    books/     BookListModel, BookSearchProxyModel, BookSortFilterProxyModel, BookCharactersModel,
-               ReadingHistoryModel
+    books/
+      list/    BookListModelBase, BookListModel, GlobalBookSearchListModel
+      proxy/   BookSortFilterProxyModel, BookSearchProxyModel, BookCriteriaFilterProxyModel
       filters/ BookFilterStrategy + 4 concrete strategies
-    settings/  LanguageModel
-  controllers/ BookController, NavigationController, SettingsController
-  tests/       Qt Test units (BookSearchProxyModelTest, etc.)
+      details/ BookCharactersModel, ReadingHistoryModel
+    settings/  LanguageModel, FontModel
+  controllers/ BookController, BookFilterController, GlobalBookSearchController,
+               NavigationController, SettingsController
+  api/
+    bookSearch/ IBookSearchAPI + OpenLibrary / Google Books clients + composite
+    translate/  ITranslator + GoogleTranslator, LanguageDetector, LanguageConverter
+  utils/       IsbnValidator
+  tests/       Qt Test units, mirroring the layout above (+ support/ helpers)
 qml/
   Main.qml     Window root, holds page Loader
   pages/
@@ -122,9 +142,10 @@ qml/
     categoryListPage/ CategoryListPage (vertical book list per category)
     bookDetailPage/   BookDetailPage + header / progress / ratings / reading-history / characters cards
     addBookPage/      AddBookPage + cover, pdf and genre pickers for a hand-added book
-  components/  Reusable UI: SurfaceCard / PressableSurface / PaddedCard / TouchTarget
-                base components, plus rows, buttons, search field, nav bar,
-                progress widgets, StarRating, TagPill
+    searchPage/       SearchPage (online catalog search + import)
+    settingsPage/     SettingsPage
+  components/  Reusable UI, grouped by role — see [qml.md](qml.md):
+    base/ buttons/ input/ display/ feedback/ lists/ navigation/ overlays/
   theme/       Theme singleton + palettes (Pink/Blue/Yellow/Purple)
   utils/       Geometry, Styles, Format (singletons: tokens + display formatting)
 db/
@@ -132,4 +153,25 @@ db/
   init.sql        Schema (books + side tables: genres, book_genres,
                   book_characters, reading_sessions)
   test_data.sql   Seed data (debug only)
+docs/
+  mds/            These developer docs
+  diagrams/       ER + use-case diagrams (drawio)
+  requirements/   Product requirements PDF and its generator scripts
 ```
+
+## Includes
+
+Every header is included by its path below `src/`:
+
+```cpp
+#include "services/dto/BookDTO.hpp"
+#include "models/books/proxy/BookSearchProxyModel.hpp"
+```
+
+`src` is the target's public include root, so the layer a header belongs to is
+visible at the include site and two layers can never shadow each other's
+basenames. CMake additionally puts each individual header folder on the
+*private* include path — moc records only a header's basename, so the generated
+`qmltyperegistrations.cpp` emits `#include <BookController.hpp>` for every
+QML-exposed type and those bare names still have to resolve. That list is
+derived from the source glob, so a new sub-folder needs no CMake edit.

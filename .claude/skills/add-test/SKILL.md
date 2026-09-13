@@ -12,17 +12,19 @@ directly — the data layer has no QML dependency by design.
 
 ## 1. Place the file
 
-Mirror the source tree: `src/tests/<layer>/<ClassName>Test.cpp`
-(`models/`, `services/`, `controllers/`, `api/`, `utils/`). Shared helpers
-live in `src/tests/support/` and are included as `#include "support/…"`.
+Mirror the source tree exactly, sub-folders included:
+`src/tests/<layer>/<role>/<ClassName>Test.cpp` — a test for
+`src/services/caching/SearchCache.hpp` goes in
+`src/tests/services/caching/SearchCacheTest.cpp`. Shared helpers live in
+`src/tests/support/` and are included as `#include "support/…"`.
 
 ## 2. File template
 
-Model it on an existing one — [`src/tests/services/SearchCacheTest.cpp`](../../../src/tests/services/SearchCacheTest.cpp)
+Model it on an existing one — [`src/tests/services/caching/SearchCacheTest.cpp`](../../../src/tests/services/caching/SearchCacheTest.cpp)
 is a good short example.
 
 ```cpp
-#include "services/SearchCache.hpp"
+#include "services/caching/SearchCache.hpp"
 
 #include <QTest>
 
@@ -66,7 +68,7 @@ Non-negotiables:
 `src/tests/CMakeLists.txt` is **not** globbed — add a line:
 
 ```cmake
-readary_add_test(services/SearchCacheTest.cpp)
+readary_add_test(services/caching/SearchCacheTest.cpp)
 readary_add_test(api/GoogleBooksSearchAPITest.cpp LIBS Qt6::Network)   # extra libs
 ```
 

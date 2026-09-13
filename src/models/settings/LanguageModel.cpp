@@ -1,4 +1,4 @@
-#include "LanguageModel.hpp"
+#include "models/settings/LanguageModel.hpp"
 
 #include <QCoreApplication>
 #include <QLocale>

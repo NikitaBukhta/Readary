@@ -1,4 +1,4 @@
-#include "GoogleTranslator.hpp"
+#include "api/translate/GoogleTranslator.hpp"
 
 #include <QJsonArray>
 #include <QJsonDocument>

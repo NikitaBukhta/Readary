@@ -1,8 +1,8 @@
 #include "controllers/GlobalBookSearchController.hpp"
 #include "api/bookSearch/IBookSearchAPI.hpp"
-#include "models/books/BookListModelBase.hpp"
-#include "models/books/GlobalBookSearchListModel.hpp"
-#include "services/BookDTO.hpp"
+#include "models/books/list/BookListModelBase.hpp"
+#include "models/books/list/GlobalBookSearchListModel.hpp"
+#include "services/dto/BookDTO.hpp"
 
 #include <QAbstractItemModel>
 #include <QList>

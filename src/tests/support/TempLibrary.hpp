@@ -1,11 +1,11 @@
 #ifndef READARY_TESTS_SUPPORT_TEMPLIBRARY_HPP
 #define READARY_TESTS_SUPPORT_TEMPLIBRARY_HPP
 
-#include "core/DatabaseManager.hpp"
-#include "services/BookDTO.hpp"
-#include "services/BookFileStore.hpp"
-#include "services/BookStatus.hpp"
-#include "services/BookTable.hpp"
+#include "core/db/DatabaseManager.hpp"
+#include "services/dto/BookDTO.hpp"
+#include "services/dto/BookStatus.hpp"
+#include "services/storage/BookFileStore.hpp"
+#include "services/storage/BookTable.hpp"
 
 #include <QString>
 #include <QTemporaryDir>

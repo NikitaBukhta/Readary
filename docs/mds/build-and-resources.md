@@ -36,13 +36,14 @@ Key bits in [CMakeLists.txt](../../CMakeLists.txt):
   automatically. Used for the SQL scripts qrc.
 - `qt_add_library(ReadaryCore STATIC ${LIB_SOURCES})` — globs everything
   under `src/` (excluding `main.cpp`, `AppInitializer.cpp` which belong to
-  the exe).
+  the exe). See [Include paths](#include-paths) below for how the globs and
+  the include directories are set up.
 - `qt_add_qml_module(ReadaryCore URI Library QML_FILES ${QML_FILES})` —
   registers the QML module. QML singletons (`Geometry`, `Styles`, `Theme`)
   get `QT_QML_SINGLETON_TYPE TRUE` set per-source.
 - `target_sources(ReadaryCore PRIVATE db/db_scripts.qrc)` — adds the SQL
   qrc to the library so AUTORCC compiles it.
-- `qt_add_executable(Readary src/main.cpp src/core/AppInitializer.cpp ...)`
+- `qt_add_executable(Readary src/main.cpp src/core/app/AppInitializer.cpp ...)`
   — main exe.
 
 ### Qt PDF
@@ -59,9 +60,30 @@ Key bits in [CMakeLists.txt](../../CMakeLists.txt):
   `AqtProvider._MODULES_BY_TARGET` (`qtpdf`). An Android tree installed before
   that entry existed needs `python bootstrap.py bootstrap -d android` again.
 
-The `src/models/*.cpp src/models/*.hpp` glob is `GLOB_RECURSE`, so adding a
-nested folder (e.g. `src/models/books/filters/` or `src/models/settings/`)
-is picked up automatically.
+### Include paths
+
+`LIB_SOURCES` globs one entry per layer with `GLOB_RECURSE`, so a new
+sub-folder inside a layer (`src/services/pdf/`, `src/models/books/proxy/`, …)
+is picked up without touching the list.
+
+`src` is the only **public** include directory. Every header is included by its
+path below it, which makes the layer visible at the include site and stops two
+layers shadowing each other's basenames:
+
+```cpp
+#include "services/dto/BookDTO.hpp"
+#include "models/books/proxy/BookSearchProxyModel.hpp"
+```
+
+Each individual header folder is *also* added as a **private** include
+directory, for one Qt-specific reason: moc records only a header's basename in
+the metatypes JSON, so the generated `readarycore_qmltyperegistrations.cpp`
+emits `#include <BookController.hpp>` for every QML-exposed type. Those bare
+names have to resolve or the registration file fails to compile. The folder
+list is derived from `LIB_SOURCES` in a loop, so it needs no maintenance.
+
+Tests additionally get `src/tests` on their include path, which is what lets
+them write `#include "support/TempLibrary.hpp"`.
 
 ## qrc resources
 
@@ -124,7 +146,7 @@ keeping it in the link.
 
 ## App environment
 
-[`AppEnvironment`](../../src/core/AppEnvironment.cpp) handles paths and
+[`AppEnvironment`](../../src/core/app/AppEnvironment.cpp) handles paths and
 logging.
 
 | Function | Purpose |
@@ -361,8 +383,8 @@ positives on Qt code:
 |------|---------|
 | [CMakeLists.txt](../../CMakeLists.txt) | Top-level build config |
 | [src/main.cpp](../../src/main.cpp) | Entry point + resource init + logging filter |
-| [src/core/AppEnvironment.hpp](../../src/core/AppEnvironment.hpp) / [.cpp](../../src/core/AppEnvironment.cpp) | Paths, file logger |
-| [src/core/AppInitializer.hpp](../../src/core/AppInitializer.hpp) / [.cpp](../../src/core/AppInitializer.cpp) | Bootstraps DB → models → controllers → QML engine |
+| [src/core/app/AppEnvironment.hpp](../../src/core/app/AppEnvironment.hpp) / [.cpp](../../src/core/app/AppEnvironment.cpp) | Paths, file logger |
+| [src/core/app/AppInitializer.hpp](../../src/core/app/AppInitializer.hpp) / [.cpp](../../src/core/app/AppInitializer.cpp) | Bootstraps DB → models → controllers → QML engine |
 | [db/db_scripts.qrc](../../db/db_scripts.qrc) | qrc manifest for SQL scripts |
 | [.clang-tidy](../../.clang-tidy) | Strict static-analysis profile |
 | [src/tests/.clang-tidy](../../src/tests/.clang-tidy) | Relaxed rules for Qt Test classes |

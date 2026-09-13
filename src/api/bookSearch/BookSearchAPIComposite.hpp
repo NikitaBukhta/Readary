@@ -1,7 +1,7 @@
 #ifndef READARY_API_BOOKSEARCH_BOOKSEARCHAPICOMPOSITE_HPP
 #define READARY_API_BOOKSEARCH_BOOKSEARCHAPICOMPOSITE_HPP
 
-#include "IBookSearchAPI.hpp"
+#include "api/bookSearch/IBookSearchAPI.hpp"
 
 #include <QList>
 

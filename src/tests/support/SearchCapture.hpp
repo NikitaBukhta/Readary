@@ -2,7 +2,7 @@
 #define READARY_TESTS_SUPPORT_SEARCHCAPTURE_HPP
 
 #include "api/bookSearch/IBookSearchAPI.hpp"
-#include "services/BookDTO.hpp"
+#include "services/dto/BookDTO.hpp"
 
 #include <QList>
 #include <QObject>

@@ -1,4 +1,4 @@
-#include "GoogleBooksSearchAPI.hpp"
+#include "api/bookSearch/GoogleBooksSearchAPI.hpp"
 
 #include "api/translate/LanguageConverter.hpp"
 #include "api/translate/LanguageDetector.hpp"

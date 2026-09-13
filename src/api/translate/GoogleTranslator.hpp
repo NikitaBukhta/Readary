@@ -1,7 +1,7 @@
 #ifndef READARY_API_TRANSLATE_GOOGLETRANSLATOR_HPP
 #define READARY_API_TRANSLATE_GOOGLETRANSLATOR_HPP
 
-#include "ITranslator.hpp"
+#include "api/translate/ITranslator.hpp"
 
 #include <QHash>
 #include <QNetworkAccessManager>

@@ -1,7 +1,7 @@
 #ifndef READARY_API_BOOKSEARCH_IBOOKNETSEARCHAPI_HPP
 #define READARY_API_BOOKSEARCH_IBOOKNETSEARCHAPI_HPP
 
-#include "IBookSearchAPI.hpp"
+#include "api/bookSearch/IBookSearchAPI.hpp"
 
 #include <QHash>
 #include <QNetworkAccessManager>

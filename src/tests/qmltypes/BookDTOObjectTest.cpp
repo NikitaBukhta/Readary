@@ -1,5 +1,5 @@
 #include "qmltypes/BookDTOObject.hpp"
-#include "services/BookDTO.hpp"
+#include "services/dto/BookDTO.hpp"
 
 #include <QTest>
 

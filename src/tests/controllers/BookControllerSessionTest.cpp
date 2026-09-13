@@ -1,5 +1,5 @@
 #include "controllers/BookController.hpp"
-#include "services/ReadingPhase.hpp"
+#include "services/dto/ReadingPhase.hpp"
 
 #include <QSettings>
 #include <QStandardPaths>

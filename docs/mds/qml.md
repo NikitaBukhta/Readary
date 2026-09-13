@@ -3,8 +3,8 @@
 QML module URI: `Library`. All `.qml` files under `qml/` are bundled by
 `qt_add_qml_module`, with three QML singletons (`Geometry`, `Styles`,
 `Theme`) declared via `QT_QML_SINGLETON_TYPE TRUE` in CMake.
-[`BookStatus`](../../src/services/BookStatus.hpp) and
-[`ReadingPhase`](../../src/services/ReadingPhase.hpp) are also visible from
+[`BookStatus`](../../src/services/dto/BookStatus.hpp) and
+[`ReadingPhase`](../../src/services/dto/ReadingPhase.hpp) are also visible from
 QML as Q_GADGET enum-namespaces (registered via `QML_ELEMENT`).
 
 ## Layout
@@ -45,32 +45,48 @@ qml/
       ReadingHistoryDelegate.qml   Wrapper around ReadingHistoryRow used as the inner ListView delegate (anchored side margins)
       ReadingHistoryRow.qml        Timeline dot on a rail + stamp / page range + delta / duration / delete tile
       BookGenreTags.qml            Flow of TagPill for genres, sits below the characters ListView
-  components/
-    AppSearchField.qml             Pill-shaped text field with magnifier glyph
-    ActionMenu.qml                 Dropdown of actions behind a "⋮" button; items are plain objects supplied by the caller
-    FieldLabel.qml                 Caption above a form input
-    FormField.qml                  FieldLabel + filled input box; single-line or multiline, optional digits-only
-    DashedOutline.qml              Canvas-painted dashed rounded outline for an empty slot
-    SurfaceCard.qml                Rectangle + radius.lg + Theme.surface + MultiEffect shadow
-    PressableSurface.qml           SurfaceCard + MouseArea + signal clicked + readonly pressed alias
-    PaddedCard.qml                 SurfaceCard with contentPadding and auto implicit size
-    PrimaryButton.qml              PressableSurface in primary fill, pill, opacity press feedback
-    SecondaryButton.qml            PressableSurface in primarySoft fill, pill, primary content
-    ActionButton.qml               PressableSurface with icon + label, surface fill, primarySoft tint on press
-    IconButton.qml                 Circular PressableSurface (radius=width/2); pressedColor defaults to restColor
-    TextButton.qml                 TouchTarget with a single Text — used for Cancel / "+ Add" style links
-    TouchTarget.qml                Item wrapping content with positive padding + click area
-    StarRating.qml                 Row of ★/☆ glyphs with rounded fill against value
-    TagPill.qml                    Pill-shaped genre/tag label
-    BookListRow.qml                Vertical-list book row (cover + meta)
-    BottomNavBar.qml               5-item nav bar driven by NavigationController
-    BottomNavItem.qml              Single nav item
-    CategoryRow.qml                "Want to read 4 books >" row
-    IconGlyph.qml                  Emoji/glyph or image renderer; collapses to 0×0 when empty; `tinted` colorizes the emoji SVG
-    ProgressBar.qml                Linear bar (track + fill); height defaults to Styles.progressBar.sm
-    ProgressRing.qml               Canvas-based circular progress
-    SectionHeader.qml              "Title + trailing badge" header
-    PagedListToggle.qml            Show less / Show more pair for any model exposing canHide/canLoadMore — used as ListView.footer; centered, hidden when nothing to do
+  components/                      Reusable widgets, grouped by role
+    base/                          The chassis everything else is built on
+      SurfaceCard.qml              Rectangle + radius.lg + Theme.surface + MultiEffect shadow
+      PressableSurface.qml         SurfaceCard + MouseArea + signal clicked + readonly pressed alias
+      PaddedCard.qml               SurfaceCard with contentPadding and auto implicit size
+      TouchTarget.qml              Item wrapping content with positive padding + click area
+      DashedOutline.qml            Canvas-painted dashed rounded outline for an empty slot
+      IconGlyph.qml                Emoji/glyph or image renderer; collapses to 0×0 when empty; `tinted` colorizes the emoji SVG
+    buttons/
+      PrimaryButton.qml            PressableSurface in primary fill, pill, opacity press feedback
+      SecondaryButton.qml          PressableSurface in primarySoft fill, pill, primary content
+      ActionButton.qml             PressableSurface with icon + label, surface fill, primarySoft tint on press
+      IconButton.qml               Circular PressableSurface (radius=width/2); pressedColor defaults to restColor
+      TextButton.qml               TouchTarget with a single Text — used for Cancel / "+ Add" style links
+      FilterButton.qml             Funnel button that opens FilterSheet; shows the active-criteria count
+    input/
+      AppSearchField.qml           Pill-shaped text field with magnifier glyph
+      FormField.qml                FieldLabel + filled input box; single-line or multiline, optional digits-only
+      FieldLabel.qml               Caption above a form input
+      RangeField.qml               From/to numeric pair used by the filter sheet (pages, year, rating)
+      StarRating.qml               Row of ★/☆ glyphs with rounded fill against value
+    display/
+      SectionHeader.qml            "Title + trailing badge" header
+      TagPill.qml                  Pill-shaped genre/tag label
+      FilterChip.qml               Selectable chip for one filter value
+    feedback/
+      ProgressBar.qml              Linear bar (track + fill); height defaults to Styles.progressBar.sm
+      ProgressRing.qml             Canvas-based circular progress
+      LoadingSpinner.qml           Indeterminate spinner shown while an online search is in flight
+      Toast.qml                    Transient message banner anchored under the window top
+      ToastService.qml             Singleton: the queue Toast renders; call `ToastService.show(text)`
+    lists/
+      BookListRow.qml              Vertical-list book row (cover + meta)
+      CategoryRow.qml              "Want to read 4 books >" row
+      PagedListToggle.qml          Show less / Show more pair for any model exposing canHide/canLoadMore — used as ListView.footer; centered, hidden when nothing to do
+    navigation/
+      BottomNavBar.qml             5-item nav bar driven by NavigationController
+      BottomNavItem.qml            Single nav item
+    overlays/
+      ConfirmDialog.qml            Yes/no confirmation over a dimmed backdrop
+      FilterSheet.qml              Bottom sheet of filter criteria, bound to BookFilterController
+      ActionMenu.qml               Dropdown of actions behind a "⋮" button; items are plain objects supplied by the caller
   theme/
     Theme.qml                      Singleton: forwards palette colors + global tokens (starColor, starColorEmpty)
     palettes/
@@ -80,6 +96,13 @@ qml/
     Styles.qml                     Singleton: font sizes, weights, elevation, opacity, duration, progressBar
     Format.qml                     Singleton: locale-aware duration (h/m/s) and entry stamp formatting
 ```
+
+Sub-folders are for humans only — `qt_add_qml_module` registers every `.qml`
+under `qml/` into the one `Library` module URI by its file name, so a component
+is still used as `SurfaceCard { }` after `import Library`, wherever it sits.
+Moving a component between folders needs no import changes; only the page URLs
+in [`NavigationController`](../../src/controllers/NavigationController.cpp)
+name a path.
 
 ## Base components
 
@@ -313,7 +336,7 @@ at `_visibleCount` (5 by default), so only the buffered rows
 instantiate.
 
 The character model is `BookController.charactersModel`
-([`BookCharactersModel`](../../src/models/books/BookCharactersModel.hpp)) —
+([`BookCharactersModel`](../../src/models/books/details/BookCharactersModel.hpp)) —
 a `QAbstractListModel` that pulls all rows for the current book in one
 SQL query and exposes them in pages of 5 via internal `_visibleCount`.
 The `PagedListToggle` buttons are bound to `canHide` / `canLoadMore`
@@ -367,7 +390,7 @@ back to the cache under a dead ISBN, then calls
 
 **2. `ReadingHistorySection`** — the `reading_sessions` journal for the
 current book, newest first, bound to `BookController.readingHistoryModel`
-([`ReadingHistoryModel`](../../src/models/books/ReadingHistoryModel.hpp)):
+([`ReadingHistoryModel`](../../src/models/books/details/ReadingHistoryModel.hpp)):
 - `header`: `ReadingHistoryListHeader` — "Reading history" title.
 - `delegate`: `ReadingHistoryDelegate` over `ReadingHistoryRow` — a timeline
   dot on a vertical rail, the `d MMM, HH:mm` stamp, `p. from → to` with a
@@ -399,7 +422,7 @@ current book, newest first, bound to `BookController.readingHistoryModel`
 
 **4. `BookGenreTags`** — `Flow` of `TagPill`, hidden when empty.
 
-Status semantics: see [`BookStatus`](../../src/services/BookStatus.hpp).
+Status semantics: see [`BookStatus`](../../src/services/dto/BookStatus.hpp).
 The page references `BookStatus.Finished` / `InProgress` directly — the
 component (`ReadingProgressCard`) takes `actionLabel: string` and stays
 ignorant of status meaning.
@@ -407,7 +430,7 @@ ignorant of status meaning.
 ### `ReadingProgressTimer.qml`
 
 Stopwatch over the current reading session. State machine driven by the
-[`ReadingPhase`](../../src/services/ReadingPhase.hpp) Q_GADGET enum:
+[`ReadingPhase`](../../src/services/dto/ReadingPhase.hpp) Q_GADGET enum:
 `Stopped` → idle (timer hidden, action button shown), `Running` → ticking,
 `Paused` → frozen but visible.
 
@@ -524,7 +547,7 @@ than untyped `QtObject`).
 | [qml/pages/bookDetailPage/BookDetailPage.qml](../../qml/pages/bookDetailPage/BookDetailPage.qml) | Book detail page |
 | [qml/pages/bookDetailPage/ReadingProgressTimer.qml](../../qml/pages/bookDetailPage/ReadingProgressTimer.qml) | Stopwatch + end-session form, persists via `BookController` |
 | [qml/pages/bookDetailPage/ReadingHistorySection.qml](../../qml/pages/bookDetailPage/ReadingHistorySection.qml) | Finished-session journal for the current book |
-| [qml/components/](../../qml/components/) | Reusable widgets — base chassis (`SurfaceCard`, `PressableSurface`, `PaddedCard`, `TouchTarget`), buttons (`PrimaryButton`, `SecondaryButton`, `ActionButton`, `IconButton`, `TextButton`), atoms (`StarRating`, `TagPill`, `IconGlyph`, `ProgressBar`, `ProgressRing`) and rows |
+| [qml/components/](../../qml/components/) | Reusable widgets in eight role folders: `base/` (`SurfaceCard`, `PressableSurface`, `PaddedCard`, `TouchTarget`, `IconGlyph`), `buttons/`, `input/`, `display/`, `feedback/`, `lists/`, `navigation/`, `overlays/` |
 | [qml/theme/Theme.qml](../../qml/theme/Theme.qml) | Theme singleton |
 | [qml/utils/Geometry.qml](../../qml/utils/Geometry.qml) | Spacing / radius / size tokens |
 | [qml/utils/Styles.qml](../../qml/utils/Styles.qml) | Font / opacity / duration / progressBar / elevation tokens |
