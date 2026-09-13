@@ -65,27 +65,31 @@ Plain C++ struct mirroring the books table:
 
 ```cpp
 struct BookDTO {
-  qint64  id = 0;
+  qint64  isbn = 0;             // primary key; a real ISBN, or a local key
   QString name;
-  qint64  authorId = 0;
-  QString authorName;       // joined from authors
+  QString authorName;
   int     year = 0;
-  qint64  publisherId = 0;
-  QString publisherName;    // joined from publishers
+  QString publisherName;
   QString description;
   QString coverUrl;
   bool    isHardcover = false;
-  qint64  typeId = 0;
-  QString typeName;         // joined from book_types
-  int     totalPages = 0;
+  QString typeName;
+  int     totalPages = 0;       // 0 = unknown, stored as NULL
   int     pagesRead = 0;
   double  globalRating = 0.0;   // external source (e.g. Goodreads)
   double  localRating = 0.0;    // averaged across this app's users
   int     userRating = 0;       // current user's own rating
   int     status = 0;           // mirrors BookStatus::Value
   bool    inWishList = false;
+  QString language;
+  bool    isCustom = false;     // added by hand, not imported from a catalog
+  QString pdfPath;              // file in the app data dir, empty when none
+  int     pdfSource = 0;        // mirrors PdfSource::Value
+  QString workKey;              // import-time only, no column
+  QStringList genres;           // side table, not part of the books row
 
   static BookDTO fromMap(const QVariantMap &);
+  QVariantMap toMap() const;
 };
 ```
 
@@ -119,9 +123,9 @@ book with its author/publisher/type names already resolved.
 | Method | Purpose |
 |--------|---------|
 | `getAllBooks()` | Full SELECT with joins → `QList<BookDTO>` |
-| `addBook(book)` | INSERT, returns the new id |
+| `addBook(book)` | INSERT; returns the row's key — `book.isbn` when the book has one, otherwise the key `nextLocalKey()` hands out |
 | `updateBook(book)` | UPDATE by id |
-| `deleteBook(id)` | DELETE by id |
+| `deleteBook(id)` | DELETE by id; genres, characters and sessions follow through `ON DELETE CASCADE` |
 | `getGenres(bookId) const` | `QStringList` of genre names for one book |
 | `getCharacters(bookId) const` | `QList<CharacterDTO>` (`id`, `name`, `role`) for one book; consumed by `BookCharactersModel` |
 | `getReadingSessions(bookId) const` | `QList<ReadingSessionDTO>` of *closed* sessions (`ended_at IS NOT NULL`) for one book, newest first; consumed by `ReadingHistoryModel` |
@@ -152,13 +156,13 @@ publishers     (id, name)
 book_types     (id, name)
 genres         (id, name)
 
-books          (id, name, author -> authors,
-                year, publisher -> publishers,
+books          (isbn, name, author,
+                year, publisher,
                 description, coverUrl,
-                isHardcover, type -> book_types,
+                isHardcover, type,
                 totalPages, pagesRead,
                 globalRating, localRating, userRating,
-                status, inWishList)
+                status, inWishList, language, isCustom)
 
 book_genres        (book_id, genre_id)             -- M:N
 book_characters    (id, book_id -> books, name, role)
@@ -167,9 +171,42 @@ reading_sessions   (id, book_id -> books,
                     pages_from, pages_to)
 ```
 
-CHECK constraints enforce ranges on `status` (0..3), `inWishList`/`isHardcover`
-(0/1), and 0..10 on all three rating columns. `totalPages` allows NULL for
-books without page count yet; `pagesRead` defaults to 0. `globalRating` /
+CHECK constraints enforce ranges on `status` (0..3),
+`inWishList`/`isHardcover`/`isCustom` (0/1), and 0..10 on all three rating
+columns. `totalPages` allows NULL for books without page count yet — and only
+NULL, never 0, so `BookTable` binds the DTO's "unknown" 0 as a typed NULL on
+insert and update; `pagesRead` defaults to 0.
+
+**No ISBN is ever invented.** A hand-added book is stored under the ISBN read
+out of its PDF, or the one the user typed — and under neither when it has
+none, which is the normal case for a notebook or a manuscript. The `isbn`
+column is still the primary key, so such a row is keyed by
+`BookTable::nextLocalKey()`: `MAX(isbn) + 1` counted over keys *below* the
+ISBN-13 floor (`9'780'000'000'000` — every ISBN-13 is 978/979-prefixed), so
+the first one is `1`. A key that small cannot be mistaken for an ISBN, and it
+can never collide with a real one imported later.
+
+SQLite's own rowid is deliberately *not* used for this: `isbn INTEGER PRIMARY
+KEY` is the rowid, and its next value is `MAX(rowid) + 1` over the whole
+table — in a library holding real ISBNs that yields an ISBN-shaped number,
+which is exactly what this avoids.
+
+`isCustom` marks a book the user typed in themselves rather than imported.
+It gates deletion: `BookController::deleteCurrentBook` refuses a catalog book
+(it can always be found online again) and only removes a custom one.
+
+`pdfPath` / `pdfSource` describe the book's attached PDF. The source is not
+just provenance, it carries a rule — see
+[`PdfSource`](../../src/services/PdfSource.hpp):
+
+| Value | Meaning |
+|-------|---------|
+| `None` (0) | no PDF; `pdfPath` is NULL |
+| `Server` (1) | supplied by a catalog. Openable, never replaceable or removable — the file is not the user's to change. No catalog currently populates this, so nothing writes a 1 yet; the rule is enforced from day one so that wiring one up later needs no migration. |
+| `User` (2) | attached by the user. Replaceable and removable. |
+
+The file itself never lives where the user picked it — see `BookFileStore`
+below. `globalRating` /
 `localRating` are REAL (averages); `userRating` is INTEGER (whole stars).
 
 `reading_sessions` is a **journal**, not a position cache. Sessions may
@@ -180,6 +217,51 @@ overlap (re-reading same range), so:
 
 The big comment at the top of [`init.sql`](../../db/init.sql) lists the
 derived metrics formulas (julianday for duration, etc.).
+
+## `BookFileStore` (files on disk)
+
+[`BookFileStore`](../../src/services/BookFileStore.cpp) owns everything a book
+keeps outside the database — its PDF and the cover rendered from it — under one
+root the caller supplies: `AppEnvironment::bookFilesPath()`
+(`<dataPath>/books`) in the app, a `QTemporaryDir` in tests.
+
+| Method | Purpose |
+|--------|---------|
+| `storePdf(isbn, sourcePath)` | Copies the file to `<root>/pdfs/<isbn>.pdf` and returns that path. Replaces an existing one, since swapping a user PDF is a supported action — and returns early when the pick already *is* the stored file, which the dialog allows and which would otherwise delete it |
+| `storeCover(isbn, image)` | Writes `<root>/covers/<isbn>.png` and returns that path. Fed both by the PDF's rendered first page and by a cover the user picked by hand — a picked file is copied in, not referenced, and scaled to the same bound |
+| `coverUrl(isbn)` | The file url to put in `books.coverUrl`, with a hash of the file's contents as a `?v=` query. Cover files keep a stable name, and `Image` caches by url — a re-rendered cover at an unchanged url would keep showing the previous PDF's first page. `QUrl::toLocalFile()` drops the query so the file still opens, and identical content still yields an identical url, so an unchanged cover does not invalidate a good cached image |
+| `removePdf(isbn)` | Deletes the stored PDF, leaving the cover. Idempotent — nothing to delete is the end state the caller asked for |
+| `removeAll(isbn)` | Both files. Called when the book itself goes away |
+| `toLocalPath(fileUrl)` | `file://…` → path. A non-local URL passes through untouched: Android hands over `content://…`, which has no local path but which Qt's file engine opens directly |
+
+**Copied in, not referenced.** The library has to keep working after the user
+moves, renames or deletes the file they picked, so the pick is a copy and the
+DB stores the copy's path. Everything is named after the book's key, which makes
+cleanup on delete a lookup rather than a search — and means a local key handed
+out again by `nextLocalKey()` would land on the previous book's files, so
+`BookController::deleteCurrentBook` calls `removeAll` on the way out.
+
+## `PdfMetadataReader` (Qt PDF)
+
+[`PdfMetadataReader`](../../src/services/PdfMetadataReader.cpp) is what makes an
+attached PDF worth attaching: one static `read()` over `QPdfDocument` (PDFium,
+from the vcpkg `qtwebengine[pdf]` port) returning a
+[`PdfDocumentInfo`](../../src/services/PdfDocumentInfo.hpp).
+
+| Field | Where it comes from | Reliability |
+|-------|---------------------|-------------|
+| `pageCount` | the page tree | always present; `pageCount == 0` is what `isValid()` reports as a failed read |
+| `isbn` | the page **text**, front matter then back matter | no PDF metadata field carries an ISBN, so it is read off the page the way a person would. 0 when the book prints none where we look, or prints it as an image (a pure scan). Bounded to 12 front and 4 back pages — a 2000-page manual is not read end to end for one number |
+| `title` / `author` / `subject` | the `/Info` dictionary | frequently empty, and sometimes authoring-tool noise |
+| `cover` | page one, rendered | absent only if the first page has no size |
+
+The cover render is scaled into `kDefaultCoverSize` (300×420) with the aspect
+ratio preserved — a page is never the cover slot's shape, and a stretched cover
+looks broken.
+
+Because `/Info` is so often blank, **an empty field never overrides**: see
+`BookController::overrideFromPdf` in
+[controllers.md](controllers.md#bookcontroller).
 
 ## `ReadingSessionCache` (QSettings)
 
@@ -222,8 +304,13 @@ C++ uses `ReadingPhase::Running` directly, QML writes
 
 ## Schema and seed data
 
-- `db/init.sql` — schema. Uses `CREATE TABLE IF NOT EXISTS`, so changing a
-  column requires deleting the existing DB file (no migration system yet).
+- `db/init.sql` — schema. Uses `CREATE TABLE IF NOT EXISTS`, so an added
+  column never reaches an existing DB file through the `CREATE` — there is no
+  migration runner. Each such column therefore gets a plain `ALTER TABLE …
+  ADD COLUMN` after the create (see `isCustom`); SQLite has no
+  `IF NOT EXISTS` for that, so once the column is in place the statement fails
+  harmlessly and logs one `duplicate column name` warning per launch under
+  `readary.core.db`.
 - `db/test_data.sql` — seed rows used in **debug builds only**, executed
   after `init.sql` from `AppInitializer::initDatabase`. Uses
   `INSERT OR REPLACE INTO books`; child rows in `book_genres` /

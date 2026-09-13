@@ -23,6 +23,9 @@ BookDTO BookDTO::fromMap(const QVariantMap &data) {
   dto.status = data.value(u"status"_s).toInt();
   dto.inWishList = data.value(u"inWishList"_s).toBool();
   dto.language = data.value(u"language"_s).toString();
+  dto.isCustom = data.value(u"isCustom"_s).toBool();
+  dto.pdfPath = data.value(u"pdfPath"_s).toString();
+  dto.pdfSource = data.value(u"pdfSource"_s).toInt();
   dto.workKey = data.value(u"workKey"_s).toString();
   dto.genres = data.value(u"genres"_s).toStringList();
   return dto;
@@ -47,6 +50,9 @@ QVariantMap BookDTO::toMap() const {
       {u"status"_s, status},
       {u"inWishList"_s, inWishList},
       {u"language"_s, language},
+      {u"isCustom"_s, isCustom},
+      {u"pdfPath"_s, pdfPath},
+      {u"pdfSource"_s, pdfSource},
       {u"workKey"_s, workKey},
       {u"genres"_s, genres},
   };

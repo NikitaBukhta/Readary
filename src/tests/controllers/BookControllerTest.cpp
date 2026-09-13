@@ -3,12 +3,19 @@
 #include "models/books/BookSortFilterProxyModel.hpp"
 #include "services/BookFilterCriteria.hpp"
 #include "services/BookStatus.hpp"
+#include "services/PdfSource.hpp"
+#include "support/MinimalPdf.hpp"
 #include "support/TempLibrary.hpp"
 
+#include <QDir>
+#include <QFile>
+#include <QImage>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QStandardPaths>
+#include <QTemporaryDir>
 #include <QTest>
+#include <QUrl>
 
 #include <memory>
 
@@ -19,6 +26,7 @@ using readary::models::BookListModel;
 using readary::services::BookDTO;
 using readary::services::BookFilterCriteria;
 using readary::services::BookStatus;
+using readary::services::PdfSource;
 using readary::tests::makeBook;
 using readary::tests::TempLibrary;
 
@@ -83,6 +91,48 @@ private slots:
   void importAndOpenBook_alreadyKnownBook_justSelectsIt();
   void importAndOpenBook_withoutAnIsbn_isIgnored();
 
+  void addCustomBook_storesTheFormAndOpensIt();
+  void addCustomBook_withoutATitle_isRejected();
+  void addCustomBook_withoutAnAuthor_isRejected();
+  void addCustomBook_trimsTheText();
+  void addCustomBook_withoutAnIsbn_doesNotInventOne();
+  void addCustomBook_keysEachBookSeparately();
+  void addCustomBook_storesTheTypedIsbn();
+  void addCustomBook_normalisesATypedIsbn10();
+  void addCustomBook_invalidTypedIsbn_isRefused();
+  void addCustomBook_pdfIsbnOverridesTheTypedOne();
+  void addCustomBook_anIsbnAlreadyInTheLibrary_isRefused();
+
+  void deleteCurrentBook_removesACustomBook();
+  void deleteCurrentBook_aCatalogBook_isRefused();
+  void deleteCurrentBook_withoutASelection_isIgnored();
+  void deleteCurrentBook_dropsTheParkedProgress();
+  void deleteCurrentBook_dropsItsFiles();
+
+  void stagePdf_reportsWhatThePdfSays();
+  void stagePdf_aFileThatIsNotAPdf_isRejected();
+  void stagePdf_handsBackTheCoverInline();
+  void clearStagedPdf_dropsIt();
+  void addCustomBook_withAStagedPdf_storesItAndTheCover();
+  void addCustomBook_copiesAPickedCoverIntoTheStore();
+  void addCustomBook_pickedCoverSurvivesTheOriginalBeingDeleted();
+  void addCustomBook_pdfPageCountOverridesTheForm();
+  void addCustomBook_pdfMetadataOverridesTheForm();
+  void addCustomBook_pdfWithoutMetadata_keepsTheTypedText();
+  void addCustomBook_pdfSuppliesTheTitleTheFormLeftBlank();
+  void addCustomBook_afterAnAdd_theStagedPdfIsGone();
+
+  void attachPdfToCurrentBook_storesIt();
+  void attachPdfToCurrentBook_onACatalogBook_leavesItsMetadataAlone();
+  void attachPdfToCurrentBook_onACustomBook_overridesTheMetadata();
+  void attachPdfToCurrentBook_replacesAUserPdf();
+  void attachPdfToCurrentBook_aServerPdf_isRefused();
+  void attachPdfToCurrentBook_withoutASelection_isIgnored();
+  void removePdfFromCurrentBook_dropsTheFileAndTheColumns();
+  void removePdfFromCurrentBook_keepsTheCover();
+  void removePdfFromCurrentBook_aServerPdf_isRefused();
+  void removePdfFromCurrentBook_whenThereIsNone_isRefused();
+
   void setFilterCriteria_narrowsTheSearchModel();
 
   void errorMessage_startsEmpty();
@@ -94,6 +144,13 @@ private slots:
 
 private:
   void dropTheBookBehindTheControllersBack();
+  QString writePdf(const QString &name, int pageCount, const QString &title = {}, const QString &author = {},
+                   const QString &subject = {}, const QString &printedIsbn = {});
+  QString stagedPdfUrl(const QString &name, int pageCount, const QString &title = {}, const QString &author = {},
+                       const QString &subject = {}, const QString &printedIsbn = {});
+  qint64 addCustomWithPdf(const QString &pdfName, int pageCount, const QVariantMap &extraFields = {});
+
+  QTemporaryDir _pdfDir;
 
   TempLibrary _library;
   std::unique_ptr<BookListModel> _listModel;
@@ -127,7 +184,7 @@ void BookControllerTest::init() {
   QCOMPARE(_library.books()->addBook(effective), kOtherIsbn);
 
   _listModel = std::make_unique<BookListModel>(_library.books(), nullptr);
-  _controller = std::make_unique<BookController>(_library.books(), _listModel.get(), nullptr);
+  _controller = std::make_unique<BookController>(_library.books(), _library.files(), _listModel.get(), nullptr);
 
   // AppInitializer owns this cross-domain wiring in the running app.
   connect(_controller.get(), &BookController::bookSaved, _listModel.get(), &BookListModel::refresh);
@@ -490,6 +547,511 @@ void BookControllerTest::importAndOpenBook_withoutAnIsbn_isIgnored() {
 
   QCOMPARE(openSpy.count(), 0);
   QCOMPARE(_controller->currentBookIsbn(), 0LL);
+}
+
+void BookControllerTest::addCustomBook_storesTheFormAndOpensIt() {
+  QSignalSpy savedSpy{_controller.get(), &BookController::bookSaved};
+  QSignalSpy openSpy{_controller.get(), &BookController::bookOpenRequested};
+
+  const QVariantMap form{
+      {u"name"_s, u"My own notes"_s},
+      {u"author"_s, u"Me"_s},
+      {u"year"_s, 2024},
+      {u"publisher"_s, u"Nobody"_s},
+      {u"totalPages"_s, 120},
+      {u"description"_s, u"Handwritten"_s},
+      {u"coverUrl"_s, u"file:///c/cover.png"_s},
+      {u"genres"_s, QStringList{u"Prose"_s}},
+  };
+
+  QVERIFY(_controller->addCustomBook(form));
+
+  QCOMPARE(savedSpy.count(), 1);
+  QCOMPARE(openSpy.count(), 1);
+  QCOMPARE(_listModel->rowCount(), 3);
+
+  const auto added = _controller->currentBookData();
+  QVERIFY(added.isbn > 0);
+  QCOMPARE(added.name, u"My own notes"_s);
+  QCOMPARE(added.authorName, u"Me"_s);
+  QCOMPARE(added.year, 2024);
+  QCOMPARE(added.publisherName, u"Nobody"_s);
+  QCOMPARE(added.totalPages, 120);
+  QCOMPARE(added.description, u"Handwritten"_s);
+  QCOMPARE(added.coverUrl, u"file:///c/cover.png"_s);
+  QCOMPARE(added.genres, QStringList{u"Prose"_s});
+  // Want-to-read, so the book is reachable from a category list right away.
+  QCOMPARE(added.status, static_cast<int>(BookStatus::WantToRead));
+  QVERIFY(added.isCustom);
+}
+
+void BookControllerTest::addCustomBook_withoutATitle_isRejected() {
+  QVERIFY(!_controller->addCustomBook({{u"author"_s, u"Me"_s}}));
+
+  QVERIFY(!_controller->errorMessage().isEmpty());
+  QCOMPARE(_listModel->rowCount(), 2);
+}
+
+void BookControllerTest::addCustomBook_withoutAnAuthor_isRejected() {
+  QVERIFY(!_controller->addCustomBook({{u"name"_s, u"My own notes"_s}}));
+
+  QVERIFY(!_controller->errorMessage().isEmpty());
+  QCOMPARE(_listModel->rowCount(), 2);
+}
+
+void BookControllerTest::addCustomBook_trimsTheText() {
+  // No page count either: the DTO's 0 has to survive the schema's
+  // `totalPages > 0` check as a NULL.
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"  My own notes  "_s}, {u"author"_s, u"  Me  "_s}}));
+
+  const auto added = _controller->currentBookData();
+  QCOMPARE(added.name, u"My own notes"_s);
+  QCOMPARE(added.authorName, u"Me"_s);
+  QCOMPARE(added.totalPages, 0);
+}
+
+void BookControllerTest::addCustomBook_withoutAnIsbn_doesNotInventOne() {
+  // Nothing 978-shaped is fabricated for a book that has no ISBN; SQLite keys
+  // the row instead.
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"My own notes"_s}, {u"author"_s, u"Me"_s}}));
+
+  const qint64 key = _controller->currentBookIsbn();
+  QVERIFY(key > 0);
+  QVERIFY(key < 9'780'000'000'000LL);
+}
+
+void BookControllerTest::addCustomBook_keysEachBookSeparately() {
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"First"_s}, {u"author"_s, u"Me"_s}}));
+  const qint64 first = _controller->currentBookIsbn();
+
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"Second"_s}, {u"author"_s, u"Me"_s}}));
+
+  QVERIFY(_controller->currentBookIsbn() != first);
+  QCOMPARE(_listModel->rowCount(), 4);
+}
+
+void BookControllerTest::addCustomBook_storesTheTypedIsbn() {
+  QVERIFY(_controller->addCustomBook(
+      {{u"name"_s, u"Refactoring"_s}, {u"author"_s, u"Me"_s}, {u"isbnText"_s, u"978-0-13-235088-4"_s}}));
+
+  QCOMPARE(_controller->currentBookIsbn(), 9780132350884LL);
+}
+
+void BookControllerTest::addCustomBook_normalisesATypedIsbn10() {
+  // The normalisation the catalog clients apply, so a hand-typed book keys the
+  // same row an import of it would.
+  QVERIFY(_controller->addCustomBook(
+      {{u"name"_s, u"Refactoring"_s}, {u"author"_s, u"Me"_s}, {u"isbnText"_s, u"0-13-235088-2"_s}}));
+
+  QCOMPARE(_controller->currentBookIsbn(), 9780132350884LL);
+}
+
+void BookControllerTest::addCustomBook_invalidTypedIsbn_isRefused() {
+  // Refused rather than ignored: dropping it silently would file the book under
+  // no ISBN while the user believes otherwise.
+  QVERIFY(!_controller->addCustomBook(
+      {{u"name"_s, u"Refactoring"_s}, {u"author"_s, u"Me"_s}, {u"isbnText"_s, u"978-0-13-235088-9"_s}}));
+
+  QVERIFY(!_controller->errorMessage().isEmpty());
+  QCOMPARE(_listModel->rowCount(), 2);
+}
+
+void BookControllerTest::addCustomBook_pdfIsbnOverridesTheTypedOne() {
+  const QString url = stagedPdfUrl(u"isbn.pdf"_s, 3, {}, {}, {}, u"978-0-13-235088-4"_s);
+  QVERIFY(!url.isEmpty());
+  QVERIFY(_controller->stagePdf(url).value(u"ok"_s).toBool());
+
+  QVERIFY(_controller->addCustomBook(
+      {{u"name"_s, u"Refactoring"_s}, {u"author"_s, u"Me"_s}, {u"isbnText"_s, u"9780306406157"_s}}));
+
+  QCOMPARE(_controller->currentBookIsbn(), 9780132350884LL);
+}
+
+void BookControllerTest::addCustomBook_anIsbnAlreadyInTheLibrary_isRefused() {
+  QVERIFY(!_controller->addCustomBook(
+      {{u"name"_s, u"Refactoring again"_s}, {u"author"_s, u"Me"_s}, {u"isbnText"_s, QString::number(kIsbn)}}));
+
+  QVERIFY(!_controller->errorMessage().isEmpty());
+  QCOMPARE(_listModel->rowCount(), 2);
+}
+
+void BookControllerTest::deleteCurrentBook_removesACustomBook() {
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"My own notes"_s}, {u"author"_s, u"Me"_s}}));
+  const qint64 isbn = _controller->currentBookIsbn();
+  QSignalSpy savedSpy{_controller.get(), &BookController::bookSaved};
+
+  QVERIFY(_controller->deleteCurrentBook());
+
+  QCOMPARE(savedSpy.count(), 1);
+  QCOMPARE(_controller->currentBookIsbn(), 0LL);
+  QVERIFY(!_listModel->contains(isbn));
+  QCOMPARE(_listModel->rowCount(), 2);
+}
+
+void BookControllerTest::deleteCurrentBook_aCatalogBook_isRefused() {
+  // A catalog book only ever leaves a category — it can be found again online.
+  _controller->setCurrentBookIsbn(kIsbn);
+
+  QVERIFY(!_controller->deleteCurrentBook());
+
+  QVERIFY(!_controller->errorMessage().isEmpty());
+  QVERIFY(_listModel->contains(kIsbn));
+  QCOMPARE(_controller->currentBookIsbn(), kIsbn);
+}
+
+void BookControllerTest::deleteCurrentBook_withoutASelection_isIgnored() {
+  QVERIFY(!_controller->deleteCurrentBook());
+  QCOMPARE(_listModel->rowCount(), 2);
+}
+
+void BookControllerTest::deleteCurrentBook_dropsTheParkedProgress() {
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"My own notes"_s}, {u"author"_s, u"Me"_s}, {u"totalPages"_s, 100}}));
+  const qint64 isbn = _controller->currentBookIsbn();
+  _controller->updateReadingProgress(40, 60);
+  _controller->moveInProgressToWantToRead();
+  QVERIFY(_controller->hasCachedProgress());
+
+  QVERIFY(_controller->deleteCurrentBook());
+
+  _controller->setCurrentBookIsbn(isbn);
+  QVERIFY(!_controller->hasCachedProgress());
+}
+
+QString BookControllerTest::writePdf(const QString &name, int pageCount, const QString &title, const QString &author,
+                                     const QString &subject, const QString &printedIsbn) {
+  if (!_pdfDir.isValid()) {
+    return {};
+  }
+  QString path = QDir{_pdfDir.path()}.absoluteFilePath(name);
+  if (!readary::tests::pdf::writeDocument(path, pageCount, title, author, subject, printedIsbn)) {
+    return {};
+  }
+  return path;
+}
+
+QString BookControllerTest::stagedPdfUrl(const QString &name, int pageCount, const QString &title,
+                                         const QString &author, const QString &subject, const QString &printedIsbn) {
+  const QString path = writePdf(name, pageCount, title, author, subject, printedIsbn);
+  if (path.isEmpty()) {
+    return {};
+  }
+  // QML hands the controller a url, not a path.
+  return QUrl::fromLocalFile(path).toString();
+}
+
+qint64 BookControllerTest::addCustomWithPdf(const QString &pdfName, int pageCount, const QVariantMap &extraFields) {
+  const QString url = stagedPdfUrl(pdfName, pageCount);
+  if (url.isEmpty()) {
+    return 0;
+  }
+  if (!_controller->stagePdf(url).value(u"ok"_s).toBool()) {
+    return 0;
+  }
+
+  QVariantMap fields{{u"name"_s, u"My own notes"_s}, {u"author"_s, u"Me"_s}};
+  for (auto it = extraFields.constBegin(); it != extraFields.constEnd(); ++it) {
+    fields.insert(it.key(), it.value());
+  }
+  if (!_controller->addCustomBook(fields)) {
+    return 0;
+  }
+  return _controller->currentBookIsbn();
+}
+
+void BookControllerTest::deleteCurrentBook_dropsItsFiles() {
+  const qint64 isbn = addCustomWithPdf(u"attached.pdf"_s, 12);
+  QVERIFY(isbn > 0);
+  QVERIFY(QFile::exists(_library.files()->pdfPath(isbn)));
+  QVERIFY(QFile::exists(_library.files()->coverPath(isbn)));
+
+  QVERIFY(_controller->deleteCurrentBook());
+
+  QVERIFY(!QFile::exists(_library.files()->pdfPath(isbn)));
+  QVERIFY(!QFile::exists(_library.files()->coverPath(isbn)));
+}
+
+void BookControllerTest::stagePdf_reportsWhatThePdfSays() {
+  const QString url = stagedPdfUrl(u"staged.pdf"_s, 7, u"Refactoring"_s, u"Martin Fowler"_s);
+  QVERIFY(!url.isEmpty());
+
+  const QVariantMap info = _controller->stagePdf(url);
+
+  QVERIFY(info.value(u"ok"_s).toBool());
+  QCOMPARE(info.value(u"pageCount"_s).toInt(), 7);
+  QCOMPARE(info.value(u"title"_s).toString(), u"Refactoring"_s);
+  QCOMPARE(info.value(u"author"_s).toString(), u"Martin Fowler"_s);
+}
+
+void BookControllerTest::stagePdf_handsBackTheCoverInline() {
+  // The form has to show the rendered first page before the book exists, and the
+  // stored cover is named after an isbn that is only assigned on commit — so the
+  // render travels inline rather than as a path.
+  const QString url = stagedPdfUrl(u"cover.pdf"_s, 2);
+  QVERIFY(!url.isEmpty());
+
+  const QString preview = _controller->stagePdf(url).value(u"coverPreview"_s).toString();
+
+  QVERIFY(preview.startsWith(u"data:image/png;base64,"_s));
+  const QByteArray png = QByteArray::fromBase64(preview.mid(QStringView{u"data:image/png;base64,"}.size()).toLatin1());
+  QVERIFY(png.startsWith(QByteArray::fromHex("89504E47")));
+  QImage decoded;
+  QVERIFY(decoded.loadFromData(png, "PNG"));
+  QVERIFY(!decoded.isNull());
+}
+
+void BookControllerTest::stagePdf_aFileThatIsNotAPdf_isRejected() {
+  const QString path = QDir{_pdfDir.path()}.absoluteFilePath(u"notes.txt"_s);
+  QFile file(path);
+  QVERIFY(file.open(QIODevice::WriteOnly));
+  QVERIFY(file.write("not a pdf") > 0);
+  file.close();
+
+  const QVariantMap info = _controller->stagePdf(QUrl::fromLocalFile(path).toString());
+
+  QVERIFY(!info.value(u"ok"_s).toBool());
+  QVERIFY(!_controller->errorMessage().isEmpty());
+}
+
+void BookControllerTest::clearStagedPdf_dropsIt() {
+  const QString url = stagedPdfUrl(u"staged.pdf"_s, 7);
+  QVERIFY(!url.isEmpty());
+  QVERIFY(_controller->stagePdf(url).value(u"ok"_s).toBool());
+
+  _controller->clearStagedPdf();
+
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"Typed"_s}, {u"author"_s, u"Me"_s}}));
+  const auto added = _controller->currentBookData();
+  QCOMPARE(added.pdfSource, static_cast<int>(PdfSource::None));
+  QVERIFY(added.pdfPath.isEmpty());
+  QCOMPARE(added.totalPages, 0);
+}
+
+void BookControllerTest::addCustomBook_withAStagedPdf_storesItAndTheCover() {
+  const qint64 isbn = addCustomWithPdf(u"attached.pdf"_s, 12);
+  QVERIFY(isbn > 0);
+
+  const auto added = _controller->currentBookData();
+  QCOMPARE(added.pdfSource, static_cast<int>(PdfSource::User));
+  QCOMPARE(added.pdfPath, _library.files()->pdfPath(isbn));
+  QVERIFY(QFile::exists(added.pdfPath));
+  // The rendered first page becomes the cover, as a local file url.
+  QVERIFY(added.coverUrl.startsWith(u"file://"_s));
+  QVERIFY(QFile::exists(_library.files()->coverPath(isbn)));
+}
+
+void BookControllerTest::addCustomBook_copiesAPickedCoverIntoTheStore() {
+  const QString source = QDir{_pdfDir.path()}.absoluteFilePath(u"cover.png"_s);
+  QImage picked(20, 30, QImage::Format_RGB32);
+  picked.fill(Qt::blue);
+  QVERIFY(picked.save(source, "PNG"));
+
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"My own notes"_s},
+                                      {u"author"_s, u"Me"_s},
+                                      {u"coverUrl"_s, QUrl::fromLocalFile(source).toString()}}));
+
+  const qint64 key = _controller->currentBookIsbn();
+  QVERIFY(QFile::exists(_library.files()->coverPath(key)));
+  QCOMPARE(_controller->currentBookData().coverUrl, _library.files()->coverUrl(key));
+}
+
+void BookControllerTest::addCustomBook_pickedCoverSurvivesTheOriginalBeingDeleted() {
+  // The point of copying rather than referencing — and on Android the picked
+  // uri's read grant does not outlive the app anyway.
+  const QString source = QDir{_pdfDir.path()}.absoluteFilePath(u"cover.png"_s);
+  QImage picked(20, 30, QImage::Format_RGB32);
+  picked.fill(Qt::green);
+  QVERIFY(picked.save(source, "PNG"));
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"My own notes"_s},
+                                      {u"author"_s, u"Me"_s},
+                                      {u"coverUrl"_s, QUrl::fromLocalFile(source).toString()}}));
+  const qint64 key = _controller->currentBookIsbn();
+
+  QVERIFY(QFile::remove(source));
+
+  QVERIFY(QFile::exists(_library.files()->coverPath(key)));
+  QVERIFY(!QImage{_library.files()->coverPath(key)}.isNull());
+}
+
+void BookControllerTest::addCustomBook_pdfPageCountOverridesTheForm() {
+  const QString url = stagedPdfUrl(u"pages.pdf"_s, 9);
+  QVERIFY(!url.isEmpty());
+  QVERIFY(_controller->stagePdf(url).value(u"ok"_s).toBool());
+
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"My own notes"_s}, {u"author"_s, u"Me"_s}, {u"totalPages"_s, 999}}));
+
+  QCOMPARE(_controller->currentBookData().totalPages, 9);
+}
+
+void BookControllerTest::addCustomBook_pdfMetadataOverridesTheForm() {
+  const QString url = stagedPdfUrl(u"meta.pdf"_s, 4, u"Refactoring"_s, u"Martin Fowler"_s, u"From the pdf"_s);
+  QVERIFY(!url.isEmpty());
+  QVERIFY(_controller->stagePdf(url).value(u"ok"_s).toBool());
+
+  QVERIFY(_controller->addCustomBook(
+      {{u"name"_s, u"Typed title"_s}, {u"author"_s, u"Typed author"_s}, {u"description"_s, u"Typed description"_s}}));
+
+  const auto added = _controller->currentBookData();
+  QCOMPARE(added.name, u"Refactoring"_s);
+  QCOMPARE(added.authorName, u"Martin Fowler"_s);
+  QCOMPARE(added.description, u"From the pdf"_s);
+}
+
+void BookControllerTest::addCustomBook_pdfWithoutMetadata_keepsTheTypedText() {
+  // A blank /Info dictionary must not wipe what the user typed — an empty
+  // override would be a loss, not a correction.
+  const QString url = stagedPdfUrl(u"bare.pdf"_s, 5);
+  QVERIFY(!url.isEmpty());
+  QVERIFY(_controller->stagePdf(url).value(u"ok"_s).toBool());
+
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"Typed title"_s}, {u"author"_s, u"Typed author"_s}}));
+
+  const auto added = _controller->currentBookData();
+  QCOMPARE(added.name, u"Typed title"_s);
+  QCOMPARE(added.authorName, u"Typed author"_s);
+  QCOMPARE(added.totalPages, 5);
+}
+
+void BookControllerTest::addCustomBook_pdfSuppliesTheTitleTheFormLeftBlank() {
+  const QString url = stagedPdfUrl(u"titled.pdf"_s, 3, u"Refactoring"_s, u"Martin Fowler"_s);
+  QVERIFY(!url.isEmpty());
+  QVERIFY(_controller->stagePdf(url).value(u"ok"_s).toBool());
+
+  // Nothing typed at all: the pdf alone satisfies the title/author requirement.
+  QVERIFY(_controller->addCustomBook({}));
+
+  const auto added = _controller->currentBookData();
+  QCOMPARE(added.name, u"Refactoring"_s);
+  QCOMPARE(added.authorName, u"Martin Fowler"_s);
+}
+
+void BookControllerTest::addCustomBook_afterAnAdd_theStagedPdfIsGone() {
+  QVERIFY(addCustomWithPdf(u"first.pdf"_s, 6) > 0);
+
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"Second"_s}, {u"author"_s, u"Me"_s}}));
+
+  const auto second = _controller->currentBookData();
+  QCOMPARE(second.pdfSource, static_cast<int>(PdfSource::None));
+  QVERIFY(second.pdfPath.isEmpty());
+}
+
+void BookControllerTest::attachPdfToCurrentBook_storesIt() {
+  _controller->setCurrentBookIsbn(kIsbn);
+  const QString url = stagedPdfUrl(u"attach.pdf"_s, 11);
+  QVERIFY(!url.isEmpty());
+
+  QVERIFY(_controller->attachPdfToCurrentBook(url));
+
+  const auto book = _controller->currentBookData();
+  QCOMPARE(book.pdfSource, static_cast<int>(PdfSource::User));
+  QCOMPARE(book.pdfPath, _library.files()->pdfPath(kIsbn));
+  QVERIFY(QFile::exists(book.pdfPath));
+}
+
+void BookControllerTest::attachPdfToCurrentBook_onACatalogBook_leavesItsMetadataAlone() {
+  // A catalog book took its fields from the catalog, not from a form — the pdf
+  // has no better claim on them.
+  _controller->setCurrentBookIsbn(kIsbn);
+  const auto before = _controller->currentBookData();
+  const QString url = stagedPdfUrl(u"attach.pdf"_s, 11, u"Pdf Title"_s, u"Pdf Author"_s, u"Pdf subject"_s);
+  QVERIFY(!url.isEmpty());
+
+  QVERIFY(_controller->attachPdfToCurrentBook(url));
+
+  const auto after = _controller->currentBookData();
+  QCOMPARE(after.name, before.name);
+  QCOMPARE(after.authorName, before.authorName);
+  QCOMPARE(after.totalPages, before.totalPages);
+  QCOMPARE(after.description, before.description);
+}
+
+void BookControllerTest::attachPdfToCurrentBook_onACustomBook_overridesTheMetadata() {
+  QVERIFY(_controller->addCustomBook({{u"name"_s, u"Typed"_s}, {u"author"_s, u"Me"_s}, {u"totalPages"_s, 100}}));
+  const QString url = stagedPdfUrl(u"later.pdf"_s, 42, u"Pdf Title"_s, u"Pdf Author"_s);
+  QVERIFY(!url.isEmpty());
+
+  QVERIFY(_controller->attachPdfToCurrentBook(url));
+
+  const auto book = _controller->currentBookData();
+  QCOMPARE(book.totalPages, 42);
+  QCOMPARE(book.name, u"Pdf Title"_s);
+  QCOMPARE(book.authorName, u"Pdf Author"_s);
+}
+
+void BookControllerTest::attachPdfToCurrentBook_replacesAUserPdf() {
+  _controller->setCurrentBookIsbn(kIsbn);
+  QVERIFY(_controller->attachPdfToCurrentBook(stagedPdfUrl(u"first.pdf"_s, 3)));
+
+  QVERIFY(_controller->attachPdfToCurrentBook(stagedPdfUrl(u"second.pdf"_s, 8)));
+
+  const auto book = _controller->currentBookData();
+  QCOMPARE(book.pdfSource, static_cast<int>(PdfSource::User));
+  QCOMPARE(book.pdfPath, _library.files()->pdfPath(kIsbn));
+  // Still the catalog's page count: kIsbn is not a custom book, so neither pdf
+  // got to override it.
+  QCOMPARE(book.totalPages, 448);
+}
+
+void BookControllerTest::attachPdfToCurrentBook_aServerPdf_isRefused() {
+  BookDTO locked = makeBook(kUnknownIsbn, u"Locked"_s, BookStatus::WantToRead);
+  locked.pdfPath = u"C:/from/the/catalog.pdf"_s;
+  locked.pdfSource = PdfSource::Server;
+  QCOMPARE(_library.books()->addBook(locked), kUnknownIsbn);
+  _listModel->refresh();
+  _controller->setCurrentBookIsbn(kUnknownIsbn);
+
+  QVERIFY(!_controller->attachPdfToCurrentBook(stagedPdfUrl(u"mine.pdf"_s, 3)));
+
+  QVERIFY(!_controller->errorMessage().isEmpty());
+  QCOMPARE(_controller->currentBookData().pdfPath, u"C:/from/the/catalog.pdf"_s);
+}
+
+void BookControllerTest::attachPdfToCurrentBook_withoutASelection_isIgnored() {
+  QVERIFY(!_controller->attachPdfToCurrentBook(stagedPdfUrl(u"mine.pdf"_s, 3)));
+}
+
+void BookControllerTest::removePdfFromCurrentBook_dropsTheFileAndTheColumns() {
+  const qint64 isbn = addCustomWithPdf(u"attached.pdf"_s, 12);
+  QVERIFY(isbn > 0);
+
+  QVERIFY(_controller->removePdfFromCurrentBook());
+
+  const auto book = _controller->currentBookData();
+  QVERIFY(book.pdfPath.isEmpty());
+  QCOMPARE(book.pdfSource, static_cast<int>(PdfSource::None));
+  QVERIFY(!QFile::exists(_library.files()->pdfPath(isbn)));
+}
+
+void BookControllerTest::removePdfFromCurrentBook_keepsTheCover() {
+  // Once rendered, the cover is the book's own picture.
+  const qint64 isbn = addCustomWithPdf(u"attached.pdf"_s, 12);
+  QVERIFY(isbn > 0);
+  const QString coverUrl = _controller->currentBookData().coverUrl;
+  QVERIFY(!coverUrl.isEmpty());
+
+  QVERIFY(_controller->removePdfFromCurrentBook());
+
+  QCOMPARE(_controller->currentBookData().coverUrl, coverUrl);
+  QVERIFY(QFile::exists(_library.files()->coverPath(isbn)));
+}
+
+void BookControllerTest::removePdfFromCurrentBook_aServerPdf_isRefused() {
+  BookDTO locked = makeBook(kUnknownIsbn, u"Locked"_s, BookStatus::WantToRead);
+  locked.pdfPath = u"C:/from/the/catalog.pdf"_s;
+  locked.pdfSource = PdfSource::Server;
+  QCOMPARE(_library.books()->addBook(locked), kUnknownIsbn);
+  _listModel->refresh();
+  _controller->setCurrentBookIsbn(kUnknownIsbn);
+
+  QVERIFY(!_controller->removePdfFromCurrentBook());
+
+  QVERIFY(!_controller->errorMessage().isEmpty());
+  QCOMPARE(_controller->currentBookData().pdfSource, static_cast<int>(PdfSource::Server));
+}
+
+void BookControllerTest::removePdfFromCurrentBook_whenThereIsNone_isRefused() {
+  _controller->setCurrentBookIsbn(kIsbn);
+
+  QVERIFY(!_controller->removePdfFromCurrentBook());
 }
 
 void BookControllerTest::setFilterCriteria_narrowsTheSearchModel() {

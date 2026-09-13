@@ -60,6 +60,12 @@ QVariant BookListModelBase::data(const QModelIndex &index, int role) const {
     return book.inWishList;
   case LanguageRole:
     return book.language;
+  case IsCustomRole:
+    return book.isCustom;
+  case PdfPathRole:
+    return book.pdfPath;
+  case PdfSourceRole:
+    return book.pdfSource;
   case GenresRole:
     return book.genres;
   default:
@@ -86,6 +92,9 @@ QHash<int, QByteArray> BookListModelBase::roleNames() const {
       {StatusRole, "status"},
       {InWishListRole, "inWishList"},
       {LanguageRole, "language"},
+      {IsCustomRole, "isCustom"},
+      {PdfPathRole, "pdfPath"},
+      {PdfSourceRole, "pdfSource"},
       {GenresRole, "genres"},
   };
 }

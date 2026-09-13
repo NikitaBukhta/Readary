@@ -24,6 +24,9 @@ struct BookDTO {
   int status = 0;
   bool inWishList = false;
   QString language;
+  bool isCustom = false;
+  QString pdfPath;
+  int pdfSource = 0;
   QString workKey;
   QStringList genres;
 

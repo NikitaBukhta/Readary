@@ -27,6 +27,8 @@ private slots:
   void setCurrentPage_toARootPage_unwindsTheStack();
   void setCurrentPage_downTwoLevels_keepsBothBehind();
 
+  void addBookPage_isReplacedByTheBookItOpens();
+
   void goBack_returnsToThePageBelow();
   void goBack_atTheRoot_isANoOp();
   void goBack_unwindsOneLevelAtATime();
@@ -52,6 +54,9 @@ void NavigationControllerTest::currentPagePath_namesTheQmlFile() {
 
   controller.setCurrentPage(Page::SearchPage);
   QCOMPARE(controller.currentPagePath(), QUrl{u"qrc:/qt/qml/Library/pages/searchPage/SearchPage.qml"_s});
+
+  controller.setCurrentPage(Page::AddBookPage);
+  QCOMPARE(controller.currentPagePath(), QUrl{u"qrc:/qt/qml/Library/pages/addBookPage/AddBookPage.qml"_s});
 }
 
 void NavigationControllerTest::goalsAndChallenges_shareTheMainPage() {
@@ -118,6 +123,20 @@ void NavigationControllerTest::setCurrentPage_downTwoLevels_keepsBothBehind() {
   QCOMPARE(controller.currentPage(), Page::CategoryListPage);
   controller.goBack();
   QCOMPARE(controller.currentPage(), Page::MainPage);
+}
+
+void NavigationControllerTest::addBookPage_isReplacedByTheBookItOpens() {
+  // Adding a book ends by opening it, and the filled-in form must not be what
+  // `goBack` lands on — the two pages share a level so the detail page replaces
+  // the form.
+  NavigationController controller{nullptr};
+  controller.setCurrentPage(Page::SearchPage);
+  controller.setCurrentPage(Page::AddBookPage);
+  controller.setCurrentPage(Page::BookDetailPage);
+
+  controller.goBack();
+
+  QCOMPARE(controller.currentPage(), Page::SearchPage);
 }
 
 void NavigationControllerTest::goBack_returnsToThePageBelow() {

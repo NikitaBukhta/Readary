@@ -15,9 +15,12 @@ class AqtProvider(ToolProvider):
     """Installs host Qt (for moc/rcc/qmltyperegistrar) and per-ABI Android Qt via aqtinstall."""
 
     # Qt 6.8 bundles qtdeclarative in both base archives; passing it explicitly errors out.
+    # Qt PDF is a separate module in the Qt installer (it ships in the
+    # qtwebengine repo but does not pull the browser in). PdfMetadataReader
+    # needs it, so the Android build has to install it alongside the base.
     _MODULES_BY_TARGET: dict[str, list[str]] = {
-        "desktop": [],
-        "android": [],
+        "desktop": ["qtpdf"],
+        "android": ["qtpdf"],
     }
 
     def __init__(self, shell: Shell, config: ProjectConfig,

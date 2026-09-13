@@ -28,13 +28,22 @@ DatabaseManager::~DatabaseManager() {
 }
 
 bool DatabaseManager::open() {
-  if (_db.open()) {
-    qCInfo(lcDb) << "Database opened:" << _db.databaseName();
-    return true;
+  if (!_db.open()) {
+    qCWarning(lcDb) << "Failed to open database:" << _db.lastError().text();
+    return false;
   }
 
-  qCWarning(lcDb) << "Failed to open database:" << _db.lastError().text();
-  return false;
+  // SQLite ignores this pragma inside a transaction, and every statement route
+  // below opens one — including the script runner, so the same pragma at the top
+  // of init.sql is a no-op. Setting it here on the bare connection is what
+  // actually makes the schema's ON DELETE CASCADE fire.
+  QSqlQuery pragma{_db};
+  if (!pragma.exec(u"PRAGMA foreign_keys = ON"_s)) {
+    qCWarning(lcDb) << "Failed to enable foreign keys:" << pragma.lastError().text();
+  }
+
+  qCInfo(lcDb) << "Database opened:" << _db.databaseName();
+  return true;
 }
 
 void DatabaseManager::close() {

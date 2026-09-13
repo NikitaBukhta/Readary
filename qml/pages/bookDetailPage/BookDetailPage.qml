@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Library
 
@@ -12,6 +13,59 @@ Page {
     readonly property var _book: BookController.currentBookData
 
     property string _pendingSessionId: ""
+
+    readonly property bool _hasPdf: root._book.pdfPath.length > 0
+
+    // Built from the book's state so an action that does not apply is absent
+    // rather than present-and-disabled. A catalog-supplied PDF is the book's,
+    // not the user's: it can be opened and nothing else.
+    readonly property var _menuActions: {
+        const items = [];
+        if (root._hasPdf)
+            items.push({
+                "id": "openPdf",
+                "label": qsTr("Open PDF"),
+                "glyph": "📄"
+            });
+        if (root._book.pdfSource !== PdfSource.Server)
+            items.push({
+                "id": "attachPdf",
+                "label": root._hasPdf ? qsTr("Replace PDF") : qsTr("Attach PDF"),
+                "glyph": "📎"
+            });
+        if (root._book.pdfSource === PdfSource.User)
+            items.push({
+                "id": "removePdf",
+                "label": qsTr("Remove PDF"),
+                "glyph": "🗑"
+            });
+        if (root._book.isCustom)
+            items.push({
+                "id": "deleteBook",
+                "label": qsTr("Delete book"),
+                "glyph": "🗑",
+                "separatorBefore": items.length > 0
+            });
+        return items;
+    }
+
+    function _runMenuAction(actionId: string): void {
+        switch (actionId) {
+        case "openPdf":
+            if (!BookController.openCurrentBookPdf())
+                ToastService.show(qsTr("Could not open the PDF."));
+            break;
+        case "attachPdf":
+            pdfDialog.open();
+            break;
+        case "removePdf":
+            removePdfDialog.open();
+            break;
+        case "deleteBook":
+            deleteBookDialog.open();
+            break;
+        }
+    }
 
     Flickable {
         id: scroll
@@ -46,8 +100,9 @@ Page {
                 coverSource: root._book.coverUrl
                 status: root._book.status
                 inWishList: root._book.inWishList
+                hasMenu: root._menuActions.length > 0
                 onBackRequested: NavigationController.goBack()
-                onPdfRequested: console.log(root._logTag, "Open PDF")
+                onMenuRequested: actionMenu.open()
                 onStatsRequested: console.log(root._logTag, "Open statistics")
                 onWantToReadRequested: {
                     if (root._book.status === BookStatus.InProgress)
@@ -145,6 +200,52 @@ Page {
             root._pendingSessionId = "";
         }
         onCancelled: root._pendingSessionId = ""
+    }
+
+    ActionMenu {
+        id: actionMenu
+        // Under the header's own button, inset by the page's side padding.
+        x: root.width - width - root._sidePadding
+        y: root._sidePadding + Geometry.size.iconXl
+        actions: root._menuActions
+        onTriggered: actionId => root._runMenuAction(actionId)
+    }
+
+    FileDialog {
+        id: pdfDialog
+        title: qsTr("Choose a PDF")
+        nameFilters: [qsTr("PDF documents (*.pdf)")]
+        onAccepted: {
+            if (!BookController.attachPdfToCurrentBook(pdfDialog.selectedFile))
+                ToastService.show(BookController.errorMessage);
+        }
+    }
+
+    ConfirmDialog {
+        id: removePdfDialog
+        title: qsTr("Remove this PDF?")
+        message: qsTr("The file is deleted from the app's storage. The book itself, your progress and the cover all stay as they are.")
+        confirmLabel: qsTr("Remove")
+        onConfirmed: {
+            if (!BookController.removePdfFromCurrentBook())
+                ToastService.show(BookController.errorMessage);
+        }
+    }
+
+    ConfirmDialog {
+        id: deleteBookDialog
+        title: qsTr("Delete this book?")
+        message: qsTr("The book leaves your library for good, together with its characters, genres, reading history and any PDF you attached. Books you added yourself cannot be found again online.")
+        confirmLabel: qsTr("Delete")
+        onConfirmed: {
+            // Stops the timer before the row goes: a running session would
+            // otherwise be flushed back to the cache under a dead ISBN.
+            summary.stopReading();
+            if (BookController.deleteCurrentBook())
+                NavigationController.goBack();
+            else
+                ToastService.show(BookController.errorMessage);
+        }
     }
 
     ConfirmDialog {

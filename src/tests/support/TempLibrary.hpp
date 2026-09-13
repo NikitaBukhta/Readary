@@ -3,10 +3,12 @@
 
 #include "core/DatabaseManager.hpp"
 #include "services/BookDTO.hpp"
+#include "services/BookFileStore.hpp"
 #include "services/BookStatus.hpp"
 #include "services/BookTable.hpp"
 
 #include <QString>
+#include <QTemporaryDir>
 #include <memory>
 
 namespace readary::tests {
@@ -24,24 +26,39 @@ public:
       return false;
     }
     _books = std::make_shared<services::BookTable>(_db);
+
+    // Rebuilt per open() so files named after an isbn cannot survive into the
+    // next test function.
+    _filesDir = std::make_unique<QTemporaryDir>();
+    if (!_filesDir->isValid()) {
+      close();
+      return false;
+    }
+    _files = std::make_shared<services::BookFileStore>(_filesDir->path());
     return true;
   }
 
   void close() {
+    _files.reset();
+    _filesDir.reset();
     _books.reset();
     _db.reset();
   }
 
   const std::shared_ptr<core::DatabaseManager> &db() const { return _db; }
   const std::shared_ptr<services::BookTable> &books() const { return _books; }
+  const std::shared_ptr<services::BookFileStore> &files() const { return _files; }
+  QString filesRoot() const { return _filesDir ? _filesDir->path() : QString{}; }
 
 private:
   std::shared_ptr<core::DatabaseManager> _db;
   std::shared_ptr<services::BookTable> _books;
+  std::unique_ptr<QTemporaryDir> _filesDir;
+  std::shared_ptr<services::BookFileStore> _files;
 };
 
-// A book that satisfies every CHECK constraint in the schema — notably
-// totalPages, which the schema rejects at the DTO's own default of 0.
+// A book that satisfies every CHECK constraint in the schema, with a real page
+// count so tests that read progress have something to work against.
 inline services::BookDTO makeBook(qint64 isbn, const QString &name, int status = services::BookStatus::None) {
   services::BookDTO book;
   book.isbn = isbn;

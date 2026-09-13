@@ -34,6 +34,9 @@ BookDTO makeBook(qint64 isbn, const QString &name) {
   book.status = 2;
   book.inWishList = true;
   book.language = u"en"_s;
+  book.isCustom = true;
+  book.pdfPath = u"C:/data/pdfs/1.pdf"_s;
+  book.pdfSource = 2;
   book.genres = {u"Science Fiction"_s};
   return book;
 }
@@ -121,6 +124,9 @@ void BookListModelBaseTest::data_exposesEveryRole() {
   QCOMPARE(idx.data(Roles::StatusRole).toInt(), book.status);
   QCOMPARE(idx.data(Roles::InWishListRole).toBool(), book.inWishList);
   QCOMPARE(idx.data(Roles::LanguageRole).toString(), book.language);
+  QCOMPARE(idx.data(Roles::IsCustomRole).toBool(), book.isCustom);
+  QCOMPARE(idx.data(Roles::PdfPathRole).toString(), book.pdfPath);
+  QCOMPARE(idx.data(Roles::PdfSourceRole).toInt(), book.pdfSource);
   QCOMPARE(idx.data(Roles::GenresRole).toStringList(), book.genres);
 }
 

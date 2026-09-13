@@ -14,7 +14,12 @@ ColumnLayout {
     property int ratingTotal: 10
     property url coverSource
 
+    // Whether the overflow button is there at all: with no applicable action the
+    // page passes false rather than opening an empty menu.
+    property bool hasMenu: false
+
     signal backClicked
+    signal menuClicked
 
     spacing: Geometry.spacing.lg
 
@@ -32,6 +37,21 @@ ColumnLayout {
             IconGlyph {
                 id: backIcon
                 glyph: "←"
+                color: Theme.textPrimary
+                size: Geometry.size.iconLg
+            }
+        }
+
+        TouchTarget {
+            id: menuButton
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.hasMenu
+            onClicked: root.menuClicked()
+
+            IconGlyph {
+                id: menuIcon
+                glyph: "⋮"
                 color: Theme.textPrimary
                 size: Geometry.size.iconLg
             }

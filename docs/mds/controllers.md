@@ -35,6 +35,18 @@ responsibilities deliberately, since both are book-scoped and small:
 | `readingHistoryModel` | property (RO, `ReadingHistoryModel*`) | per-current-book journal of finished reading sessions, newest first, paged the same way as `charactersModel`. Re-reads whenever `currentBookIsbn` changes — which covers a saved session too, since `bookSaved` refreshes the list model and that reset re-emits the signal |
 | `getSortFilterProxyForKind(kind)` | `Q_INVOKABLE` | proxy for a specific kind |
 | `openBook(id)` | `Q_INVOKABLE` | sets `currentBookId` and emits `bookOpenRequested(id)` for the router to pick up |
+| `addCustomBook(fields)` | `Q_INVOKABLE` → `bool` | stores a hand-typed book from a `QVariantMap` keyed by SQL column names (`name`, `author`, `year`, `publisher`, `totalPages`, `description`, `coverUrl`, `genres`) — the shape `BookDTO::fromMap` already reads. Trims the text, applies a staged PDF over it, then requires a title and an author (otherwise sets `errorMessage` and returns false), resolves the ISBN (below), marks the row `isCustom` and files it under `WantToRead` so it lands in a category list, then emits `bookSaved` and `openBook`s it. Backs [`AddBookPage`](../../qml/pages/addBookPage/AddBookPage.qml) |
+| `deleteCurrentBook()` | `Q_INVOKABLE` → `bool` | removes the current book from the library for good, cascading to its genres, characters and reading sessions, dropping both timer caches and its stored files (`BookFileStore::removeAll`). Refuses anything but a custom book — a catalog book only ever leaves a category, since it can be found online again. Clears the selection before emitting `bookSaved`, so `currentBookData` stops resolving a row that is gone. QML confirms first, then calls `NavigationController.goBack()` |
+| `stagePdf(fileUrl)` | `Q_INVOKABLE` → `QVariantMap` | parses a PDF the **add form** just picked and holds it as pending. Returns `{ok, pageCount, title, author, isbn, coverPreview}` so the form can show the overwrite instead of letting it happen silently on save. `coverPreview` is the rendered first page as a `data:image/png;base64,…` url — inline because the stored cover is named after an isbn that does not exist until the add commits, so there is no file for the form to point at; on failure `{ok: false}` and `errorMessage` is set. Nothing is written yet — the stored file is named after the isbn, which does not exist until the add commits |
+| `clearStagedPdf()` | `Q_INVOKABLE` | drops the pending PDF. `AddBookPage` calls it on destruction: the controller would otherwise hold it until the next add and attach it to a different book |
+| `attachPdfToCurrentBook(fileUrl)` | `Q_INVOKABLE` → `bool` | parses, stores and attaches a PDF to the book on screen, replacing one that is already there. Refused when `pdfSource` is `Server`. Metadata overrides the book's own fields **only for a custom book** — a catalog book took its fields from the catalog, and the PDF has no better claim on them |
+| `removePdfFromCurrentBook()` | `Q_INVOKABLE` → `bool` | deletes the stored PDF and clears both columns. Only for `PdfSource::User`; the cover stays, since once rendered it is the book's own picture. QML confirms first |
+
+The four PDF actions and `deleteCurrentBook` are reached from the detail page's
+"⋮" overflow menu, which builds its entries from the book's state — see
+[qml.md](qml.md#bookdetailpageqml). The C++ side re-checks every rule anyway:
+the menu decides what to show, not what is allowed.
+| `openCurrentBookPdf()` | `Q_INVOKABLE` (const) → `bool` | hands the stored file to the platform viewer through `QDesktopServices` — rendering a whole book is not this app's job |
 | `updateReadingProgress(pageNumber, durationSeconds)` | `Q_INVOKABLE` | persists current reading position in `books.pagesRead` and logs a row in `reading_sessions`; emits `bookSaved` so the list refreshes |
 | `setBookStatus(status)` | `Q_INVOKABLE` | writes `books.status` for the current book (values from `BookStatus`); emits `bookSaved` |
 | `toggleWantToRead()` | `Q_INVOKABLE` | flips the current book's status between `WantToRead` and `None`. Not meant for an in-progress book — QML routes that case through the move-warning dialog to `moveInProgressToWantToRead()` |
@@ -68,6 +80,25 @@ For the reading-timer phase (`ReadingPhase.Stopped` / `Running` / `Paused`),
 see [`ReadingPhase`](../../src/services/ReadingPhase.hpp) — also Q_GADGET,
 single source of truth shared between `ReadingSessionCache` (C++) and
 `ReadingProgressTimer` (QML).
+
+### How a custom book gets its ISBN
+
+Never by generating one. In order of precedence:
+
+1. **The PDF** — `PdfMetadataReader` scans the page text for a labelled ISBN
+   and `addCustomBook` takes it over anything typed, the same precedence the
+   rest of the PDF metadata has.
+2. **The form** — the optional `isbnText` field, run through
+   `IsbnValidator::convert`, which validates the checksum and normalises an
+   ISBN-10 to its ISBN-13 form so a hand-typed book keys the same row an
+   import of it would. A typed-but-invalid ISBN is **refused**, not ignored:
+   quietly dropping it would file the book under no ISBN while the user
+   believes otherwise.
+3. **Neither** — the book is stored with no ISBN at all and keyed by
+   `BookTable::nextLocalKey()` (see [database.md](database.md#booktable)).
+
+An ISBN already in the library is refused up front, so the duplicate surfaces
+as "That book is already in your library" rather than a failed insert.
 
 ### `openBook(id)` flow
 
@@ -206,19 +237,25 @@ back to the root.
 ```
 MainPage         = 1   level 1   qrc:/qt/qml/Library/pages/mainPage/MainPage.qml
 CategoryListPage = 2   level 2   qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml
-SearchPage       = 3   level 1   (placeholder — falls back to MainPage)
+SearchPage       = 3   level 1   qrc:/qt/qml/Library/pages/searchPage/SearchPage.qml
 GoalsPage        = 4   level 1   (placeholder — falls back to MainPage)
 ChallengesPage   = 5   level 1   (placeholder — falls back to MainPage)
 ProfilePage      = 6   level 1   qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml
-BookDetailPage   = 7   level 3   qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml
+AddBookPage      = 7   level 3   qrc:/qt/qml/Library/pages/addBookPage/AddBookPage.qml
+BookDetailPage   = 8   level 3   qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml
 ```
 
-The three remaining placeholder pages (Search/Goals/Challenges) are exposed
-so `BottomNavBar` can drive `currentPage` to them, but their `pageInfo()`
-entry maps to `MainPage`'s URL — they'll get real implementations later.
+The two remaining placeholder pages (Goals/Challenges) are exposed so
+`BottomNavBar` can drive `currentPage` to them, but their `pageInfo()` entry
+maps to `MainPage`'s URL — they'll get real implementations later.
 `ProfilePage` already routes to the
 [Settings page](../../qml/pages/settingsPage/SettingsPage.qml) (language picker
 + future preferences).
+
+`AddBookPage` deliberately shares level 3 with `BookDetailPage`: a successful
+add ends in `BookController::openBook`, and a same-level push replaces the
+form instead of stacking on top of it — so `goBack` from the new book's detail
+page lands on the search page, never on a filled-in form.
 
 ### Wiring in QML
 

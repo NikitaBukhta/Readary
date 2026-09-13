@@ -121,7 +121,7 @@ void QmlSingletonWiringTest::init() {
   QCOMPARE(_library.books()->addBook(makeBook(kIsbn, u"Refactoring"_s)), kIsbn);
 
   _listModel = std::make_unique<BookListModel>(_library.books(), nullptr);
-  _bookController = std::make_unique<BookController>(_library.books(), _listModel.get(), nullptr);
+  _bookController = std::make_unique<BookController>(_library.books(), _library.files(), _listModel.get(), nullptr);
 }
 
 void QmlSingletonWiringTest::cleanup() {

@@ -9,7 +9,8 @@ class QQmlApplicationEngine;
 
 namespace readary::services {
 class BookTable;
-}
+class BookFileStore;
+} // namespace readary::services
 
 namespace readary::models {
 class BookListModel;
@@ -47,6 +48,7 @@ private:
 
   std::shared_ptr<DatabaseManager> _db;
   std::shared_ptr<services::BookTable> _bookTable;
+  std::shared_ptr<services::BookFileStore> _bookFileStore;
 
   models::BookListModel *_bookListModel{nullptr};
   controllers::BookController *_bookController{nullptr};

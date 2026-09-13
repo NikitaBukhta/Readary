@@ -31,6 +31,9 @@ BookDTO makeBook() {
   book.status = 2;
   book.inWishList = true;
   book.language = u"en"_s;
+  book.isCustom = true;
+  book.pdfPath = u"C:/data/pdfs/1.pdf"_s;
+  book.pdfSource = 2;
   book.genres = {u"Software"_s};
   return book;
 }
@@ -139,6 +142,9 @@ void BookDTOObjectTest::properties_readThroughTheMetaObject() {
   QCOMPARE(read(book, "status").toInt(), 2);
   QVERIFY(read(book, "isHardcover").toBool());
   QVERIFY(read(book, "inWishList").toBool());
+  QVERIFY(read(book, "isCustom").toBool());
+  QCOMPARE(read(book, "pdfPath").toString(), u"C:/data/pdfs/1.pdf"_s);
+  QCOMPARE(read(book, "pdfSource").toInt(), 2);
   QCOMPARE(read(book, "language").toString(), u"en"_s);
   QCOMPARE(read(book, "description").toString(), u"Improving the design of existing code"_s);
   QCOMPARE(read(book, "coverUrl").toString(), u"https://example.invalid/cover.jpg"_s);
@@ -161,7 +167,7 @@ void BookDTOObjectTest::properties_coverEveryDtoFieldQmlNeeds() {
   const QMetaObject &meta = BookDTOObject::staticMetaObject;
 
   // Every DTO field except workKey, which is an import-time detail.
-  QCOMPARE(meta.propertyCount(), 18);
+  QCOMPARE(meta.propertyCount(), 21);
 }
 
 void BookDTOObjectTest::unknownProperty_isNotFound() {

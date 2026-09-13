@@ -36,6 +36,10 @@ NavigationController::PageInfo NavigationController::pageInfo(Page page) {
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/categoryListPage/CategoryListPage.qml"_s}, .level = 2};
   case Page::BookDetailPage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml"_s}, .level = 3};
+  // Level 3, same as the detail page: adding a book ends by opening it, and the
+  // form must not stay on the stack for `goBack` to land on.
+  case Page::AddBookPage:
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/addBookPage/AddBookPage.qml"_s}, .level = 3};
   case Page::ProfilePage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s}, .level = 1};
   case Page::SearchPage:

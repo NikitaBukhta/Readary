@@ -1,4 +1,5 @@
-PRAGMA foreign_keys = ON;
+-- Foreign keys are enabled by DatabaseManager::open() instead: SQLite ignores the
+-- pragma inside a transaction, and the script runner wraps every statement in one.
 
 CREATE TABLE IF NOT EXISTS genres (
   id   INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -6,6 +7,7 @@ CREATE TABLE IF NOT EXISTS genres (
 );
 
 -- status: 0 = NONE, 1 = WantToRead, 2 = InProgress, 3 = Finished
+-- pdfSource: 0 = none, 1 = supplied by a catalog (locked), 2 = attached by the user
 CREATE TABLE IF NOT EXISTS books (
   isbn         INTEGER PRIMARY KEY,
   name         TEXT    NOT NULL,
@@ -23,8 +25,21 @@ CREATE TABLE IF NOT EXISTS books (
   userRating   INTEGER DEFAULT NULL CHECK (userRating   IS NULL OR (userRating   >= 0 AND userRating   <= 10)),
   status       INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0, 1, 2, 3)),
   inWishList   INTEGER NOT NULL DEFAULT 0 CHECK (inWishList IN (0, 1)),
-  language     TEXT    DEFAULT NULL
+  language     TEXT    DEFAULT NULL,
+  isCustom     INTEGER NOT NULL DEFAULT 0 CHECK (isCustom IN (0, 1)),
+  pdfPath      TEXT    DEFAULT NULL,
+  pdfSource    INTEGER NOT NULL DEFAULT 0 CHECK (pdfSource IN (0, 1, 2))
 );
+
+-- Databases created before these columns existed skip the CREATE above, so they
+-- are added separately for them, carrying the same CHECK constraints so the
+-- enforced schema does not depend on how old the install is. There is no
+-- ADD COLUMN IF NOT EXISTS in SQLite: once a column is in place its statement
+-- fails harmlessly, and every launch logs one "duplicate column name" warning
+-- per column under readary.core.db. Expected.
+ALTER TABLE books ADD COLUMN isCustom INTEGER NOT NULL DEFAULT 0 CHECK (isCustom IN (0, 1));
+ALTER TABLE books ADD COLUMN pdfPath TEXT DEFAULT NULL;
+ALTER TABLE books ADD COLUMN pdfSource INTEGER NOT NULL DEFAULT 0 CHECK (pdfSource IN (0, 1, 2));
 
 CREATE TABLE IF NOT EXISTS book_genres (
   book_isbn INTEGER NOT NULL REFERENCES books(isbn) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -62,6 +77,16 @@ CREATE TABLE IF NOT EXISTS reading_sessions (
   CHECK (pages_to IS NULL OR pages_to >= pages_from),
   CHECK (ended_at IS NULL OR ended_at >= started_at)
 );
+
+-- Repair for databases written while the foreign_keys pragma was still a no-op:
+-- deleting a book left its child rows behind, and a local key handed out again
+-- by BookTable::nextLocalKey() would inherit them. Enforcement is not
+-- retroactive, so the sweep has to be explicit. It runs on every launch (there
+-- is no schema-version table to gate it on); three indexed anti-joins over small
+-- tables, and a no-op once the orphans are gone.
+DELETE FROM book_genres WHERE book_isbn NOT IN (SELECT isbn FROM books);
+DELETE FROM book_characters WHERE book_isbn NOT IN (SELECT isbn FROM books);
+DELETE FROM reading_sessions WHERE book_isbn NOT IN (SELECT isbn FROM books);
 
 CREATE INDEX IF NOT EXISTS ix_books_name              ON books(name);
 CREATE INDEX IF NOT EXISTS ix_books_author            ON books(author);

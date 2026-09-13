@@ -17,10 +17,11 @@ ColumnLayout {
     property url coverSource
     property int status: 0
     property bool inWishList: false
+    property bool hasMenu: false
     property int sidePadding: 0
 
     signal backRequested
-    signal pdfRequested
+    signal menuRequested
     signal statsRequested
     signal wantToReadRequested
     signal wantToBuyRequested
@@ -60,7 +61,9 @@ ColumnLayout {
         totalPages: root.totalPages
         rating: root.userRating
         coverSource: root.coverSource
+        hasMenu: root.hasMenu
         onBackClicked: root.backRequested()
+        onMenuClicked: root.menuRequested()
     }
 
     ReadingProgressCard {
@@ -122,22 +125,6 @@ ColumnLayout {
         rowSpacing: Geometry.spacing.md
 
         ActionButton {
-            id: pdfAction
-            Layout.fillWidth: true
-            label: qsTr("PDF")
-            iconGlyph: "📄"
-            onClicked: root.pdfRequested()
-        }
-
-        ActionButton {
-            id: statsAction
-            Layout.fillWidth: true
-            label: qsTr("Statistics")
-            iconGlyph: "📊"
-            onClicked: root.statsRequested()
-        }
-
-        ActionButton {
             id: wantToReadAction
             Layout.fillWidth: true
             label: qsTr("Want to read")
@@ -153,6 +140,15 @@ ColumnLayout {
             iconGlyph: "🛒"
             active: root.inWishList
             onClicked: root.wantToBuyRequested()
+        }
+
+        ActionButton {
+            id: statsAction
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
+            label: qsTr("Statistics")
+            iconGlyph: "📊"
+            onClicked: root.statsRequested()
         }
     }
 }

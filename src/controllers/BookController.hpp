@@ -7,7 +7,9 @@
 #include "models/books/BookSortFilterProxyModel.hpp"
 #include "models/books/ReadingHistoryModel.hpp"
 #include "qmltypes/BookDTOObject.hpp"
+#include "services/BookFileStore.hpp"
 #include "services/BookTable.hpp"
+#include "services/PdfDocumentInfo.hpp"
 
 #include <QHash>
 #include <QObject>
@@ -49,7 +51,8 @@ public:
   };
   Q_ENUM(ListKind)
 
-  explicit BookController(std::shared_ptr<services::BookTable> bookTable, models::BookListModel *listModel,
+  explicit BookController(std::shared_ptr<services::BookTable> bookTable,
+                          std::shared_ptr<services::BookFileStore> fileStore, models::BookListModel *listModel,
                           QObject *parent);
   ~BookController() override;
 
@@ -66,6 +69,14 @@ public:
 
   Q_INVOKABLE void openBook(qint64 isbn);
   void importAndOpenBook(const services::BookDTO &book);
+  Q_INVOKABLE bool addCustomBook(const QVariantMap &fields);
+  Q_INVOKABLE bool deleteCurrentBook();
+
+  Q_INVOKABLE QVariantMap stagePdf(const QString &fileUrl);
+  Q_INVOKABLE void clearStagedPdf();
+  Q_INVOKABLE bool attachPdfToCurrentBook(const QString &fileUrl);
+  Q_INVOKABLE bool removePdfFromCurrentBook();
+  Q_INVOKABLE bool openCurrentBookPdf() const;
 
   static Q_INVOKABLE void saveReadingSession(const QString &bookIsbn, int seconds, int phase);
   static Q_INVOKABLE QVariantMap takeReadingSession(const QString &bookIsbn);
@@ -99,11 +110,23 @@ private:
 
   models::BookSortFilterProxyModel *buildProxy(models::BookListModel *source,
                                                const models::filters::BookFilterStrategy &strategy);
+  // Copies the pdf in and renders its cover beside it, then writes both paths
+  // onto the book. Metadata only overrides the book's own fields for a custom
+  // one — a catalog book keeps what the catalog said.
+  bool applyPdf(services::BookDTO &book, const QString &sourcePath, const services::PdfDocumentInfo &info) const;
+  static void overrideFromPdf(services::BookDTO &book, const services::PdfDocumentInfo &info);
+  // Copies a cover the user picked into the store, so it survives the original
+  // being moved. Returns whether the book's coverUrl changed.
+  bool adoptPickedCover(services::BookDTO &book) const;
+  // Reads the ISBN the form typed, if any. Reports a typed-but-invalid one so it
+  // is refused rather than silently dropped.
+  bool resolveTypedIsbn(const QVariantMap &fields, qint64 &isbn);
   void applyActiveSourceToSearchProxy();
 
   static BookController *s_instance;
 
   std::shared_ptr<services::BookTable> _bookTable;
+  std::shared_ptr<services::BookFileStore> _fileStore;
   models::BookListModel *_listModel;
   models::BookSearchProxyModel *_searchProxy;
   models::BookCriteriaFilterProxyModel *_criteriaProxy;
@@ -118,6 +141,11 @@ private:
 
   mutable qmltypes::BookDTOObject _cachedBookData;
   mutable bool _cacheValid{false};
+
+  // Parsed once when the add form picks a file, committed by addCustomBook —
+  // the stored file is named after the isbn, which does not exist until then.
+  QString _stagedPdfPath;
+  services::PdfDocumentInfo _stagedPdf;
 };
 
 } // namespace readary::controllers

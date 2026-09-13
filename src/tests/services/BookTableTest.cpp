@@ -34,6 +34,10 @@ private slots:
   void addBook_duplicateIsbn_isRejected();
   void addBook_withGenres_linksThem();
   void addBook_violatingASchemaCheck_isRejected();
+  void addBook_withoutAPageCount_storesNull();
+  void addBook_keepsTheCustomFlag();
+  void addBook_keepsThePdfColumns();
+  void updateBook_writesThePdfColumns();
 
   void getAllBooks_onAnEmptyLibrary_returnsNothing();
   void getAllBooks_attachesGenresToTheRightBook();
@@ -42,6 +46,10 @@ private slots:
   void updateBook_unknownIsbn_returnsFalse();
   void updateBook_withGenres_replacesTheOldSet();
   void updateBook_withoutGenres_leavesTheOldSet();
+
+  void addBook_withoutAnIsbn_keysTheRowBelowTheIsbnRange();
+  void addBook_withoutAnIsbn_keysEachRowSeparately();
+  void addBook_withoutAnIsbn_keepsCountingPastCatalogBooks();
 
   void deleteBook_removesIt();
   void deleteBook_unknownIsbn_returnsFalse();
@@ -167,12 +175,36 @@ void BookTableTest::addBook_withGenres_linksThem() {
 }
 
 void BookTableTest::addBook_violatingASchemaCheck_isRejected() {
-  // totalPages must be NULL or positive; the DTO's own default of 0 is not.
+  // userRating is constrained to 0..10.
   BookDTO book = makeBook(kIsbn, u"Refactoring"_s);
-  book.totalPages = 0;
+  book.userRating = 42;
 
   QCOMPARE(_library.books()->addBook(book), 0LL);
   QCOMPARE(countOf(u"books"_s), 0);
+}
+
+void BookTableTest::addBook_withoutAPageCount_storesNull() {
+  // The schema rejects totalPages = 0 outright, and that is exactly what the
+  // DTO carries for "length unknown" — it has to reach the column as NULL.
+  BookDTO book = makeBook(kIsbn, u"Refactoring"_s);
+  book.totalPages = 0;
+
+  QCOMPARE(_library.books()->addBook(book), kIsbn);
+
+  SqlQueryBuilder query;
+  query.select({u"totalPages"_s}).from(u"books"_s).where(u"isbn = ?"_s).values({kIsbn});
+  const auto rows = _library.db()->select(query);
+  QCOMPARE(rows.size(), 1);
+  QVERIFY(rows.first().value(u"totalPages"_s).isNull());
+  QCOMPARE(_library.books()->getAllBooks().first().totalPages, 0);
+}
+
+void BookTableTest::addBook_keepsTheCustomFlag() {
+  BookDTO book = makeBook(kIsbn, u"My own notes"_s);
+  book.isCustom = true;
+
+  QCOMPARE(_library.books()->addBook(book), kIsbn);
+  QVERIFY(_library.books()->getAllBooks().first().isCustom);
 }
 
 void BookTableTest::getAllBooks_onAnEmptyLibrary_returnsNothing() {
@@ -238,6 +270,73 @@ void BookTableTest::updateBook_withoutGenres_leavesTheOldSet() {
   book.genres.clear();
   QVERIFY(_library.books()->updateBook(book));
   QCOMPARE(_library.books()->getGenres(kIsbn), QStringList({u"Software"_s}));
+}
+
+void BookTableTest::addBook_keepsThePdfColumns() {
+  BookDTO book = makeBook(kIsbn, u"Refactoring"_s);
+  book.pdfPath = u"C:/data/pdfs/9780201616224.pdf"_s;
+  book.pdfSource = 2;
+
+  QCOMPARE(_library.books()->addBook(book), kIsbn);
+
+  const BookDTO stored = _library.books()->getAllBooks().first();
+  QCOMPARE(stored.pdfPath, book.pdfPath);
+  QCOMPARE(stored.pdfSource, 2);
+}
+
+void BookTableTest::updateBook_writesThePdfColumns() {
+  // Attaching and removing a pdf both go through updateBook.
+  QCOMPARE(_library.books()->addBook(makeBook(kIsbn, u"Refactoring"_s)), kIsbn);
+
+  BookDTO book = makeBook(kIsbn, u"Refactoring"_s);
+  book.pdfPath = u"C:/data/pdfs/9780201616224.pdf"_s;
+  book.pdfSource = 2;
+  QVERIFY(_library.books()->updateBook(book));
+  QCOMPARE(_library.books()->getAllBooks().first().pdfSource, 2);
+
+  book.pdfPath.clear();
+  book.pdfSource = 0;
+  QVERIFY(_library.books()->updateBook(book));
+
+  const BookDTO stored = _library.books()->getAllBooks().first();
+  QVERIFY(stored.pdfPath.isEmpty());
+  QCOMPARE(stored.pdfSource, 0);
+}
+
+void BookTableTest::addBook_withoutAnIsbn_keysTheRowBelowTheIsbnRange() {
+  // No ISBN is invented for a book that has none — the row gets a small local
+  // key that could never be read as an ISBN.
+  BookDTO book = makeBook(0, u"My own notes"_s);
+  book.isCustom = true;
+
+  const qint64 key = _library.books()->addBook(book);
+
+  QCOMPARE(key, 1LL);
+  QCOMPARE(_library.books()->getAllBooks().first().isbn, key);
+}
+
+void BookTableTest::addBook_withoutAnIsbn_keysEachRowSeparately() {
+  BookDTO first = makeBook(0, u"First"_s);
+  BookDTO second = makeBook(0, u"Second"_s);
+
+  const qint64 firstKey = _library.books()->addBook(first);
+  const qint64 secondKey = _library.books()->addBook(second);
+
+  QVERIFY(firstKey > 0);
+  QVERIFY(secondKey > 0);
+  QVERIFY(firstKey != secondKey);
+  QCOMPARE(countOf(u"books"_s), 2);
+}
+
+void BookTableTest::addBook_withoutAnIsbn_keepsCountingPastCatalogBooks() {
+  // A library full of real ISBNs must not push the local keys into their range:
+  // a later import of the book with that ISBN would collide.
+  QCOMPARE(_library.books()->addBook(makeBook(kIsbn, u"Refactoring"_s)), kIsbn);
+  QCOMPARE(_library.books()->addBook(makeBook(kOtherIsbn, u"Effective Modern C++"_s)), kOtherIsbn);
+
+  const qint64 key = _library.books()->addBook(makeBook(0, u"My own notes"_s));
+
+  QCOMPARE(key, 1LL);
 }
 
 void BookTableTest::deleteBook_removesIt() {

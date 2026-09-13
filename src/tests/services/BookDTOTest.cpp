@@ -27,6 +27,9 @@ BookDTO makeFullBook() {
   book.status = 2;
   book.inWishList = true;
   book.language = u"en"_s;
+  book.isCustom = true;
+  book.pdfPath = u"C:/data/pdfs/1.pdf"_s;
+  book.pdfSource = 2;
   book.workKey = u"/works/OL1W"_s;
   book.genres = {u"Software"_s, u"Programming"_s};
   return book;
@@ -75,6 +78,9 @@ void BookDTOTest::fromMap_missingKeys_leaveDefaults() {
   QCOMPARE(book.status, 0);
   QVERIFY(!book.isHardcover);
   QVERIFY(!book.inWishList);
+  QVERIFY(!book.isCustom);
+  QVERIFY(book.pdfPath.isEmpty());
+  QCOMPARE(book.pdfSource, 0);
   QVERIFY(book.genres.isEmpty());
 }
 
@@ -137,6 +143,9 @@ void BookDTOTest::toMap_carriesEveryField() {
   QCOMPARE(row.value(u"status"_s).toInt(), book.status);
   QCOMPARE(row.value(u"inWishList"_s).toBool(), book.inWishList);
   QCOMPARE(row.value(u"language"_s).toString(), book.language);
+  QCOMPARE(row.value(u"isCustom"_s).toBool(), book.isCustom);
+  QCOMPARE(row.value(u"pdfPath"_s).toString(), book.pdfPath);
+  QCOMPARE(row.value(u"pdfSource"_s).toInt(), book.pdfSource);
   QCOMPARE(row.value(u"workKey"_s).toString(), book.workKey);
   QCOMPARE(row.value(u"genres"_s).toStringList(), book.genres);
 }
@@ -162,6 +171,9 @@ void BookDTOTest::roundTrip_throughAMap_preservesEveryField() {
   QCOMPARE(restored.status, original.status);
   QCOMPARE(restored.inWishList, original.inWishList);
   QCOMPARE(restored.language, original.language);
+  QCOMPARE(restored.isCustom, original.isCustom);
+  QCOMPARE(restored.pdfPath, original.pdfPath);
+  QCOMPARE(restored.pdfSource, original.pdfSource);
   QCOMPARE(restored.genres, original.genres);
   QCOMPARE(restored.workKey, original.workKey);
 }

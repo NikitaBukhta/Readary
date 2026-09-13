@@ -9,6 +9,7 @@ class AppEnvironment {
 public:
   static QString dataPath();
   static QString databasePath();
+  static QString bookFilesPath();
   static QString logFilePath();
 
   static void installFileLogger();

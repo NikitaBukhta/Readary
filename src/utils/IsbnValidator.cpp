@@ -1,6 +1,52 @@
 #include "IsbnValidator.hpp"
 
+#include <QRegularExpression>
+
+namespace {
+// The first `count` significant characters of a run, or empty when it holds
+// fewer. Separators are dropped here so the caller can cut the run to an exact
+// ISBN length; convert() tolerates them either way.
+QString firstSignificant(const QString &run, int count) {
+  QString out;
+  out.reserve(count);
+  for (const QChar ch : run) {
+    if (!ch.isDigit() && ch != u'X' && ch != u'x') {
+      continue;
+    }
+    out += ch;
+    if (out.size() == count) {
+      return out;
+    }
+  }
+  return {};
+}
+} // namespace
+
 namespace readary::utils {
+
+std::optional<qint64> IsbnValidator::findIn(const QString &text) {
+  // "ISBN 978-0-13-235088-4", "ISBN-13: 9780132350884", "isbn 0132350882".
+  // A raw literal so the regex escapes read as themselves. The run is captured
+  // generously — copyright pages print the descending printing number right
+  // under the ISBN, and a greedy match would otherwise swallow it.
+  static const QRegularExpression pattern{QStringLiteral(R"(ISBN(?:[\s-]*1[03])?[\s:]*((?:[0-9Xx][\s-]*){9,19}))"),
+                                          QRegularExpression::CaseInsensitiveOption};
+
+  QRegularExpressionMatchIterator matches = pattern.globalMatch(text);
+  while (matches.hasNext()) {
+    const QString run = matches.next().captured(1);
+    // An ISBN is 13 or 10 significant characters; cut the run to each in turn
+    // rather than trusting where it happened to end.
+    for (const int length : {kMaxDigits, 10}) {
+      // A book often prints both its ISBN-10 and ISBN-13, and back matter can
+      // carry other editions' — the first that passes its checksum wins.
+      if (const auto isbn = convert(firstSignificant(run, length))) {
+        return isbn;
+      }
+    }
+  }
+  return std::nullopt;
+}
 
 std::optional<qint64> IsbnValidator::convert(const QString &val) {
   Digits digits{};

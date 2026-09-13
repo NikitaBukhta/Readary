@@ -105,7 +105,8 @@ pattern) at construction time; see [models-and-filters.md](models-and-filters.md
 ```
 src/
   core/        AppEnvironment, AppInitializer, DatabaseManager, SqlQueryBuilder
-  services/    BookTable, BookDTO, CharacterDTO, ReadingSessionDTO, BookStatus, ReadingPhase, ReadingSessionCache
+  services/    BookTable, BookDTO, CharacterDTO, ReadingSessionDTO, BookStatus, ReadingPhase, ReadingSessionCache,
+               BookFileStore (per-book files on disk), PdfMetadataReader + PdfDocumentInfo (Qt PDF), PdfSource
   qmltypes/    BookDTOObject (Q_GADGET wrapper over BookDTO, exposed by BookController to QML)
   models/
     books/     BookListModel, BookSearchProxyModel, BookSortFilterProxyModel, BookCharactersModel,
@@ -120,6 +121,7 @@ qml/
     mainPage/         MainPage + sections (Currently reading, Categories, …)
     categoryListPage/ CategoryListPage (vertical book list per category)
     bookDetailPage/   BookDetailPage + header / progress / ratings / reading-history / characters cards
+    addBookPage/      AddBookPage + cover, pdf and genre pickers for a hand-added book
   components/  Reusable UI: SurfaceCard / PressableSurface / PaddedCard / TouchTarget
                 base components, plus rows, buttons, search field, nav bar,
                 progress widgets, StarRating, TagPill

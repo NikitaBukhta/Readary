@@ -24,9 +24,14 @@ qml/
       CategoryListPage.qml         Vertical list per category, with search
     settingsPage/
       SettingsPage.qml             Language picker (and future user-preference rows) — bound to SettingsController.languageModel
+    addBookPage/
+      AddBookPage.qml              Form for a hand-added book; submits to BookController.addCustomBook
+      CoverPicker.qml              Tap-to-pick cover slot with a dashed placeholder (QtQuick.Dialogs FileDialog)
+      PdfPicker.qml                Tap-to-pick PDF row; parses through BookController and reports the numbers back
+      GenrePicker.qml              Preset genre chips plus a free-text slot behind "Other"
     bookDetailPage/
       BookDetailPage.qml           Detail page bound to BookController.currentBookData
-      BookDetailHeader.qml         Back arrow + cover + title/author/meta + inline rating
+      BookDetailHeader.qml         Back arrow + "⋮" overflow button + cover + title/author/meta + inline rating
       ReadingProgressCard.qml      Progress block + action button OR embedded ReadingProgressTimer
       ReadingProgressTimer.qml     Stopwatch (Phase enum) + end-session form; persists via BookController
       RatingsCard.qml              Two RatingTile halves separated by a divider
@@ -42,6 +47,10 @@ qml/
       BookGenreTags.qml            Flow of TagPill for genres, sits below the characters ListView
   components/
     AppSearchField.qml             Pill-shaped text field with magnifier glyph
+    ActionMenu.qml                 Dropdown of actions behind a "⋮" button; items are plain objects supplied by the caller
+    FieldLabel.qml                 Caption above a form input
+    FormField.qml                  FieldLabel + filled input box; single-line or multiline, optional digits-only
+    DashedOutline.qml              Canvas-painted dashed rounded outline for an empty slot
     SurfaceCard.qml                Rectangle + radius.lg + Theme.surface + MultiEffect shadow
     PressableSurface.qml           SurfaceCard + MouseArea + signal clicked + readonly pressed alias
     PaddedCard.qml                 SurfaceCard with contentPadding and auto implicit size
@@ -244,6 +253,43 @@ Vertical list page. Header (back arrow + title), subtitle "%n book(s)",
 delegate `BookListRow` calls `BookController.openBook(model.bookId)` on
 tap.
 
+### `AddBookPage.qml`
+
+Reached from the "+ Add your own" link on the search page, next to the result
+count. Header (back arrow + title), then a `Flickable` holding a `CoverPicker`,
+seven `FormField`s (title, author, year, publisher, page count, ISBN,
+description), a `PdfPicker`, a `GenrePicker` and the submit `PrimaryButton`.
+
+- Nothing is bound two-way. `_submit()` reads each field's `value` into a
+  `QVariantMap` keyed by SQL column names and hands it to
+  `BookController.addCustomBook`, which validates. On failure the page toasts
+  `BookController.errorMessage`; on success the controller opens the new book,
+  which swaps this page out — so the detail page *is* the confirmation and no
+  QML runs after the call. See
+  [controllers.md](controllers.md#bookcontroller) for the field keys.
+- The page holds no reset path: it lives behind `Main.qml`'s page `Loader`, so
+  leaving and coming back builds a fresh, empty form.
+- `CoverPicker` stores a local file URL straight into `coverUrl`; `Image`
+  loads it the same as a remote cover, and an empty pick falls back to the
+  usual 📖 placeholder.
+- `GenrePicker` chips show translated labels but contribute untranslated ids
+  (`"Fantasy"`, `"Sci-Fi"`, …) — rows in the `genres` table are
+  language-independent keys shared with imported books, so a translated label
+  must never reach storage. "Other" reveals a `FormField` whose raw text is
+  appended as-is.
+- `PdfPicker` calls `BookController.stagePdf()` on pick and re-emits the result
+  as `parsed(info)`; the page pushes those values into the title, author and
+  page-count and ISBN fields through `FormField.setValue`, and the rendered first page
+  into `CoverPicker.previewUrl`. That is **display only** — the controller
+  applies the same override again when it stores the book, so the rule holds
+  even if QML never showed it. The trash tile emits `cleared()` and drops the
+  staged file via `clearStagedPdf()`, which the page uses to clear the preview.
+- `CoverPicker` keeps the two apart: `imageUrl` is what the user picked and what
+  the form submits, `previewUrl` is the PDF's first page and wins for display —
+  matching the controller, which lets the PDF override a hand-picked cover on a
+  custom book. The preview arrives as a `data:` url because the stored cover has
+  no file until the book has an isbn to be named after.
+
 ### `BookDetailPage.qml`
 
 Bound to `BookController.currentBookData` (a `bl::qmltypes::BookDTOObject`
@@ -293,7 +339,31 @@ Layout (top → bottom, all inside the page-level Flickable's ColumnLayout):
      rating with stars (decimals: 0). Right: global rating without stars
      (decimals: 1). Each tile shows "Not rated" when `value <= 0`.
 1.4. Description — header + body text, hidden when description is empty.
-1.5. Three `ActionButton`s (PDF / Statistics / Favorite).
+1.5. Three `ActionButton`s: Want to read / Want to buy as a pair, then
+     Statistics spanning both columns. The PDF actions and the book
+     deletion are **not** here — they live in the overflow menu below,
+     because each of them only applies to some books and a grid of
+     half-disabled tiles reads worse than a short menu.
+
+**The overflow menu.** `BookDetailHeader` carries a "⋮" `TouchTarget` at the
+right of its back-arrow row, shown only when `hasMenu` (the page passes
+`_menuActions.length > 0`, so there is never an empty menu to open). The page
+owns the `ActionMenu` next to its dialogs and builds `_menuActions` from the
+book's state:
+
+| Entry | Present when |
+|-------|--------------|
+| Open PDF | the book has a `pdfPath` |
+| Attach PDF / Replace PDF | `pdfSource !== PdfSource.Server` — a catalog-supplied file is the book's, not the user's |
+| Remove PDF | `pdfSource === PdfSource.User` |
+| Delete book | `isCustom`; drawn under a divider |
+
+`_runMenuAction(id)` routes the ids: open goes straight to
+`BookController.openCurrentBookPdf()` (toasting on failure), attach opens a
+`FileDialog`, and both removals go through a `ConfirmDialog` first. Deleting
+the book also stops the reading timer, so a running session is not flushed
+back to the cache under a dead ISBN, then calls
+`BookController.deleteCurrentBook()` and `NavigationController.goBack()`.
 
 **2. `ReadingHistorySection`** — the `reading_sessions` journal for the
 current book, newest first, bound to `BookController.readingHistoryModel`
@@ -392,6 +462,10 @@ its original id.
 | `StarRating` | `value: real` rounded to int via `Math.round`; `total: int`. Renders ★/☆ in `Theme.starColor` / `Theme.starColorEmpty`. |
 | `RatingTile` | `label`, `value`, `total`, `decimals: 0`, `showStars: false`. Empty `label` hides the label row; `value <= 0` shows "Not rated". |
 | `TagPill` | Pill with `label`; `Theme.primarySoft` background |
+| `FieldLabel` | A `Text` preset for form captions — the shared look of every label in `AddBookPage` |
+| `FormField` | `FieldLabel` + a filled, rounded input box. One-way by design: the host form reads `value` on submit rather than binding both ways, so there is no write-back loop. `setValue(text)` is the escape hatch for a field the form fills in for the user (a PDF's page count overwriting what was typed). `multiline` swaps the `TextField` for a scrollable `TextArea` and grows the box to `Geometry.size.formTextAreaHeight`; `numeric` installs an `IntValidator` plus `Qt.ImhDigitsOnly`. An empty `label` hides the caption row |
+| `DashedOutline` | Dashed rounded outline on a `Canvas` — `Rectangle.border` can only draw a solid line. `strokeColor` / `strokeWidth` / `radius` / `dashLength` / `dashGap`, each repainting on change the way `ProgressRing` does |
+| `ActionMenu` | Styled `Popup` holding a column of tappable rows, one per entry in `actions: [{ id, label, glyph, separatorBefore }]`; emits `triggered(actionId)` and closes itself. The caller builds the list from state, so an action that does not apply is **absent rather than disabled**; `separatorBefore` draws a divider to group the destructive ones off (the palettes have no danger colour to use instead) |
 | `CharacterRow` | `PressableSurface`; reserves `avatarSource: url` for future avatars (currently the IconGlyph 👥 placeholder shows when source is empty) |
 
 ## Theme and tokens

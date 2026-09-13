@@ -86,6 +86,7 @@ trigger on their own when the task matches.
 
 | Skill | Use it for |
 |-------|-----------|
+| `ping-pong` | Implementing a feature or fixing a bug as a red/green rally, closed by an adversarial review round. |
 | `verify` | The definition-of-done gate: format → analysis build → qmllint → tests. Run before calling any change complete. |
 | `fix-gate` | Triaging `/analyze` + clang-tidy warnings-as-errors. |
 | `add-test` | Writing, registering and running a single Qt Test. |

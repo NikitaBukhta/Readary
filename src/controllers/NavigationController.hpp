@@ -28,6 +28,7 @@ public:
     GoalsPage,
     ChallengesPage,
     ProfilePage,
+    AddBookPage,
     BookDetailPage,
   };
   Q_ENUM(Page)

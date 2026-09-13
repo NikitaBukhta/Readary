@@ -45,6 +45,20 @@ Key bits in [CMakeLists.txt](../../CMakeLists.txt):
 - `qt_add_executable(Readary src/main.cpp src/core/AppInitializer.cpp ...)`
   — main exe.
 
+### Qt PDF
+
+`PdfMetadataReader` needs `Qt6::Pdf`, which is not part of qtbase:
+
+- **Desktop** — [`vcpkg.json`](../../vcpkg.json) depends on `qtwebengine` with
+  `default-features: false` and only the `pdf` feature, pinned to the same
+  6.10.2 as the rest of Qt (a Qt module has to match its base exactly). That
+  builds PDFium alone, not Chromium — but it is still by far the longest
+  dependency build in the tree, so expect a first `bootstrap`/`compile` after
+  a clean checkout to take a while.
+- **Android** — Qt comes from aqt instead, so the module is requested in
+  `AqtProvider._MODULES_BY_TARGET` (`qtpdf`). An Android tree installed before
+  that entry existed needs `python bootstrap.py bootstrap -d android` again.
+
 The `src/models/*.cpp src/models/*.hpp` glob is `GLOB_RECURSE`, so adding a
 nested folder (e.g. `src/models/books/filters/` or `src/models/settings/`)
 is picked up automatically.
@@ -116,7 +130,8 @@ logging.
 | Function | Purpose |
 |----------|---------|
 | `dataPath()` | App data directory (`%LOCALAPPDATA%/Readary` on Windows) |
-| `databasePath()` | `<dataPath>/beelibrary.db` |
+| `databasePath()` | `<dataPath>/readary.db` |
+| `bookFilesPath()` | `<dataPath>/books` — root for the files a book owns (its PDF and the cover rendered from it); `BookFileStore` lays out the subdirectories |
 | `logFilePath()` | Time-stamped `<dataPath>/log_DD.MM.YYYY-HH.MM.SS.log` |
 | `installFileLogger()` | Installs a `QtMessageHandler` that writes every message to the log file (and stderr in debug). Cleans up logs older than 7 days. |
 | `shutdownFileLogger()` | Restores default handler, flushes and closes the file. |

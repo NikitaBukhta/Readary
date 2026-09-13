@@ -14,7 +14,17 @@
       "name": "qttools",
       "version>=": "6.10.2",
       "default-features": false,
-      "features": ["linguist"]
+      "features": [
+        "linguist"
+      ]
+    },
+    {
+      "name": "qtwebengine",
+      "default-features": false,
+      "features": [
+        "pdf"
+      ],
+      "version>=": "6.10.2"
     }
   ],
   "overrides": [
@@ -28,6 +38,10 @@
     },
     {
       "name": "qttools",
+      "version": "6.10.2"
+    },
+    {
+      "name": "qtwebengine",
       "version": "6.10.2"
     }
   ]

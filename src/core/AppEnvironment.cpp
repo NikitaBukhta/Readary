@@ -24,6 +24,7 @@ Q_LOGGING_CATEGORY(lcAppEnv, "readary.core.env")
 
 constexpr auto g_appDirName = "Readary"_L1;
 constexpr auto g_databaseFileName = "/readary.db"_L1;
+constexpr auto g_bookFilesDirName = "/books"_L1;
 constexpr auto g_logFilePattern = "log_*.log"_L1;
 
 std::unique_ptr<QFile> g_logFile;
@@ -54,6 +55,7 @@ QString AppEnvironment::dataPath() {
 }
 
 QString AppEnvironment::databasePath() { return dataPath() + g_databaseFileName; }
+QString AppEnvironment::bookFilesPath() { return dataPath() + g_bookFilesDirName; }
 
 QString AppEnvironment::logFilePath() {
   const QString timestamp = QDateTime::currentDateTime().toString(u"dd.MM.yyyy-hh.mm.ss"_s);

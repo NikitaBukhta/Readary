@@ -36,6 +36,8 @@ readary_add_test(services/BookDTOTest.cpp)
 readary_add_test(services/CharacterDTOTest.cpp)
 readary_add_test(services/ReadingSessionDTOTest.cpp)
 readary_add_test(services/BookTableTest.cpp)
+readary_add_test(services/BookFileStoreTest.cpp)
+readary_add_test(services/PdfMetadataReaderTest.cpp)
 
 readary_add_test(qmltypes/BookDTOObjectTest.cpp)
 

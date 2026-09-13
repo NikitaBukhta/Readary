@@ -66,6 +66,15 @@ QtObject {
         readonly property int bookDetailCoverWidth: 100
         readonly property int bookDetailCoverHeight: 140
 
+        readonly property int borderWidth: 1
+
+        readonly property int coverPickerWidth: 140
+        readonly property int coverPickerHeight: 180
+        readonly property int formTextAreaHeight: 120
+
+        readonly property int menuWidth: 220
+        readonly property int menuItemHeight: 44
+
         readonly property int actionButtonHeight: 56
         readonly property int pillButtonHeight: 52
         readonly property int characterRowHeight: 64

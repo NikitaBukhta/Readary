@@ -29,6 +29,9 @@ public:
     StatusRole,
     InWishListRole,
     LanguageRole,
+    IsCustomRole,
+    PdfPathRole,
+    PdfSourceRole,
     GenresRole,
   };
   Q_ENUM(Roles)

@@ -14,6 +14,7 @@
 #include "models/books/BookListModel.hpp"
 #include "models/settings/FontModel.hpp"
 #include "models/settings/LanguageModel.hpp"
+#include "services/BookFileStore.hpp"
 #include "services/BookTable.hpp"
 
 #include <QCoreApplication>
@@ -62,6 +63,7 @@ void AppInitializer::initDatabase() {
 #endif
 
   _bookTable = std::make_shared<services::BookTable>(_db);
+  _bookFileStore = std::make_shared<services::BookFileStore>(AppEnvironment::bookFilesPath());
 
   qCInfo(lcInit) << "Database layer ready";
 }
@@ -69,7 +71,7 @@ void AppInitializer::initDatabase() {
 void AppInitializer::initModels() {
   // Internal books init
   _bookListModel = new models::BookListModel{_bookTable, this};
-  _bookController = new controllers::BookController{_bookTable, _bookListModel, this};
+  _bookController = new controllers::BookController{_bookTable, _bookFileStore, _bookListModel, this};
   connect(_bookController, &controllers::BookController::bookSaved, _bookListModel, &models::BookListModel::refresh);
 
   // Context init

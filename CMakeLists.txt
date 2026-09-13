@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 # Minimum Qt version — not pinned to an exact release, any newer Qt6 works.
 set(QT_MINIMUM_VERSION 6.8)
-find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick Sql Svg Network)
+find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED COMPONENTS Quick Sql Svg Network Pdf)
 
 qt_standard_project_setup(REQUIRES ${QT_MINIMUM_VERSION})
 
@@ -98,7 +98,7 @@ target_include_directories(ReadaryCore PUBLIC
     src/models/books
     src/models/settings
 )
-target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg Qt6::Network)
+target_link_libraries(ReadaryCore PUBLIC Qt6::Core Qt6::Sql Qt6::Quick Qt6::Svg Qt6::Network Qt6::Pdf)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ReadarySecrets.cmake)
 set(_SECRETS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/secrets/api_keys.env)

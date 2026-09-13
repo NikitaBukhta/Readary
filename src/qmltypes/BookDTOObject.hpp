@@ -30,6 +30,9 @@ struct BookDTOObject : public services::BookDTO {
   Q_PROPERTY(int status MEMBER status)
   Q_PROPERTY(bool inWishList MEMBER inWishList)
   Q_PROPERTY(QString language MEMBER language)
+  Q_PROPERTY(bool isCustom MEMBER isCustom)
+  Q_PROPERTY(QString pdfPath MEMBER pdfPath)
+  Q_PROPERTY(int pdfSource MEMBER pdfSource)
   Q_PROPERTY(QStringList genres MEMBER genres)
 
 public:

@@ -26,23 +26,12 @@ Page {
             elide: Text.ElideRight
         }
 
-        Text {
-            id: subtitleText
-            Layout.fillWidth: true
-            Layout.leftMargin: root._sidePadding
-            Layout.rightMargin: root._sidePadding
-            Layout.topMargin: Geometry.spacing.xs
-            text: GlobalBookSearchController.searching ? qsTr("Searching...") : qsTr("%n result(s)", "", list.count)
-            color: Theme.textMuted
-            font.pixelSize: Styles.fontSize.body
-        }
-
         RowLayout {
             id: searchRow
+            Layout.topMargin: Geometry.spacing.lg
             Layout.fillWidth: true
             Layout.leftMargin: root._sidePadding
             Layout.rightMargin: root._sidePadding
-            Layout.topMargin: Geometry.spacing.lg
             spacing: Geometry.spacing.md
 
             AppSearchField {
@@ -61,6 +50,36 @@ Page {
                     BookFilterController.scope = BookFilterController.Search;
                     filterSheet.open();
                 }
+            }
+        }
+
+        RowLayout {
+            id: resultsRow
+            Layout.fillWidth: true
+            Layout.leftMargin: root._sidePadding
+            Layout.rightMargin: root._sidePadding
+            Layout.topMargin: Geometry.spacing.md
+            spacing: Geometry.spacing.md
+
+            Text {
+                id: subtitleText
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+                text: GlobalBookSearchController.searching ? qsTr("Searching...") : qsTr("%n result(s)", "", list.count)
+                color: Theme.textMuted
+                font.pixelSize: Styles.fontSize.body
+                elide: Text.ElideRight
+            }
+
+            TextButton {
+                id: addOwnButton
+                Layout.alignment: Qt.AlignVCenter
+                padding: 0
+                label: qsTr("+ Add your own")
+                labelColor: Theme.primary
+                labelSize: Styles.fontSize.body
+                labelWeight: Styles.fontWeight.semibold
+                onClicked: NavigationController.currentPage = NavigationController.AddBookPage
             }
         }
 
