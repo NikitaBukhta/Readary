@@ -43,7 +43,6 @@ aqtinstall.log
 *.pro.user*
 *.qbs.user*
 CMakeLists.txt.user*
-*.ts
 
 # xemacs temporary files
 *.flc
