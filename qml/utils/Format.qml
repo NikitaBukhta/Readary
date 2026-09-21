@@ -3,6 +3,8 @@ pragma Singleton
 import QtQuick
 
 QtObject {
+    readonly property string blank: "—"
+
     function duration(totalSeconds) {
         const total = Math.max(0, Math.round(totalSeconds));
         const hours = Math.floor(total / 3600);

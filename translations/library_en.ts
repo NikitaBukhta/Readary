@@ -212,7 +212,7 @@
         <translation>Failed to update reading progress.</translation>
     </message>
     <message>
-        <location filename="../src/controllers/BookController.cpp" line="616"/>
+        <location filename="../src/controllers/BookController.cpp" line="619"/>
         <source>Failed to delete the reading session.</source>
         <translation>Failed to delete the reading session.</translation>
     </message>
@@ -464,6 +464,9 @@
     <name>BookListRow</name>
 </context>
 <context>
+    <name>BookProgressChart</name>
+</context>
+<context>
     <name>BookSearchAPIComposite</name>
 </context>
 <context>
@@ -474,6 +477,90 @@
 </context>
 <context>
     <name>BookSortFilterProxyModelTest</name>
+</context>
+<context>
+    <name>BookStatisticsCalculator</name>
+</context>
+<context>
+    <name>BookStatisticsCalculatorTest</name>
+</context>
+<context>
+    <name>BookStatisticsController</name>
+</context>
+<context>
+    <name>BookStatisticsControllerTest</name>
+</context>
+<context>
+    <name>BookStatisticsDTO</name>
+</context>
+<context>
+    <name>BookStatisticsObject</name>
+</context>
+<context>
+    <name>BookStatisticsObjectTest</name>
+</context>
+<context>
+    <name>BookStatisticsPage</name>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="49"/>
+        <source>Statistics</source>
+        <translation>Statistics</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="90"/>
+        <source>Pages</source>
+        <translation>Pages</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="98"/>
+        <source>Reading</source>
+        <translation>Reading</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="107"/>
+        <source>Pages/h</source>
+        <translation>Pages/h</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="130"/>
+        <source>No reading sessions yet. Start the timer on the book page and your statistics will appear here.</source>
+        <translation>No reading sessions yet. Start the timer on the book page and your statistics will appear here.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="149"/>
+        <source>Pages this week</source>
+        <translation>Pages this week</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="156"/>
+        <source>Reading speed</source>
+        <translation>Reading speed</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="166"/>
+        <source>Progress through the book</source>
+        <translation>Progress through the book</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="167"/>
+        <source>The page you had reached when each session ended</source>
+        <translation>The page you had reached when each session ended</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="168"/>
+        <source>Page</source>
+        <translation>Page</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="169"/>
+        <source>Session</source>
+        <translation>Session</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="170"/>
+        <source>Page %1</source>
+        <translation>Page %1</translation>
+    </message>
 </context>
 <context>
     <name>BookTable</name>
@@ -766,25 +853,28 @@
 <context>
     <name>Format</name>
     <message>
-        <location filename="../qml/utils/Format.qml" line="12"/>
+        <location filename="../qml/utils/Format.qml" line="17"/>
         <source>%1h %2m</source>
         <translation>%1h %2m</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="14"/>
+        <location filename="../qml/utils/Format.qml" line="19"/>
         <source>%1h</source>
         <translation>%1h</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="16"/>
+        <location filename="../qml/utils/Format.qml" line="21"/>
         <source>%1m</source>
         <translation>%1m</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="18"/>
+        <location filename="../qml/utils/Format.qml" line="23"/>
         <source>%1s</source>
         <translation>%1s</translation>
     </message>
+</context>
+<context>
+    <name>GadgetAccess</name>
 </context>
 <context>
     <name>GenrePicker</name>
@@ -1176,6 +1266,24 @@
     <name>ReadingSessionDTOTest</name>
 </context>
 <context>
+    <name>ReadingSpeedCard</name>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="41"/>
+        <source>Min. p/h</source>
+        <translation>Min. p/h</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="49"/>
+        <source>Avg.</source>
+        <translation>Avg.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="57"/>
+        <source>Max.</source>
+        <translation>Max.</translation>
+    </message>
+</context>
+<context>
     <name>SearchCache</name>
 </context>
 <context>
@@ -1255,6 +1363,12 @@
     <name>StarRating</name>
 </context>
 <context>
+    <name>StatColumn</name>
+</context>
+<context>
+    <name>StatTile</name>
+</context>
+<context>
     <name>StubBookModel</name>
 </context>
 <context>
@@ -1302,6 +1416,14 @@
     <name>TouchTarget</name>
 </context>
 <context>
+    <name>WeeklyPagesChart</name>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/WeeklyPagesChart.qml" line="110"/>
+        <source>Nothing read this week</source>
+        <translation>Nothing read this week</translation>
+    </message>
+</context>
+<context>
     <name>WelcomeHeader</name>
     <message>
         <location filename="../qml/pages/mainPage/WelcomeHeader.qml" line="22"/>
@@ -1343,6 +1465,9 @@
 </context>
 <context>
     <name>readary::api::OpenLibrarySearchAPI</name>
+</context>
+<context>
+    <name>readary::controllers::BookStatisticsController</name>
 </context>
 <context>
     <name>readary::controllers::GlobalBookSearchController</name>
@@ -1403,6 +1528,9 @@
 </context>
 <context>
     <name>readary::services::BookFileStore</name>
+</context>
+<context>
+    <name>readary::services::BookStatisticsCalculator</name>
 </context>
 <context>
     <name>readary::services::BookStatus</name>

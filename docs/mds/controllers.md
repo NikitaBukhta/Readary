@@ -1,6 +1,6 @@
 # Controllers
 
-Three QML singletons live in `src/controllers/`. All follow the same pattern:
+The QML singletons live in `src/controllers/`. All follow the same pattern:
 the C++ instance is created by `AppInitializer`, registered via
 `setInstance()`, and the QML factory `create()` returns the prepared instance
 with `QQmlEngine::CppOwnership`.
@@ -11,6 +11,12 @@ with `QQmlEngine::CppOwnership`.
 - `SettingsController` — façade for user preferences. Owns
   `LanguageModel` (and any future settings models). See
   [i18n.md](i18n.md) for the language pipeline end-to-end.
+- `BookStatisticsController` — everything the statistics page shows about the
+  one book the detail page has open.
+- `BookFilterController` — the filter criteria shared by the library lists and
+  the online search; see [filtering.md](filtering.md).
+- `GlobalBookSearchController` — the online catalog search; see
+  [online-book-search.md](online-book-search.md).
 
 ## `BookController`
 
@@ -216,6 +222,80 @@ BookController.activeKind = BookController.WantToBuy
 | [src/controllers/BookController.hpp](../../src/controllers/BookController.hpp) | Class declaration, properties, enum, signals |
 | [src/controllers/BookController.cpp](../../src/controllers/BookController.cpp) | Wiring of proxies, activeKind logic, form state, cache |
 
+## `BookStatisticsController`
+
+Backs [`BookStatisticsPage`](../../qml/pages/bookStatisticsPage/BookStatisticsPage.qml).
+It never picks a book itself: `AppInitializer` pushes
+`BookController::currentBookIsbn` in whenever the open book changes, and
+re-runs the computation on `BookController::readingJournalChanged`. Everything
+is derived from that book's `reading_sessions` rows on read — nothing is
+stored, and there is no cache to invalidate.
+
+The ISBN is **not** QML-visible: the page never picks a book, and a 64-bit
+ISBN written from QML would truncate anyway. The C++ setter early-returns on
+an unchanged ISBN, which matters because `currentBookIsbnChanged` doubles as
+a cache-invalidation ping — `BookController` re-emits it on every book-list
+reset, so without the guard an unrelated edit like a wishlist toggle would
+re-read the journal. The two channels then split cleanly: that signal picks
+the book, `readingJournalChanged` recomputes it.
+
+### QML-visible API
+
+| Member | Kind | Purpose |
+|--------|------|---------|
+| `statistics` | property (RO, `readary::qmltypes::BookStatisticsObject` Q_GADGET) | the whole set in one value (below) |
+| `hasData` | property (RO, `bool`) | whether the book has any finished session at all |
+| `refresh()` | `Q_INVOKABLE` | recomputes from the journal as it stands now, and stays silent when the figures come back unchanged — the page calls this on every open, and an emit there would tear down and rebuild every chart delegate for an identical result |
+
+`statistics` fields, as QML sees them:
+
+| Field | Meaning |
+|-------|---------|
+| `sessionCount` | finished sessions for this book |
+| `timedSessionCount` | how many of those carry a reading speed — the only way to tell a displayed `0` p/h from "nothing was ever timed", since both leave the three speeds at `0.0` |
+| `pagesRead` | journal total, re-reads included — **not** the reading position (`books.pagesRead` is that) |
+| `totalSeconds` | summed session durations |
+| `averagePagesPerHour` | pages over time across the **timed** sessions — the duration-weighted mean of their speeds, not a plain mean |
+| `minPagesPerHour` / `maxPagesPerHour` | slowest and fastest single session |
+| `weeklyPages` | seven ints, Monday..Sunday of the **current** week; always seven, so the chart keeps a column per weekday even for a book last read months ago |
+| `progressPoints` | `[{session, page}]`, oldest session first — the page reached when each session ended |
+
+### Which sessions carry a speed
+
+All three speeds come from the same set: the sessions that were actually
+timed **and** logged an end page. A session saved the instant it started has
+no duration to divide by, so it carries no speed. Neither does one whose
+`pages_to` is NULL — `db/init.sql` permits that on a finished row and
+`ReadingSessionDTO` reads it back as `0`, which is a missing measurement, not
+zero pages; `pagesTo < pagesFrom` identifies it exactly, because the schema's
+CHECK forbids every other way to get there. A timed session that really did
+gain no page is **kept** — 0 p/h is a real, and the reader's slowest,
+session, which is why the page needs `timedSessionCount` to render it as `0`
+rather than as a dash.
+
+Sharing one set is what keeps the card honest: the average is then the
+duration-weighted mean of the per-session speeds, so it can never fall
+outside `minPagesPerHour`..`maxPagesPerHour`, which is exactly what the card
+prints it between. Computing the average over the whole journal instead —
+`pagesRead / totalSeconds` — reads as the more obvious definition but lets
+untimed sessions push it outside its own range.
+
+`pagesRead`, `totalSeconds` and `sessionCount` stay whole-journal sums
+regardless: a session that measured no speed was still time the reader
+spent. The three tiles are therefore not divisible into one another once an
+untimed row exists — Pages and Reading are whole-journal, Pages/h is
+timed-only.
+
+### File map
+
+| File | Purpose |
+|------|---------|
+| [src/controllers/BookStatisticsController.hpp](../../src/controllers/BookStatisticsController.hpp) | Properties, singleton wiring |
+| [src/controllers/BookStatisticsController.cpp](../../src/controllers/BookStatisticsController.cpp) | Journal read + recompute |
+| [src/services/statistics/BookStatisticsCalculator.hpp](../../src/services/statistics/BookStatisticsCalculator.hpp) | The pure computation, testable without a database |
+| [src/services/dto/BookStatisticsDTO.hpp](../../src/services/dto/BookStatisticsDTO.hpp) | The plain, moc-free result struct |
+| [src/qmltypes/BookStatisticsObject.hpp](../../src/qmltypes/BookStatisticsObject.hpp) | Q_GADGET wrapper at the QML boundary |
+
 ## `NavigationController`
 
 Tiny stack-based router. Holds a `QStack<Page>`; pushing a page that
@@ -241,8 +321,9 @@ SearchPage       = 3   level 1   qrc:/qt/qml/pages/searchPage/SearchPage.qml
 GoalsPage        = 4   level 1   (placeholder — falls back to MainPage)
 ChallengesPage   = 5   level 1   (placeholder — falls back to MainPage)
 ProfilePage      = 6   level 1   qrc:/qt/qml/pages/settingsPage/SettingsPage.qml
-AddBookPage      = 7   level 3   qrc:/qt/qml/pages/addBookPage/AddBookPage.qml
-BookDetailPage   = 8   level 3   qrc:/qt/qml/pages/bookDetailPage/BookDetailPage.qml
+AddBookPage        = 7   level 3   qrc:/qt/qml/pages/addBookPage/AddBookPage.qml
+BookDetailPage     = 8   level 3   qrc:/qt/qml/pages/bookDetailPage/BookDetailPage.qml
+BookStatisticsPage = 9   level 4   qrc:/qt/qml/pages/bookStatisticsPage/BookStatisticsPage.qml
 ```
 
 The two remaining placeholder pages (Goals/Challenges) are exposed so
@@ -256,6 +337,10 @@ maps to `MainPage`'s URL — they'll get real implementations later.
 add ends in `BookController::openBook`, and a same-level push replaces the
 form instead of stacking on top of it — so `goBack` from the new book's detail
 page lands on the search page, never on a filled-in form.
+
+`BookStatisticsPage` is the only level-4 page: it is reached from the detail
+page's Statistics tile and describes the book that page has open, so its back
+arrow has to land back on it rather than unwind to the list.
 
 ### Wiring in QML
 

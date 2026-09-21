@@ -28,6 +28,8 @@ private slots:
   void setCurrentPage_downTwoLevels_keepsBothBehind();
 
   void addBookPage_isReplacedByTheBookItOpens();
+  void statisticsPage_stacksOnTopOfTheBookItDescribes();
+  void statisticsPage_leavesTheWholeStackBehindIt();
 
   void goBack_returnsToThePageBelow();
   void goBack_atTheRoot_isANoOp();
@@ -57,6 +59,10 @@ void NavigationControllerTest::currentPagePath_namesTheQmlFile() {
 
   controller.setCurrentPage(Page::AddBookPage);
   QCOMPARE(controller.currentPagePath(), QUrl{u"qrc:/qt/qml/Library/pages/addBookPage/AddBookPage.qml"_s});
+
+  controller.setCurrentPage(Page::BookStatisticsPage);
+  QCOMPARE(controller.currentPagePath(),
+           QUrl{u"qrc:/qt/qml/Library/pages/bookStatisticsPage/BookStatisticsPage.qml"_s});
 }
 
 void NavigationControllerTest::goalsAndChallenges_shareTheMainPage() {
@@ -137,6 +143,31 @@ void NavigationControllerTest::addBookPage_isReplacedByTheBookItOpens() {
   controller.goBack();
 
   QCOMPARE(controller.currentPage(), Page::SearchPage);
+}
+
+void NavigationControllerTest::statisticsPage_stacksOnTopOfTheBookItDescribes() {
+  // Statistics is opened from the detail page and its back arrow has to land
+  // there, so it sits one level deeper rather than replacing it.
+  NavigationController controller{nullptr};
+  controller.setCurrentPage(Page::BookDetailPage);
+
+  controller.setCurrentPage(Page::BookStatisticsPage);
+
+  QCOMPARE(controller.currentPage(), Page::BookStatisticsPage);
+  controller.goBack();
+  QCOMPARE(controller.currentPage(), Page::BookDetailPage);
+}
+
+void NavigationControllerTest::statisticsPage_leavesTheWholeStackBehindIt() {
+  NavigationController controller{nullptr};
+  controller.setCurrentPage(Page::CategoryListPage);
+  controller.setCurrentPage(Page::BookDetailPage);
+  controller.setCurrentPage(Page::BookStatisticsPage);
+
+  controller.goBack();
+  controller.goBack();
+
+  QCOMPARE(controller.currentPage(), Page::CategoryListPage);
 }
 
 void NavigationControllerTest::goBack_returnsToThePageBelow() {

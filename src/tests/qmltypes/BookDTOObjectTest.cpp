@@ -1,5 +1,6 @@
 #include "qmltypes/BookDTOObject.hpp"
 #include "services/dto/BookDTO.hpp"
+#include "support/GadgetAccess.hpp"
 
 #include <QTest>
 
@@ -9,6 +10,8 @@ using Qt::StringLiterals::operator""_s;
 
 using readary::qmltypes::BookDTOObject;
 using readary::services::BookDTO;
+using readary::tests::readGadget;
+using readary::tests::writeGadget;
 
 namespace {
 
@@ -36,24 +39,6 @@ BookDTO makeBook() {
   book.pdfSource = 2;
   book.genres = {u"Software"_s};
   return book;
-}
-
-QVariant read(const BookDTOObject &book, const char *property) {
-  const QMetaObject &meta = BookDTOObject::staticMetaObject;
-  const int index = meta.indexOfProperty(property);
-  if (index < 0) {
-    return {};
-  }
-  return meta.property(index).readOnGadget(&book);
-}
-
-bool write(BookDTOObject &book, const char *property, const QVariant &value) {
-  const QMetaObject &meta = BookDTOObject::staticMetaObject;
-  const int index = meta.indexOfProperty(property);
-  if (index < 0) {
-    return false;
-  }
-  return meta.property(index).writeOnGadget(&book, value);
 }
 
 } // namespace
@@ -128,35 +113,35 @@ void BookDTOObjectTest::properties_exposeQmlFriendlyNames() {
 void BookDTOObjectTest::properties_readThroughTheMetaObject() {
   const BookDTOObject book{makeBook()};
 
-  QCOMPARE(read(book, "isbn").toLongLong(), 9780201616224LL);
-  QCOMPARE(read(book, "name").toString(), u"Refactoring"_s);
-  QCOMPARE(read(book, "author").toString(), u"Martin Fowler"_s);
-  QCOMPARE(read(book, "publisher").toString(), u"Addison-Wesley"_s);
-  QCOMPARE(read(book, "type").toString(), u"paper"_s);
-  QCOMPARE(read(book, "year").toInt(), 1999);
-  QCOMPARE(read(book, "totalPages").toInt(), 448);
-  QCOMPARE(read(book, "pagesRead").toInt(), 120);
-  QCOMPARE(read(book, "globalRating").toDouble(), 4.5);
-  QCOMPARE(read(book, "localRating").toDouble(), 4.0);
-  QCOMPARE(read(book, "userRating").toInt(), 9);
-  QCOMPARE(read(book, "status").toInt(), 2);
-  QVERIFY(read(book, "isHardcover").toBool());
-  QVERIFY(read(book, "inWishList").toBool());
-  QVERIFY(read(book, "isCustom").toBool());
-  QCOMPARE(read(book, "pdfPath").toString(), u"C:/data/pdfs/1.pdf"_s);
-  QCOMPARE(read(book, "pdfSource").toInt(), 2);
-  QCOMPARE(read(book, "language").toString(), u"en"_s);
-  QCOMPARE(read(book, "description").toString(), u"Improving the design of existing code"_s);
-  QCOMPARE(read(book, "coverUrl").toString(), u"https://example.invalid/cover.jpg"_s);
-  QCOMPARE(read(book, "genres").toStringList(), QStringList({u"Software"_s}));
+  QCOMPARE(readGadget(book, "isbn").toLongLong(), 9780201616224LL);
+  QCOMPARE(readGadget(book, "name").toString(), u"Refactoring"_s);
+  QCOMPARE(readGadget(book, "author").toString(), u"Martin Fowler"_s);
+  QCOMPARE(readGadget(book, "publisher").toString(), u"Addison-Wesley"_s);
+  QCOMPARE(readGadget(book, "type").toString(), u"paper"_s);
+  QCOMPARE(readGadget(book, "year").toInt(), 1999);
+  QCOMPARE(readGadget(book, "totalPages").toInt(), 448);
+  QCOMPARE(readGadget(book, "pagesRead").toInt(), 120);
+  QCOMPARE(readGadget(book, "globalRating").toDouble(), 4.5);
+  QCOMPARE(readGadget(book, "localRating").toDouble(), 4.0);
+  QCOMPARE(readGadget(book, "userRating").toInt(), 9);
+  QCOMPARE(readGadget(book, "status").toInt(), 2);
+  QVERIFY(readGadget(book, "isHardcover").toBool());
+  QVERIFY(readGadget(book, "inWishList").toBool());
+  QVERIFY(readGadget(book, "isCustom").toBool());
+  QCOMPARE(readGadget(book, "pdfPath").toString(), u"C:/data/pdfs/1.pdf"_s);
+  QCOMPARE(readGadget(book, "pdfSource").toInt(), 2);
+  QCOMPARE(readGadget(book, "language").toString(), u"en"_s);
+  QCOMPARE(readGadget(book, "description").toString(), u"Improving the design of existing code"_s);
+  QCOMPARE(readGadget(book, "coverUrl").toString(), u"https://example.invalid/cover.jpg"_s);
+  QCOMPARE(readGadget(book, "genres").toStringList(), QStringList({u"Software"_s}));
 }
 
 void BookDTOObjectTest::properties_writeThroughTheMetaObject() {
   BookDTOObject book;
 
-  QVERIFY(write(book, "name", u"Dune"_s));
-  QVERIFY(write(book, "author", u"Frank Herbert"_s));
-  QVERIFY(write(book, "pagesRead", 42));
+  QVERIFY(writeGadget(book, "name", u"Dune"_s));
+  QVERIFY(writeGadget(book, "author", u"Frank Herbert"_s));
+  QVERIFY(writeGadget(book, "pagesRead", 42));
 
   QCOMPARE(book.name, u"Dune"_s);
   QCOMPARE(book.authorName, u"Frank Herbert"_s);

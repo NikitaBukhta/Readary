@@ -8,6 +8,8 @@ Item {
     property string title: ""
     property string trailingText: ""
     property color trailingColor: Theme.primary
+    // Page sections use titleMedium; a header inside a card sits one step down.
+    property int titleSize: Styles.fontSize.titleMedium
 
     implicitHeight: titleLabel.implicitHeight
     implicitWidth: layout.implicitWidth
@@ -22,7 +24,7 @@ Item {
             Layout.fillWidth: true
             text: root.title
             color: Theme.textPrimary
-            font.pixelSize: Styles.fontSize.titleMedium
+            font.pixelSize: root.titleSize
             font.weight: Styles.fontWeight.bold
             elide: Text.ElideRight
         }

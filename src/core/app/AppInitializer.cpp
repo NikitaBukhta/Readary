@@ -6,6 +6,7 @@
 #include "api/translate/GoogleTranslator.hpp"
 #include "controllers/BookController.hpp"
 #include "controllers/BookFilterController.hpp"
+#include "controllers/BookStatisticsController.hpp"
 #include "controllers/GlobalBookSearchController.hpp"
 #include "controllers/NavigationController.hpp"
 #include "controllers/SettingsController.hpp"
@@ -101,6 +102,13 @@ void AppInitializer::initModels() {
     _globalSearchController->setFilterCriteria(criteria);
   });
 
+  // Statistics init
+  _statisticsController = new controllers::BookStatisticsController{_bookTable, this};
+  connect(_bookController, &controllers::BookController::currentBookIsbnChanged, _statisticsController,
+          [this] { _statisticsController->setBookIsbn(_bookController->currentBookIsbn()); });
+  connect(_bookController, &controllers::BookController::readingJournalChanged, _statisticsController,
+          &controllers::BookStatisticsController::refresh);
+
   // Settings init
   _settingsController = new controllers::SettingsController{this};
   _settingsController->languageModel()->applyCurrent();
@@ -119,6 +127,7 @@ void AppInitializer::registerQmlTypes() {
   controllers::SettingsController::setInstance(_settingsController);
   controllers::GlobalBookSearchController::setInstance(_globalSearchController);
   controllers::BookFilterController::setInstance(_filterController);
+  controllers::BookStatisticsController::setInstance(_statisticsController);
 
   QObject::connect(
       _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app, []() { QCoreApplication::exit(-1); },

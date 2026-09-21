@@ -45,6 +45,12 @@ qml/
       ReadingHistoryDelegate.qml   Wrapper around ReadingHistoryRow used as the inner ListView delegate (anchored side margins)
       ReadingHistoryRow.qml        Timeline dot on a rail + stamp / page range + delta / duration / delete tile
       BookGenreTags.qml            Flow of TagPill for genres, sits below the characters ListView
+    bookStatisticsPage/
+      BookStatisticsPage.qml       Per-book statistics, bound to BookStatisticsController.statistics
+      StatTile.qml                 IconGlyph over a StatColumn, three across the top
+      WeeklyPagesChart.qml         Mon..Sun bar chart of pages read this week
+      ReadingSpeedCard.qml         Slowest / average / fastest pages per hour
+      BookProgressChart.qml        Canvas line chart of the page reached per session
   components/                      Reusable widgets, grouped by role
     base/                          The chassis everything else is built on
       SurfaceCard.qml              Rectangle + radius.lg + Theme.surface + MultiEffect shadow
@@ -67,7 +73,8 @@ qml/
       RangeField.qml               From/to numeric pair used by the filter sheet (pages, year, rating)
       StarRating.qml               Row of ★/☆ glyphs with rounded fill against value
     display/
-      SectionHeader.qml            "Title + trailing badge" header
+      SectionHeader.qml            "Title + trailing badge" header; titleSize steps it down inside a card
+      StatColumn.qml               A figure over its caption; the statistics cards stack three across
       TagPill.qml                  Pill-shaped genre/tag label
       FilterChip.qml               Selectable chip for one filter value
     feedback/
@@ -92,9 +99,9 @@ qml/
     palettes/
       PinkPalette.qml, BluePalette.qml, YellowPalette.qml, PurplePalette.qml
   utils/
-    Geometry.qml                   Singleton: spacing/radius/size sub-specs
+    Geometry.qml                   Singleton: spacing/radius/size/chart sub-specs
     Styles.qml                     Singleton: font sizes, weights, elevation, opacity, duration, progressBar
-    Format.qml                     Singleton: locale-aware duration (h/m/s) and entry stamp formatting
+    Format.qml                     Singleton: locale-aware duration (h/m/s), entry stamp formatting, and the `blank` dash for a value that does not exist
 ```
 
 Sub-folders are for humans only — `qt_add_qml_module` registers every `.qml`
@@ -426,6 +433,96 @@ Status semantics: see [`BookStatus`](../../src/services/dto/BookStatus.hpp).
 The page references `BookStatus.Finished` / `InProgress` directly — the
 component (`ReadingProgressCard`) takes `actionLabel: string` and stays
 ignorant of status meaning.
+
+### `BookStatisticsPage.qml`
+
+Reached from the Statistics tile in
+[`BookDetailSummary`](../../qml/pages/bookDetailPage/BookDetailSummary.qml),
+which only emits `statsRequested`; the page above it sets
+`NavigationController.currentPage = BookStatisticsPage`. Level 4, so the back
+arrow lands on the detail page it came from. Everything on it describes the
+one book that page has open — the page itself never names a book, it only
+reads `BookStatisticsController.statistics`
+(see [controllers.md](controllers.md#bookstatisticscontroller)).
+
+`Component.onCompleted` calls `BookStatisticsController.refresh()`. The page
+is rebuilt behind `Main.qml`'s `Loader` on every open while the controller's
+figures are not, and the weekly buckets are relative to *today* — without the
+refresh, a set computed last week would still be on screen. The controller
+stays silent when the recomputed figures are unchanged, so the usual case
+costs one query and no relayout.
+
+The cards are inset once by the content `ColumnLayout`, not per card.
+
+Layout (top → bottom, inside a page-level `Flickable`):
+
+1. Three `StatTile`s in a row — pages read, reading time
+   (`Format.duration`), average pages per hour. Each is an `IconGlyph` over a
+   `StatColumn`. A value that does not exist yet shows `Format.blank` rather
+   than a zero.
+2. Either one muted card or the three below it, on
+   `BookStatisticsController.hasData` — three separate "no data" lines read
+   worse than one. `WeeklyPagesChart` keeps its own empty line for the case
+   that still happens *with* data: a book not read this week.
+3. `WeeklyPagesChart` — one bar per bucket, `Layout.fillWidth` so they share
+   the card evenly. Heights scale against the week's own peak, not the book's
+   total: the shape of the week is what the card is for. Every day that was
+   read carries its page count just above its bar, which is why the plot
+   reserves a label's worth of headroom — measured off a `TextMetrics`, not a
+   constant, so it follows the app font. A day with nothing read has no bar,
+   so it gets no number either. The chart renders however many buckets it is
+   handed and takes the week length from `values.length`; the DTO owns the
+   "always seven" guarantee. Weekday labels come from
+   `Qt.locale().dayName()`, which counts from Sunday while the buckets start
+   on Monday — hence the `(index + 1) % length`.
+4. `ReadingSpeedCard` — slowest / average / fastest pages per hour, three
+   `StatColumn`s with the average picked out in `Theme.primary`. It takes
+   `hasSpeed` rather than testing the numbers: a measured 0 p/h and "nothing
+   was ever timed" are both `0.0`, and only the first should print as `0`.
+5. `BookProgressChart` — a `Canvas` line chart of the page reached at the end
+   of each session, x = session ordinal.
+
+All three cards head themselves with a `SectionHeader` at
+`Styles.fontSize.title`.
+
+**Inside `BookProgressChart`.** The `Canvas` paints no text at all: it takes a
+CSS font string, and the only family this app exposes is `Theme.fontFamily` —
+the bundled emoji face, which carries no digits, so ticks drawn with it came
+out blank. Every label is a `Text` item positioned off the same shared
+plot-rect properties (`_plotLeft`, `_plotBottom`, `_xAt`, `_rowY`) the paint
+routine uses, so the two cannot drift apart. The colours are `readonly`
+properties with `requestPaint()` handlers, the way `ProgressRing` does, so a
+theme switch repaints.
+
+Numbers alone do not say what they measure, so the card carries a `subtitle`
+and an axis caption in each gutter — `valueAxisCaption` rotated -90 down the
+left, `stepAxisCaption` centred under the tick numbers.
+`Geometry.chart.axisGutterLeft` / `axisGutterBottom` are sized for tick
+labels **plus** a caption. The plot rect is inset on the right by the marker
+radius and on top by half a label so the newest point and the peak tick are
+not sliced by the canvas edge, and the grid is stroked **over** the filled
+area — with two sessions the fill covers most of the plot and would bury it.
+
+Hovering near the curve raises a tooltip over the nearest point with the page
+it stands for; tapping pins it, which is the only half that works on a touch
+screen. Points are matched on **x alone**, within
+`Geometry.chart.pointHitRadius` — the reader aims at a column of the chart,
+not at a 4px dot. The bubble is a `Popup` with `closePolicy: CloseOnEscape |
+CloseOnPressOutside`, so Controls owns press-anywhere dismissal and the
+escape key, the same mechanism `ActionMenu`, `ConfirmDialog` and `FilterSheet`
+use. It is clamped inside the plot so the newest session's tooltip does not
+hang off the card, and flips below the marker when the point sits too high to
+fit above.
+
+There is no "books per month" chart here on purpose: this page is scoped to
+one book, and a month-by-month count of *books* belongs to a library-wide
+statistics page that does not exist yet.
+
+Chart dimensions live in `Geometry.chart` (plot heights, axis gutters, point
+and hit radii, grid rows and dash, `maxAxisLabels`) so neither chart carries a
+raw number. Tokens that already existed are reused rather than restated —
+`Geometry.radius.xs` for the bar corners, `Geometry.size.borderWidth` for the
+grid stroke.
 
 ### `ReadingProgressTimer.qml`
 

@@ -1,5 +1,6 @@
 #include "controllers/BookController.hpp"
 #include "controllers/BookFilterController.hpp"
+#include "controllers/BookStatisticsController.hpp"
 #include "controllers/NavigationController.hpp"
 #include "controllers/SettingsController.hpp"
 #include "models/books/list/BookListModel.hpp"
@@ -18,6 +19,7 @@ using Qt::StringLiterals::operator""_s;
 
 using readary::controllers::BookController;
 using readary::controllers::BookFilterController;
+using readary::controllers::BookStatisticsController;
 using readary::controllers::NavigationController;
 using readary::controllers::SettingsController;
 using readary::models::BookListModel;
@@ -91,6 +93,8 @@ private slots:
   void settingsController_staysOwnedByCpp();
   void bookFilterController_createReturnsTheRegisteredInstance();
   void bookFilterController_staysOwnedByCpp();
+  void bookStatisticsController_createReturnsTheRegisteredInstance();
+  void bookStatisticsController_staysOwnedByCpp();
 
   void controllers_exposeTheirModelsToQml();
   void bookController_exposesItsQmlInvokables();
@@ -174,6 +178,18 @@ void QmlSingletonWiringTest::bookFilterController_staysOwnedByCpp() {
   BookFilterController::setInstance(nullptr);
 }
 
+void QmlSingletonWiringTest::bookStatisticsController_createReturnsTheRegisteredInstance() {
+  BookStatisticsController controller{_library.books(), nullptr};
+  verifyCreateReturnsTheRegisteredInstance(&controller);
+  BookStatisticsController::setInstance(nullptr);
+}
+
+void QmlSingletonWiringTest::bookStatisticsController_staysOwnedByCpp() {
+  BookStatisticsController controller{_library.books(), nullptr};
+  verifyCppKeepsOwnership(&controller);
+  BookStatisticsController::setInstance(nullptr);
+}
+
 void QmlSingletonWiringTest::controllers_exposeTheirModelsToQml() {
   // QML never touches a model directly — it reads one off a controller
   // property. Renaming a property silently breaks every binding on it.
@@ -188,6 +204,14 @@ void QmlSingletonWiringTest::controllers_exposeTheirModelsToQml() {
   const QMetaObject &settings = SettingsController::staticMetaObject;
   QVERIFY(hasQmlProperty(settings, "languageModel"));
   QVERIFY(hasQmlProperty(settings, "fontModel"));
+
+  const QMetaObject &statistics = BookStatisticsController::staticMetaObject;
+  QVERIFY(hasQmlProperty(statistics, "statistics"));
+  // The ISBN is pushed in by AppInitializer and never read from QML, so it
+  // deliberately is not a property.
+  QVERIFY(!hasQmlProperty(statistics, "bookIsbn"));
+  QVERIFY(hasQmlProperty(statistics, "hasData"));
+  QVERIFY(findMethod(statistics, "refresh").isValid());
 
   const QMetaObject &filter = BookFilterController::staticMetaObject;
   QVERIFY(hasQmlProperty(filter, "availableGenres"));

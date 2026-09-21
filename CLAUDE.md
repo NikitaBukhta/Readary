@@ -57,7 +57,7 @@ QML (Library module)  →  Controllers (singletons)  →  Models  →  Services 
                                                          ↘ qmltypes (Q_GADGET DTO wrappers at the controller↔QML boundary)
 ```
 
-- **Controllers** (`src/controllers/`) are QML singletons and the only QML-visible entry points: `BookController` (book form/list state, characters, reading timer), `NavigationController` (stack router), `SettingsController` (owns `LanguageModel` + `FontModel`), `BookDiscoveryController` (online search/import). Models are exposed as read-only properties on controllers.
+- **Controllers** (`src/controllers/`) are QML singletons and the only QML-visible entry points: `BookController` (book form/list state, characters, reading timer), `NavigationController` (stack router), `SettingsController` (owns `LanguageModel` + `FontModel`), `BookDiscoveryController` (online search/import), `BookStatisticsController` (per-book reading statistics). Models are exposed as read-only properties on controllers.
 - **Singleton wiring pattern**: C++ instance is constructed by `AppInitializer`, registered via `setInstance()`; the QML `create()` factory returns that instance with `CppOwnership`. (Note: Qt prefers a default ctor over `create()` — keep singleton classes free of default-arg ctors.)
 - **`AppInitializer`** (`src/core/app/`) is the composition root: `initDatabase()` → `initModels()` → `registerQmlTypes()`. All QObjects are parented to it. **Connect-placement rule**: intra-domain connects live inside the owning controller; cross-domain connects live in `AppInitializer` (so controllers don't include each other).
 - **Book list data flow**: one `BookListModel` (DB source) → four `BookSortFilterProxyModel` (one per `ListKind`, configured by a filter Strategy) → `BookSearchProxyModel` (free-text + relevance ranking) → QML. The active category's proxy is swapped in as the search proxy's source.
@@ -69,7 +69,7 @@ Each top-level folder under `src/` is one layer **and** one namespace (`readary:
 
 ```
 src/core/        app/ (AppEnvironment, AppInitializer)  db/ (DatabaseManager, SqlQueryBuilder)
-src/services/    dto/  storage/  caching/  pdf/  filtering/  emoji/
+src/services/    dto/  storage/  caching/  pdf/  filtering/  emoji/  statistics/
 src/models/      books/{list,proxy,filters,details}/  settings/
 src/api/         bookSearch/  translate/
 src/tests/       mirrors the layout above; shared helpers in support/

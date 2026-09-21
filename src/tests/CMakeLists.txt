@@ -28,6 +28,7 @@ readary_add_test(services/caching/ReadingProgressCacheTest.cpp)
 readary_add_test(services/pdf/PdfMetadataReaderTest.cpp)
 readary_add_test(services/filtering/BookFilterCriteriaTest.cpp)
 readary_add_test(services/emoji/EmojiResolverTest.cpp)
+readary_add_test(services/statistics/BookStatisticsCalculatorTest.cpp)
 
 readary_add_test(models/books/list/BookListModelBaseTest.cpp)
 readary_add_test(models/books/list/BookListModelTest.cpp)
@@ -41,6 +42,7 @@ readary_add_test(models/settings/FontModelTest.cpp)
 
 readary_add_test(controllers/BookControllerTest.cpp)
 readary_add_test(controllers/BookControllerSessionTest.cpp)
+readary_add_test(controllers/BookStatisticsControllerTest.cpp)
 readary_add_test(controllers/BookFilterControllerTest.cpp)
 readary_add_test(controllers/GlobalBookSearchControllerTest.cpp)
 readary_add_test(controllers/NavigationControllerTest.cpp)
@@ -52,6 +54,7 @@ readary_add_test(api/LanguageConverterTest.cpp)
 readary_add_test(api/BookSearchAPICompositeTest.cpp)
 
 readary_add_test(qmltypes/BookDTOObjectTest.cpp)
+readary_add_test(qmltypes/BookStatisticsObjectTest.cpp)
 
 readary_add_test(utils/IsbnValidatorTest.cpp)
 

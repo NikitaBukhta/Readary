@@ -30,6 +30,7 @@ public:
     ProfilePage,
     AddBookPage,
     BookDetailPage,
+    BookStatisticsPage,
   };
   Q_ENUM(Page)
 

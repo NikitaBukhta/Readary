@@ -84,8 +84,28 @@ QtObject {
         readonly property int bottomNavIcon: 22
     }
 
+    component ChartSpec: QtObject {
+        readonly property int barPlotHeight: 120
+        readonly property int barMinHeight: 3
+        readonly property int linePlotHeight: 190
+        // Both gutters carry a rotated/centred axis caption beside the tick
+        // labels, so they are wider than the ticks alone would need.
+        readonly property int axisGutterLeft: 48
+        readonly property int axisGutterBottom: 38
+        readonly property int axisCaptionSlot: 14
+        readonly property int pointRadius: 4
+        // Generous next to the 4px marker: on a line chart the reader aims at
+        // the curve, not at the dot, and a finger is nowhere near that precise.
+        readonly property int pointHitRadius: 24
+        readonly property int lineWidth: 2
+        readonly property var gridDash: [2, 3]
+        readonly property int gridRows: 4
+        readonly property int maxAxisLabels: 5
+    }
+
     readonly property WindowSpec window: WindowSpec {}
     readonly property SpacingSpec spacing: SpacingSpec {}
     readonly property RadiusSpec radius: RadiusSpec {}
     readonly property SizeSpec size: SizeSpec {}
+    readonly property ChartSpec chart: ChartSpec {}
 }

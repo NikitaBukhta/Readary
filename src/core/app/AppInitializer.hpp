@@ -19,6 +19,7 @@ class BookListModel;
 namespace readary::controllers {
 class BookController;
 class BookFilterController;
+class BookStatisticsController;
 class NavigationController;
 class SettingsController;
 class GlobalBookSearchController;
@@ -56,6 +57,7 @@ private:
   controllers::SettingsController *_settingsController{nullptr};
   controllers::GlobalBookSearchController *_globalSearchController{nullptr};
   controllers::BookFilterController *_filterController{nullptr};
+  controllers::BookStatisticsController *_statisticsController{nullptr};
 };
 
 } // namespace readary::core

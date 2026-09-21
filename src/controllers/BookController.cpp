@@ -594,9 +594,12 @@ void BookController::updateReadingProgress(int pageNumber, int durationSeconds) 
     return;
   }
 
-  if (durationSeconds > 0 &&
-      _bookTable->insertReadingSession(_currentBookIsbn, pagesFrom, pageNumber, durationSeconds) <= 0) {
-    qCWarning(lcBook) << "Reading progress saved, but session log insert failed for book isbn:" << _currentBookIsbn;
+  if (durationSeconds > 0) {
+    if (_bookTable->insertReadingSession(_currentBookIsbn, pagesFrom, pageNumber, durationSeconds) > 0) {
+      emit readingJournalChanged();
+    } else {
+      qCWarning(lcBook) << "Reading progress saved, but session log insert failed for book isbn:" << _currentBookIsbn;
+    }
   }
 
   emit bookSaved();
@@ -619,6 +622,7 @@ void BookController::deleteReadingSession(const QString &sessionId) {
 
   // Same ISBN: keeps however far the list was expanded.
   _readingHistoryModel->setBookIsbn(_currentBookIsbn);
+  emit readingJournalChanged();
 }
 
 models::BookSearchProxyModel *BookController::searchModel() const { return _searchProxy; }

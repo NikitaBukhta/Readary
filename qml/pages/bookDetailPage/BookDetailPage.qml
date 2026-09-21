@@ -103,7 +103,7 @@ Page {
                 hasMenu: root._menuActions.length > 0
                 onBackRequested: NavigationController.goBack()
                 onMenuRequested: actionMenu.open()
-                onStatsRequested: console.log(root._logTag, "Open statistics")
+                onStatsRequested: NavigationController.currentPage = NavigationController.BookStatisticsPage
                 onWantToReadRequested: {
                     if (root._book.status === BookStatus.InProgress)
                         moveWarningDialog.open();

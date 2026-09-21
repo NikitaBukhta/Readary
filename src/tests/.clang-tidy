@@ -1,4 +1,7 @@
 InheritParentConfig: true
+
+# The last two are for Q_DECLARE_METATYPE, which a table-driven test needs to
+# put a custom type in a QTest data column: it expands to an unnamed int enum.
 Checks: >
   -misc-use-internal-linkage,
   -readability-convert-member-functions-to-static,
@@ -7,7 +10,9 @@ Checks: >
   -misc-const-correctness,
   -modernize-use-designated-initializers,
   -modernize-type-traits,
-  -readability-math-missing-parentheses
+  -readability-math-missing-parentheses,
+  -cppcoreguidelines-use-enum-class,
+  -performance-enum-size
 
 CheckOptions:
   - key: readability-function-cognitive-complexity.IgnoreMacros

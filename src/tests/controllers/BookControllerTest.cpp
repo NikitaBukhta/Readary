@@ -86,6 +86,8 @@ private slots:
 
   void deleteReadingSession_dropsTheEntry();
   void deleteReadingSession_invalidId_isIgnored();
+  void readingJournalChanged_firesOnEverySessionWrite();
+  void readingJournalChanged_staysQuietWhenNothingWasWritten();
 
   void importAndOpenBook_addsAndSelectsIt();
   void importAndOpenBook_alreadyKnownBook_justSelectsIt();
@@ -515,6 +517,34 @@ void BookControllerTest::deleteReadingSession_invalidId_isIgnored() {
   _controller->deleteReadingSession(u"0"_s);
 
   QCOMPARE(_library.books()->getReadingSessions(kIsbn).size(), 1);
+}
+
+void BookControllerTest::readingJournalChanged_firesOnEverySessionWrite() {
+  // Anything computed off the journal (the statistics page) has no other way
+  // to learn a session appeared or went away.
+  _controller->setCurrentBookIsbn(kIsbn);
+  QSignalSpy journalSpy{_controller.get(), &BookController::readingJournalChanged};
+
+  // The fixture book already stands at page 100.
+  _controller->updateReadingProgress(200, 600);
+  QCOMPARE(journalSpy.count(), 1);
+
+  const auto sessions = _library.books()->getReadingSessions(kIsbn);
+  QCOMPARE(sessions.size(), 1);
+  _controller->deleteReadingSession(QString::number(sessions.first().id));
+  QCOMPARE(journalSpy.count(), 2);
+}
+
+void BookControllerTest::readingJournalChanged_staysQuietWhenNothingWasWritten() {
+  _controller->setCurrentBookIsbn(kIsbn);
+  QSignalSpy journalSpy{_controller.get(), &BookController::readingJournalChanged};
+
+  // A page behind the current position is refused, and a zero duration logs
+  // no session at all.
+  _controller->updateReadingProgress(0, 600);
+  _controller->deleteReadingSession(u"not-a-number"_s);
+
+  QCOMPARE(journalSpy.count(), 0);
 }
 
 void BookControllerTest::importAndOpenBook_addsAndSelectsIt() {

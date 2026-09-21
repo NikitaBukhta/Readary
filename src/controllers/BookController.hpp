@@ -104,6 +104,7 @@ signals:
   void bookSaved();
   void activeKindChanged();
   void bookOpenRequested(qint64 isbn);
+  void readingJournalChanged();
 
 private:
   void setErrorMessage(const QString &message);

@@ -44,6 +44,10 @@ NavigationController::PageInfo NavigationController::pageInfo(Page page) {
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s}, .level = 1};
   case Page::SearchPage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/searchPage/SearchPage.qml"_s}, .level = 1};
+  // Level 4: opened from the detail page, and its back arrow has to land back
+  // there rather than unwind to the list.
+  case Page::BookStatisticsPage:
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/bookStatisticsPage/BookStatisticsPage.qml"_s}, .level = 4};
   case Page::GoalsPage:
   case Page::ChallengesPage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_s}, .level = 1};
