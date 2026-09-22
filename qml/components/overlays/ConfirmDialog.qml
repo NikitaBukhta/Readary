@@ -6,10 +6,10 @@ import Library
 Popup {
     id: root
 
-    property string title: ""
-    property string message: ""
-    property string confirmLabel: qsTr("Confirm")
-    property string cancelLabel: qsTr("Cancel")
+    property alias title: titleText.text
+    property alias message: messageText.text
+    property alias confirmLabel: confirmButton.label
+    property alias cancelLabel: cancelButton.label
 
     signal confirmed
     signal cancelled
@@ -38,7 +38,6 @@ Popup {
         Text {
             id: titleText
             Layout.fillWidth: true
-            text: root.title
             color: Theme.textPrimary
             font.pixelSize: Styles.fontSize.title
             font.weight: Styles.fontWeight.bold
@@ -48,7 +47,6 @@ Popup {
         Text {
             id: messageText
             Layout.fillWidth: true
-            text: root.message
             color: Theme.textSecondary
             font.pixelSize: Styles.fontSize.body
             wrapMode: Text.WordWrap
@@ -65,7 +63,7 @@ Popup {
             SecondaryButton {
                 id: cancelButton
                 Layout.fillWidth: true
-                label: root.cancelLabel
+                label: qsTr("Cancel")
                 onClicked: {
                     root.close();
                     root.cancelled();
@@ -75,7 +73,7 @@ Popup {
             PrimaryButton {
                 id: confirmButton
                 Layout.fillWidth: true
-                label: root.confirmLabel
+                label: qsTr("Confirm")
                 onClicked: {
                     root.close();
                     root.confirmed();

@@ -7,13 +7,11 @@ import Library
 PaddedCard {
     id: root
 
-    property string title: ""
-    property string subtitle: ""
-    property string valueAxisCaption: ""
-    property string stepAxisCaption: ""
-    // Template for the tooltip over a point; %1 is the page it stands for.
+    property alias title: header.title
+    property alias subtitle: subtitleText.text
+    property alias valueAxisCaption: valueAxisText.text
+    property alias stepAxisCaption: stepAxisText.text
     property string pointTemplate: "%1"
-    // [{ session: int, page: int }], oldest session first.
     property var points: []
 
     // Not knobs for the caller — they exist so a theme switch repaints the
@@ -183,7 +181,6 @@ PaddedCard {
             SectionHeader {
                 id: header
                 Layout.fillWidth: true
-                title: root.title
                 titleSize: Styles.fontSize.title
             }
 
@@ -191,7 +188,6 @@ PaddedCard {
                 id: subtitleText
                 Layout.fillWidth: true
                 visible: root.subtitle.length > 0
-                text: root.subtitle
                 color: Theme.textMuted
                 font.pixelSize: Styles.fontSize.small
                 wrapMode: Text.WordWrap
@@ -260,7 +256,6 @@ PaddedCard {
                     id: valueAxisText
                     anchors.centerIn: parent
                     rotation: -90
-                    text: root.valueAxisCaption
                     color: Theme.textMuted
                     font.pixelSize: Styles.fontSize.caption
                     font.weight: Styles.fontWeight.semibold
@@ -271,7 +266,6 @@ PaddedCard {
                 id: stepAxisText
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
-                text: root.stepAxisCaption
                 color: Theme.textMuted
                 font.pixelSize: Styles.fontSize.caption
                 font.weight: Styles.fontWeight.semibold

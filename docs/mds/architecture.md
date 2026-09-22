@@ -114,15 +114,17 @@ src/
     app/       AppEnvironment (paths, file logger), AppInitializer (composition root)
     db/        DatabaseManager, SqlQueryBuilder
   services/
-    dto/       BookDTO, CharacterDTO, ReadingSessionDTO, BookStatisticsDTO + the BookStatus / ReadingPhase enums
+    dto/       BookDTO, CharacterDTO, ReadingSessionDTO, BookStatisticsDTO, LibraryStatisticsDTO
+               + the BookStatus / ReadingPhase enums
     storage/   BookTable (CRUD over BookDTO), BookFileStore (per-book files on disk)
     caching/   SearchCache, ReadingProgressCache, ReadingSessionCache
     pdf/       PdfMetadataReader, PdfDocumentInfo, PdfSource (Qt PDF)
     filtering/ BookFilterCriteria (the multi-criteria value object)
     emoji/     EmojiResolver (emoji char → vendored Twemoji SVG)
-    statistics/ BookStatisticsCalculator (reading journal → per-book figures)
-  qmltypes/    BookDTOObject, BookStatisticsObject (Q_GADGET wrappers over the DTOs,
-               exposed by BookController / BookStatisticsController to QML)
+    statistics/ BookStatisticsCalculator (reading journal → per-book figures),
+                LibraryStatisticsCalculator (shelf + journal → whole-library figures)
+  qmltypes/    BookDTOObject, BookStatisticsObject, LibraryStatisticsObject (Q_GADGET
+               wrappers over the DTOs, exposed by the matching controller to QML)
   models/
     books/
       list/    BookListModelBase, BookListModel, GlobalBookSearchListModel
@@ -131,7 +133,8 @@ src/
       details/ BookCharactersModel, ReadingHistoryModel
     settings/  LanguageModel, FontModel
   controllers/ BookController, BookFilterController, BookStatisticsController,
-               GlobalBookSearchController, NavigationController, SettingsController
+               GlobalBookSearchController, NavigationController, ProfileController,
+               SettingsController
   api/
     bookSearch/ IBookSearchAPI + OpenLibrary / Google Books clients + composite
     translate/  ITranslator + GoogleTranslator, LanguageDetector, LanguageConverter

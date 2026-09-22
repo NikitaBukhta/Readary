@@ -5,9 +5,9 @@ import Library
 PressableSurface {
     id: root
 
-    property string name: ""
-    property string role: ""
-    property url avatarSource
+    property alias name: nameText.text
+    property alias role: roleText.text
+    property alias avatarSource: avatarImage.source
 
     implicitHeight: Geometry.size.characterRowHeight
     shadowOffset: Styles.elevation.subtleOffset
@@ -32,7 +32,6 @@ PressableSurface {
             Image {
                 id: avatarImage
                 anchors.fill: parent
-                source: root.avatarSource
                 fillMode: Image.PreserveAspectCrop
                 visible: status === Image.Ready
             }
@@ -56,7 +55,6 @@ PressableSurface {
             Text {
                 id: nameText
                 Layout.fillWidth: true
-                text: root.name
                 color: Theme.textPrimary
                 font.pixelSize: Styles.fontSize.bodyLarge
                 font.weight: Styles.fontWeight.semibold
@@ -66,7 +64,6 @@ PressableSurface {
             Text {
                 id: roleText
                 Layout.fillWidth: true
-                text: root.role
                 color: Theme.textSecondary
                 font.pixelSize: Styles.fontSize.small
                 elide: Text.ElideRight

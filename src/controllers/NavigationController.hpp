@@ -28,6 +28,7 @@ public:
     GoalsPage,
     ChallengesPage,
     ProfilePage,
+    SettingsPage,
     AddBookPage,
     BookDetailPage,
     BookStatisticsPage,

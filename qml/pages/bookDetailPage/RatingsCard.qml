@@ -6,8 +6,8 @@ import Library
 PaddedCard {
     id: root
 
-    property real userRating: 0
-    property real globalRating: 0
+    property alias userRating: userTile.value
+    property alias globalRating: globalTile.value
     property int total: 10
 
     RowLayout {
@@ -20,7 +20,6 @@ PaddedCard {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             label: qsTr("Your rating")
-            value: root.userRating
             total: root.total
             decimals: 0
             showStars: true
@@ -38,7 +37,6 @@ PaddedCard {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             label: qsTr("Global rating")
-            value: root.globalRating
             total: root.total
             decimals: 1
             showStars: false

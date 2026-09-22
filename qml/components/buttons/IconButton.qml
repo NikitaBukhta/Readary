@@ -4,10 +4,10 @@ import Library
 PressableSurface {
     id: root
 
-    property string iconGlyph: ""
-    property url iconSource
-    property color iconColor: Theme.primaryContent
-    property bool iconTinted: false
+    property alias iconGlyph: glyph.glyph
+    property alias iconSource: glyph.source
+    property alias iconColor: glyph.color
+    property alias iconTinted: glyph.tinted
     property int diameter: Geometry.size.avatarSm
 
     implicitWidth: diameter
@@ -22,10 +22,7 @@ PressableSurface {
     IconGlyph {
         id: glyph
         anchors.centerIn: parent
-        glyph: root.iconGlyph
-        source: root.iconSource
-        color: root.iconColor
-        tinted: root.iconTinted
+        color: Theme.primaryContent
         size: Geometry.size.iconMd
     }
 }

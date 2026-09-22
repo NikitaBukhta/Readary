@@ -22,8 +22,12 @@ qml/
       CategoriesSection.qml        Three category rows
     categoryListPage/
       CategoryListPage.qml         Vertical list per category, with search
+    profilePage/
+      ProfilePage.qml              Reader level + three whole-library stat tiles + the section list, bound to ProfileController
+      ProfileHeaderCard.qml        Avatar + reader level + "N books read"
+      ProfileMenuRow.qml           One section row; dimmed and inert when its page does not exist yet
     settingsPage/
-      SettingsPage.qml             Language picker (and future user-preference rows) — bound to SettingsController.languageModel
+      SettingsPage.qml             Language picker (and future user-preference rows) — bound to SettingsController.languageModel; reached from ProfilePage, so it carries a back arrow
     addBookPage/
       AddBookPage.qml              Form for a hand-added book; submits to BookController.addCustomBook
       CoverPicker.qml              Tap-to-pick cover slot with a dashed placeholder (QtQuick.Dialogs FileDialog)
@@ -47,7 +51,7 @@ qml/
       BookGenreTags.qml            Flow of TagPill for genres, sits below the characters ListView
     bookStatisticsPage/
       BookStatisticsPage.qml       Per-book statistics, bound to BookStatisticsController.statistics
-      StatTile.qml                 IconGlyph over a StatColumn, three across the top
+      StatTile.qml                 IconGlyph over a StatColumn, three across the top; `iconTinted` (default true) tints the emoji to the accent — the profile page turns it off
       WeeklyPagesChart.qml         Mon..Sun bar chart of pages read this week
       ReadingSpeedCard.qml         Slowest / average / fastest pages per hour
       BookProgressChart.qml        Canvas line chart of the page reached per session
@@ -101,7 +105,7 @@ qml/
   utils/
     Geometry.qml                   Singleton: spacing/radius/size/chart sub-specs
     Styles.qml                     Singleton: font sizes, weights, elevation, opacity, duration, progressBar
-    Format.qml                     Singleton: locale-aware duration (h/m/s), entry stamp formatting, and the `blank` dash for a value that does not exist
+    Format.qml                     Singleton: locale-aware duration (h/m/s), K/M-suffixed compact numbers, entry stamp formatting, and the `blank` dash for a value that does not exist
 ```
 
 Sub-folders are for humans only — `qt_add_qml_module` registers every `.qml`
@@ -640,6 +644,7 @@ than untyped `QtObject`).
 | [qml/Main.qml](../../qml/Main.qml) | Window + page Loader + footer Loader + language-driven `active` toggle |
 | [qml/pages/mainPage/MainPage.qml](../../qml/pages/mainPage/MainPage.qml) | Home page |
 | [qml/pages/categoryListPage/CategoryListPage.qml](../../qml/pages/categoryListPage/CategoryListPage.qml) | Per-category list |
+| [qml/pages/profilePage/ProfilePage.qml](../../qml/pages/profilePage/ProfilePage.qml) | Whole-library figures bound to `ProfileController`, plus the section list |
 | [qml/pages/settingsPage/SettingsPage.qml](../../qml/pages/settingsPage/SettingsPage.qml) | Language picker bound to `SettingsController.languageModel` |
 | [qml/pages/bookDetailPage/BookDetailPage.qml](../../qml/pages/bookDetailPage/BookDetailPage.qml) | Book detail page |
 | [qml/pages/bookDetailPage/ReadingProgressTimer.qml](../../qml/pages/bookDetailPage/ReadingProgressTimer.qml) | Stopwatch + end-session form, persists via `BookController` |
@@ -648,4 +653,4 @@ than untyped `QtObject`).
 | [qml/theme/Theme.qml](../../qml/theme/Theme.qml) | Theme singleton |
 | [qml/utils/Geometry.qml](../../qml/utils/Geometry.qml) | Spacing / radius / size tokens |
 | [qml/utils/Styles.qml](../../qml/utils/Styles.qml) | Font / opacity / duration / progressBar / elevation tokens |
-| [qml/utils/Format.qml](../../qml/utils/Format.qml) | `duration()` / `stamp()` display helpers |
+| [qml/utils/Format.qml](../../qml/utils/Format.qml) | `duration()` / `compact()` / `stamp()` display helpers |

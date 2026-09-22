@@ -74,6 +74,9 @@ private slots:
   void getReadingSessions_areNewestFirst();
   void getReadingSessions_skipOpenEntries();
   void getReadingSessions_unknownBook_returnsNothing();
+  void getAllReadingSessions_spanEveryBook();
+  void getAllReadingSessions_skipOpenEntries();
+  void getAllReadingSessions_emptyJournal_returnsNothing();
 
   void deleteReadingSession_removesOnlyThatEntry();
   void deleteReadingSession_leavesThePositionAlone();
@@ -493,6 +496,42 @@ void BookTableTest::getReadingSessions_skipOpenEntries() {
 
 void BookTableTest::getReadingSessions_unknownBook_returnsNothing() {
   QVERIFY(_library.books()->getReadingSessions(kIsbn).isEmpty());
+}
+
+void BookTableTest::getAllReadingSessions_spanEveryBook() {
+  QCOMPARE(_library.books()->addBook(makeBook(kIsbn, u"Refactoring"_s)), kIsbn);
+  QCOMPARE(_library.books()->addBook(makeBook(kOtherIsbn, u"Effective Modern C++"_s)), kOtherIsbn);
+  QVERIFY(_library.books()->insertReadingSession(kIsbn, 0, 90, 600) > 0);
+  QVERIFY(_library.books()->insertReadingSession(kIsbn, 90, 180, 900) > 0);
+  QVERIFY(_library.books()->insertReadingSession(kOtherIsbn, 0, 40, 1200) > 0);
+
+  const auto sessions = _library.books()->getAllReadingSessions();
+
+  QCOMPARE(sessions.size(), 3);
+  int seconds = 0;
+  for (const auto &session : sessions) {
+    seconds += session.durationSeconds();
+  }
+  QCOMPARE(seconds, 2700);
+}
+
+void BookTableTest::getAllReadingSessions_skipOpenEntries() {
+  // A row still in flight belongs to the timer cache, not to the journal.
+  QCOMPARE(_library.books()->addBook(makeBook(kIsbn, u"Refactoring"_s)), kIsbn);
+  QVERIFY(_library.db()->exec(u"INSERT INTO reading_sessions (book_isbn, started_at, ended_at, pages_from, pages_to) "
+                              "VALUES (9780201616224, '2026-03-01T19:00:00Z', '2026-03-01T20:30:00Z', 0, 90), "
+                              "(9780201616224, '2026-03-09T19:00:00Z', NULL, 90, NULL)"_s));
+
+  const auto sessions = _library.books()->getAllReadingSessions();
+
+  QCOMPARE(sessions.size(), 1);
+  QCOMPARE(sessions.first().pagesFrom, 0);
+}
+
+void BookTableTest::getAllReadingSessions_emptyJournal_returnsNothing() {
+  QCOMPARE(_library.books()->addBook(makeBook(kIsbn, u"Refactoring"_s)), kIsbn);
+
+  QVERIFY(_library.books()->getAllReadingSessions().isEmpty());
 }
 
 void BookTableTest::deleteReadingSession_removesOnlyThatEntry() {

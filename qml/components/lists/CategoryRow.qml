@@ -6,12 +6,12 @@ import Library
 Rectangle {
     id: root
 
-    property string title: ""
-    property string subtitle: ""
-    property string iconGlyph: ""
-    property url iconSource
-    property color iconBackground: Theme.primarySoft
-    property color iconColor: Theme.primary
+    property alias title: titleText.text
+    property alias subtitle: subtitleText.text
+    property alias iconGlyph: icon.glyph
+    property alias iconSource: icon.source
+    property alias iconBackground: iconBox.color
+    property alias iconColor: icon.color
 
     signal clicked
 
@@ -45,13 +45,12 @@ Rectangle {
             Layout.preferredWidth: Geometry.size.categoryIconBox
             Layout.preferredHeight: Geometry.size.categoryIconBox
             radius: Geometry.radius.md
-            color: root.iconBackground
+            color: Theme.primarySoft
 
             IconGlyph {
+                id: icon
                 anchors.centerIn: parent
-                glyph: root.iconGlyph
-                source: root.iconSource
-                color: root.iconColor
+                color: Theme.primary
                 size: Geometry.size.iconLg
             }
         }
@@ -61,8 +60,8 @@ Rectangle {
             spacing: 2
 
             Text {
+                id: titleText
                 Layout.fillWidth: true
-                text: root.title
                 color: Theme.textPrimary
                 font.pixelSize: Styles.fontSize.bodyLarge
                 font.weight: Styles.fontWeight.semibold
@@ -70,8 +69,8 @@ Rectangle {
             }
 
             Text {
+                id: subtitleText
                 Layout.fillWidth: true
-                text: root.subtitle
                 color: Theme.textSecondary
                 font.pixelSize: Styles.fontSize.small
                 elide: Text.ElideRight

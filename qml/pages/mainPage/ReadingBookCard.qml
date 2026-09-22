@@ -7,10 +7,10 @@ import Library
 Item {
     id: root
 
-    property string title: ""
-    property string author: ""
-    property url coverSource
-    property color coverFallbackColor: Theme.primarySoft
+    property alias title: titleText.text
+    property alias author: authorText.text
+    property alias coverSource: cover.source
+    property alias coverFallbackColor: coverFallback.color
     property int pagesRead: 0
     property int pagesTotal: 0
 
@@ -64,14 +64,13 @@ Item {
                     Rectangle {
                         id: coverFallback
                         anchors.fill: parent
-                        color: root.coverFallbackColor
+                        color: Theme.primarySoft
                         visible: !cover.visible
                     }
 
                     Image {
                         id: cover
                         anchors.fill: parent
-                        source: root.coverSource
                         fillMode: Image.PreserveAspectCrop
                         visible: source.toString().length > 0 && status === Image.Ready
                     }
@@ -117,7 +116,6 @@ Item {
 
             Text {
                 id: titleText
-                text: root.title
                 color: Theme.textPrimary
                 elide: Text.ElideRight
                 font.pixelSize: Styles.fontSize.body
@@ -129,7 +127,7 @@ Item {
             }
 
             Text {
-                text: root.author
+                id: authorText
                 color: Theme.primary
                 elide: Text.ElideRight
                 font.pixelSize: Styles.fontSize.small

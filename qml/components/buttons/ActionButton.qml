@@ -5,10 +5,10 @@ import Library
 PressableSurface {
     id: root
 
-    property string label: ""
-    property string iconGlyph: ""
-    property url iconSource
-    property color iconColor: Theme.primary
+    property alias label: labelText.text
+    property alias iconGlyph: glyph.glyph
+    property alias iconSource: glyph.source
+    property alias iconColor: glyph.color
     property bool active: false
 
     implicitHeight: Geometry.size.actionButtonHeight
@@ -26,15 +26,12 @@ PressableSurface {
 
         IconGlyph {
             id: glyph
-            glyph: root.iconGlyph
-            source: root.iconSource
-            color: root.iconColor
+            color: Theme.primary
             size: Geometry.size.iconMd
         }
 
         Text {
             id: labelText
-            text: root.label
             color: root.active ? Theme.primary : Theme.textPrimary
             font.pixelSize: Styles.fontSize.body
             font.weight: Styles.fontWeight.semibold

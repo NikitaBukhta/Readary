@@ -13,6 +13,8 @@ with `QQmlEngine::CppOwnership`.
   [i18n.md](i18n.md) for the language pipeline end-to-end.
 - `BookStatisticsController` — everything the statistics page shows about the
   one book the detail page has open.
+- `ProfileController` — the same idea one level up: what the library as a
+  whole adds up to, for the profile page.
 - `BookFilterController` — the filter criteria shared by the library lists and
   the online search; see [filtering.md](filtering.md).
 - `GlobalBookSearchController` — the online catalog search; see
@@ -296,6 +298,70 @@ timed-only.
 | [src/services/dto/BookStatisticsDTO.hpp](../../src/services/dto/BookStatisticsDTO.hpp) | The plain, moc-free result struct |
 | [src/qmltypes/BookStatisticsObject.hpp](../../src/qmltypes/BookStatisticsObject.hpp) | Q_GADGET wrapper at the QML boundary |
 
+## `ProfileController`
+
+Backs [`ProfilePage`](../../qml/pages/profilePage/ProfilePage.qml). Where
+`BookStatisticsController` describes one book, this one describes the shelf:
+how many books are behind the reader, how many pages that is, and how long
+the timer has run across all of them. Everything is recomputed from `books`
+and `reading_sessions` on read — nothing is stored, and there is no cache to
+invalidate.
+
+`AppInitializer` re-runs it on `BookListModel::modelReset` (which fires after
+any book write, since `BookController::bookSaved` reloads the list) and on
+`BookController::readingJournalChanged`. The page also calls `refresh()` on
+open, because it lives behind `Main.qml`'s `Loader` and is rebuilt each time
+while the controller's figures are not.
+
+### QML-visible API
+
+| Member | Kind | Purpose |
+|--------|------|---------|
+| `statistics` | property (RO, `readary::qmltypes::LibraryStatisticsObject` Q_GADGET) | the whole set in one value (below) |
+| `readerLevel` | property (RO, `ReaderLevel`) | the badge over the profile card, derived from `booksFinished` alone |
+| `hasData` | property (RO, `bool`) | whether the library holds any book at all |
+| `refresh()` | `Q_INVOKABLE` | recomputes from the library as it stands now, and stays silent when the figures come back unchanged |
+
+`statistics` fields, as QML sees them:
+
+| Field | Meaning |
+|-------|---------|
+| `booksTotal` | rows in `books` |
+| `booksFinished` | `status = Finished` |
+| `booksInProgress` | `status = InProgress` |
+| `pagesRead` | pages behind the reader across the library (below) |
+| `totalSeconds` | summed durations of every finished session, all books |
+| `sessionCount` | finished sessions, all books |
+
+`ReaderLevel` steps with `booksFinished`: `Newcomer` at 0, `Reader` from 1,
+`Bookworm` from 5, `Bibliophile` from 20. The thresholds live in C++ so they
+are testable; QML owns the wording, so `retranslate` reaches it.
+
+### Why pages are counted per book, not from the journal
+
+`BookStatisticsDTO::pagesRead` sums the journal, which is right for one book:
+re-reading it really is more pages read. Across the library that sum would be
+wrong twice over — it double-counts re-reads against the shelf, and it is
+empty for anyone who never used the reading timer, which is most of a library
+imported from a catalog. So each book contributes its own reading position
+(`books.pagesRead`) instead, with two adjustments: a book marked `Finished`
+counts its whole `totalPages`, because setting the status from the detail page
+never writes a position; and a position past the stated length wins over it,
+because an imported page count can simply be too low.
+
+`totalSeconds` and `sessionCount` still come from the journal — that is the
+only place the timer records anything.
+
+### File map
+
+| File | Purpose |
+|------|---------|
+| [src/controllers/ProfileController.hpp](../../src/controllers/ProfileController.hpp) | Properties, `ReaderLevel` thresholds, singleton wiring |
+| [src/controllers/ProfileController.cpp](../../src/controllers/ProfileController.cpp) | Library read + recompute |
+| [src/services/statistics/LibraryStatisticsCalculator.hpp](../../src/services/statistics/LibraryStatisticsCalculator.hpp) | The pure computation, testable without a database |
+| [src/services/dto/LibraryStatisticsDTO.hpp](../../src/services/dto/LibraryStatisticsDTO.hpp) | The plain, moc-free result struct |
+| [src/qmltypes/LibraryStatisticsObject.hpp](../../src/qmltypes/LibraryStatisticsObject.hpp) | Q_GADGET wrapper at the QML boundary |
+
 ## `NavigationController`
 
 Tiny stack-based router. Holds a `QStack<Page>`; pushing a page that
@@ -320,18 +386,19 @@ CategoryListPage = 2   level 2   qrc:/qt/qml/pages/categoryListPage/CategoryList
 SearchPage       = 3   level 1   qrc:/qt/qml/pages/searchPage/SearchPage.qml
 GoalsPage        = 4   level 1   (placeholder — falls back to MainPage)
 ChallengesPage   = 5   level 1   (placeholder — falls back to MainPage)
-ProfilePage      = 6   level 1   qrc:/qt/qml/pages/settingsPage/SettingsPage.qml
-AddBookPage        = 7   level 3   qrc:/qt/qml/pages/addBookPage/AddBookPage.qml
-BookDetailPage     = 8   level 3   qrc:/qt/qml/pages/bookDetailPage/BookDetailPage.qml
-BookStatisticsPage = 9   level 4   qrc:/qt/qml/pages/bookStatisticsPage/BookStatisticsPage.qml
+ProfilePage      = 6   level 1   qrc:/qt/qml/pages/profilePage/ProfilePage.qml
+SettingsPage     = 7   level 2   qrc:/qt/qml/pages/settingsPage/SettingsPage.qml
+AddBookPage        = 8   level 3   qrc:/qt/qml/pages/addBookPage/AddBookPage.qml
+BookDetailPage     = 9   level 3   qrc:/qt/qml/pages/bookDetailPage/BookDetailPage.qml
+BookStatisticsPage = 10  level 4   qrc:/qt/qml/pages/bookStatisticsPage/BookStatisticsPage.qml
 ```
 
 The two remaining placeholder pages (Goals/Challenges) are exposed so
 `BottomNavBar` can drive `currentPage` to them, but their `pageInfo()` entry
 maps to `MainPage`'s URL — they'll get real implementations later.
-`ProfilePage` already routes to the
-[Settings page](../../qml/pages/settingsPage/SettingsPage.qml) (language picker
-+ future preferences).
+`SettingsPage` is level 2 under `ProfilePage`: it is reached from the profile
+page's section list, so its back arrow has to land there rather than unwind to
+the library. It is not a bottom-nav destination of its own.
 
 `AddBookPage` deliberately shares level 3 with `BookDetailPage`: a successful
 add ends in `BookController::openBook`, and a same-level push replaces the

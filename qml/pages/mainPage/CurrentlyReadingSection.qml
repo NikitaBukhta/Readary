@@ -6,19 +6,20 @@ import Library
 ColumnLayout {
     id: root
 
-    property var model
+    property alias model: list.model
     property int sidePadding: Geometry.spacing.xxl
-    property string title: qsTr("Currently reading")
+    property alias title: header.title
 
     signal bookOpened(real isbn)
 
     spacing: Geometry.spacing.md
 
     SectionHeader {
+        id: header
         Layout.fillWidth: true
         Layout.leftMargin: root.sidePadding
         Layout.rightMargin: root.sidePadding
-        title: root.title
+        title: qsTr("Currently reading")
         trailingText: list.count > 0 ? list.count.toString() : ""
     }
 
@@ -34,7 +35,6 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: cardSizer.implicitHeight
         orientation: ListView.Horizontal
-        model: root.model
         spacing: Geometry.spacing.lg
         clip: true
         boundsBehavior: Flickable.StopAtBounds

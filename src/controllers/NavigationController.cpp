@@ -41,7 +41,11 @@ NavigationController::PageInfo NavigationController::pageInfo(Page page) {
   case Page::AddBookPage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/addBookPage/AddBookPage.qml"_s}, .level = 3};
   case Page::ProfilePage:
-    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s}, .level = 1};
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/profilePage/ProfilePage.qml"_s}, .level = 1};
+  // Level 2: opened from the profile page, and its back arrow has to land
+  // there rather than unwind to the library.
+  case Page::SettingsPage:
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s}, .level = 2};
   case Page::SearchPage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/searchPage/SearchPage.qml"_s}, .level = 1};
   // Level 4: opened from the detail page, and its back arrow has to land back

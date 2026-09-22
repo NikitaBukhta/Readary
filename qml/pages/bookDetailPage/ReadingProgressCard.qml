@@ -7,7 +7,7 @@ PaddedCard {
 
     property int pagesRead: 0
     property int pagesTotal: 0
-    property string actionLabel: qsTr("Continue reading")
+    property alias actionLabel: actionButton.label
 
     readonly property real progress: pagesTotal > 0 ? Math.min(1, pagesRead / pagesTotal) : 0
     readonly property bool _hasPages: root.pagesTotal > 0
@@ -78,7 +78,7 @@ PaddedCard {
             visible: !progressTimer.active
             Layout.fillWidth: true
             Layout.topMargin: root._hasPages ? Geometry.spacing.sm : 0
-            label: root.actionLabel
+            label: qsTr("Continue reading")
             iconGlyph: "▶"
             onClicked: root.startReadingRequested()
         }

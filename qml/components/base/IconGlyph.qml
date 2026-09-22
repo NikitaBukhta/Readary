@@ -7,18 +7,13 @@ import Library
 Item {
     id: root
 
-    property string glyph: ""
+    property alias glyph: label.text
     property url source
     property int size: Geometry.size.iconMd
-    property color color: Theme.textPrimary
+    property alias color: label.color
     // Emoji render as Twemoji SVGs, so `color` has no effect unless tinted.
-    property bool tinted: false
+    property alias tinted: image.layer.enabled
 
-    // Emoji codepoints are rendered as SVGs from the vendored Twemoji set so
-    // they look identical on every platform (Qt's text engine on Android
-    // can't render bundled color-emoji fonts — see EmojiResolver). Non-emoji
-    // symbols (✓ ← ↻) fall through to the Label below, which uses the
-    // platform default font.
     readonly property url _emojiUrl: glyph.length > 0 ? EmojiResolver.iconUrl(glyph) : ""
     readonly property url _imageSource: _emojiUrl.toString().length > 0 ? _emojiUrl : root.source
 
@@ -36,7 +31,6 @@ Item {
         sourceSize.width: root.size
         sourceSize.height: root.size
 
-        layer.enabled: root.tinted
         layer.effect: MultiEffect {
             colorization: 1.0
             colorizationColor: root.color
@@ -46,8 +40,7 @@ Item {
     Label {
         id: label
         anchors.centerIn: parent
-        text: root.glyph
-        color: root.color
+        color: Theme.textPrimary
         font.pixelSize: Math.round(root.size * 0.9)
         visible: !image.visible
     }

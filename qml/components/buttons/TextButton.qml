@@ -4,18 +4,17 @@ import Library
 TouchTarget {
     id: root
 
-    property string label: ""
-    property color labelColor: Theme.textMuted
-    property int labelSize: Styles.fontSize.bodyLarge
-    property int labelWeight: Styles.fontWeight.medium
+    property alias label: labelText.text
+    property alias labelColor: labelText.color
+    property alias labelSize: labelText.font.pixelSize
+    property alias labelWeight: labelText.font.weight
 
     padding: Geometry.spacing.md
 
     Text {
         id: labelText
-        text: root.label
-        color: root.labelColor
-        font.pixelSize: root.labelSize
-        font.weight: root.labelWeight
+        color: Theme.textMuted
+        font.pixelSize: Styles.fontSize.bodyLarge
+        font.weight: Styles.fontWeight.medium
     }
 }

@@ -6,7 +6,7 @@ import Library
 PaddedCard {
     id: root
 
-    property string title: ""
+    property alias title: header.title
     // One bucket per weekday, Monday first — the order BookStatisticsController
     // hands over. The chart renders however many it is given.
     property var values: []
@@ -47,7 +47,6 @@ PaddedCard {
         SectionHeader {
             id: header
             Layout.fillWidth: true
-            title: root.title
             titleSize: Styles.fontSize.title
         }
 

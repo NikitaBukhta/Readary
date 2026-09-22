@@ -5,18 +5,15 @@ import Library
 ColumnLayout {
     id: root
 
-    property string title: ""
-    property string author: ""
+    property alias title: titleText.text
+    property alias author: authorText.text
     property int year: 0
     property string publisher: ""
     property int totalPages: 0
     property int rating: 0
     property int ratingTotal: 10
-    property url coverSource
-
-    // Whether the overflow button is there at all: with no applicable action the
-    // page passes false rather than opening an empty menu.
-    property bool hasMenu: false
+    property alias coverSource: coverImage.source
+    property alias hasMenu: menuButton.visible
 
     signal backClicked
     signal menuClicked
@@ -46,7 +43,7 @@ ColumnLayout {
             id: menuButton
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.hasMenu
+            visible: false
             onClicked: root.menuClicked()
 
             IconGlyph {
@@ -77,7 +74,6 @@ ColumnLayout {
             Image {
                 id: coverImage
                 anchors.fill: parent
-                source: root.coverSource
                 fillMode: Image.PreserveAspectCrop
                 visible: status === Image.Ready
             }
@@ -101,7 +97,6 @@ ColumnLayout {
             Text {
                 id: titleText
                 Layout.fillWidth: true
-                text: root.title
                 color: Theme.textPrimary
                 font.pixelSize: Styles.fontSize.titleMedium
                 font.weight: Styles.fontWeight.bold
@@ -113,7 +108,6 @@ ColumnLayout {
             Text {
                 id: authorText
                 Layout.fillWidth: true
-                text: root.author
                 color: Theme.textSecondary
                 font.pixelSize: Styles.fontSize.body
                 font.weight: Styles.fontWeight.medium

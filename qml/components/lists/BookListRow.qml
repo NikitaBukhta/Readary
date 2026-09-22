@@ -6,12 +6,12 @@ import Library
 Rectangle {
     id: root
 
-    property string name: ""
-    property string author: ""
+    property alias name: nameText.text
+    property alias author: authorText.text
     property string type: ""
     property int year: 0
-    property url coverSource
-    property color coverFallbackColor: Theme.primarySoft
+    property alias coverSource: cover.source
+    property alias coverFallbackColor: coverFallback.color
 
     signal clicked
 
@@ -49,14 +49,13 @@ Rectangle {
                 id: coverFallback
                 anchors.fill: parent
                 radius: Geometry.radius.md
-                color: root.coverFallbackColor
+                color: Theme.primarySoft
                 visible: !cover.visible
             }
 
             Image {
                 id: cover
                 anchors.fill: parent
-                source: root.coverSource
                 fillMode: Image.PreserveAspectCrop
                 visible: source.toString().length > 0 && status === Image.Ready
             }
@@ -68,8 +67,8 @@ Rectangle {
             spacing: Geometry.spacing.xxs
 
             Text {
+                id: nameText
                 Layout.fillWidth: true
-                text: root.name
                 color: Theme.textPrimary
                 font.pixelSize: Styles.fontSize.bodyLarge
                 font.weight: Styles.fontWeight.semibold
@@ -78,8 +77,8 @@ Rectangle {
             }
 
             Text {
+                id: authorText
                 Layout.fillWidth: true
-                text: root.author
                 color: Theme.textSecondary
                 font.pixelSize: Styles.fontSize.body
                 elide: Text.ElideRight

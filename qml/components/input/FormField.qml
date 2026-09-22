@@ -3,21 +3,16 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Library
 
-// Labelled input: a caption above a filled, rounded box. One-way by design —
-// the hosting form reads `value` when it submits rather than binding both ways.
 ColumnLayout {
     id: root
 
-    property string label: ""
-    property string placeholder: ""
-    // Grows the box and swaps the single-line field for a scrollable area.
+    property alias label: caption.text
+    property alias placeholder: field.placeholderText
     property bool multiline: false
     property bool numeric: false
 
     readonly property string value: root.multiline ? area.text : field.text
 
-    // Escape hatch for a field the form fills in for the user (a PDF's page
-    // count overwriting what was typed). Reading still goes through `value`.
     function setValue(text: string): void {
         if (root.multiline)
             area.text = text;
@@ -31,7 +26,6 @@ ColumnLayout {
         id: caption
         Layout.fillWidth: true
         visible: root.label.length > 0
-        text: root.label
     }
 
     Rectangle {
@@ -53,7 +47,6 @@ ColumnLayout {
             anchors.fill: parent
             anchors.leftMargin: Geometry.spacing.md
             anchors.rightMargin: Geometry.spacing.md
-            placeholderText: root.placeholder
             placeholderTextColor: Theme.textMuted
             color: Theme.textPrimary
             font.pixelSize: Styles.fontSize.body

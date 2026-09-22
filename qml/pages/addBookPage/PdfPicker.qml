@@ -10,7 +10,7 @@ import Library
 ColumnLayout {
     id: root
 
-    property string label: ""
+    property alias label: caption.text
 
     readonly property bool attached: root._fileName.length > 0
 
@@ -33,7 +33,6 @@ ColumnLayout {
         id: caption
         Layout.fillWidth: true
         visible: root.label.length > 0
-        text: root.label
     }
 
     PressableSurface {

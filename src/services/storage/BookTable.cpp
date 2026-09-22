@@ -12,11 +12,17 @@ using Qt::StringLiterals::operator""_s;
 namespace {
 Q_LOGGING_CATEGORY(lcBookTable, "readary.services.books")
 
-// The schema takes NULL for "length unknown" and rejects 0 outright, while the
-// DTO carries that same unknown as 0 — bind it as a typed NULL so a book with
-// no page count still inserts.
 QVariant pagesOrNull(int totalPages) {
   return totalPages > 0 ? QVariant{totalPages} : QVariant{QMetaType::fromType<int>()};
+}
+
+QList<readary::services::ReadingSessionDTO> toSessions(const QList<QVariantMap> &rows) {
+  QList<readary::services::ReadingSessionDTO> result;
+  result.reserve(rows.size());
+  for (const auto &row : std::as_const(rows)) {
+    result.emplaceBack(readary::services::ReadingSessionDTO::fromMap(row));
+  }
+  return result;
 }
 } // namespace
 
@@ -315,13 +321,26 @@ QList<ReadingSessionDTO> BookTable::getReadingSessions(qint64 bookIsbn) const {
   if (!error.isEmpty()) {
     qCWarning(lcBookTable) << "Failed to load reading sessions for book isbn:" << bookIsbn << "error:" << error;
   }
+  return toSessions(rows);
+}
 
-  QList<ReadingSessionDTO> result;
-  result.reserve(rows.size());
-  for (const auto &row : std::as_const(rows)) {
-    result.emplaceBack(ReadingSessionDTO::fromMap(row));
+QList<ReadingSessionDTO> BookTable::getAllReadingSessions() const {
+  core::SqlQueryBuilder query;
+  QString error;
+
+  // Same "finished sessions only" rule as the per-book read: a row still in
+  // flight belongs to the timer cache, not to the journal.
+  query.select({u"id"_s, u"started_at"_s, u"ended_at"_s, u"pages_from"_s, u"pages_to"_s})
+      .from(u"reading_sessions"_s)
+      .where(u"ended_at IS NOT NULL"_s)
+      .orderBy(u"started_at"_s, u"DESC"_s)
+      .orderBy(u"id"_s, u"DESC"_s);
+
+  auto rows = _db->select(query, &error);
+  if (!error.isEmpty()) {
+    qCWarning(lcBookTable) << "Failed to load the reading journal:" << error;
   }
-  return result;
+  return toSessions(rows);
 }
 
 bool BookTable::updatePagesRead(qint64 bookIsbn, int pagesRead) {

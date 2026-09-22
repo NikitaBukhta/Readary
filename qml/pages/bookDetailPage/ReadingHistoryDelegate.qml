@@ -6,8 +6,8 @@ Item {
 
     property var sessionData: ({})
     property int sidePadding: 0
-    property bool railAbove: true
-    property bool railBelow: true
+    property alias railAbove: row.railAbove
+    property alias railBelow: row.railBelow
 
     // A string: a QML signal cannot carry qint64, and an int would clip the id.
     signal deleteRequested(string sessionId)
@@ -26,8 +26,6 @@ Item {
         pagesTo: root.sessionData.pagesTo ?? 0
         pagesRead: root.sessionData.pagesRead ?? 0
         durationSeconds: root.sessionData.durationSeconds ?? 0
-        railAbove: root.railAbove
-        railBelow: root.railBelow
 
         onDeleteRequested: root.deleteRequested(String(root.sessionData.id ?? 0))
     }

@@ -5,8 +5,8 @@ import Library
 Item {
     id: root
 
-    property string title: qsTr("Characters")
-    property string addLabel: qsTr("+ Add")
+    property alias title: titleText.text
+    property alias addLabel: addButton.label
     property int sidePadding: 0
 
     signal addRequested
@@ -25,7 +25,7 @@ Item {
         Text {
             id: titleText
             Layout.fillWidth: true
-            text: root.title
+            text: qsTr("Characters")
             color: Theme.textPrimary
             font.pixelSize: Styles.fontSize.titleMedium
             font.weight: Styles.fontWeight.bold
@@ -33,7 +33,7 @@ Item {
 
         TextButton {
             id: addButton
-            label: root.addLabel
+            label: qsTr("+ Add")
             labelColor: Theme.primary
             labelSize: Styles.fontSize.body
             labelWeight: Styles.fontWeight.semibold

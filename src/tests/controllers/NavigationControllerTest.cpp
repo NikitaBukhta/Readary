@@ -28,6 +28,7 @@ private slots:
   void setCurrentPage_downTwoLevels_keepsBothBehind();
 
   void addBookPage_isReplacedByTheBookItOpens();
+  void settingsPage_stacksOnTopOfTheProfile();
   void statisticsPage_stacksOnTopOfTheBookItDescribes();
   void statisticsPage_leavesTheWholeStackBehindIt();
 
@@ -52,6 +53,9 @@ void NavigationControllerTest::currentPagePath_namesTheQmlFile() {
   QCOMPARE(controller.currentPagePath(), QUrl{u"qrc:/qt/qml/Library/pages/bookDetailPage/BookDetailPage.qml"_s});
 
   controller.setCurrentPage(Page::ProfilePage);
+  QCOMPARE(controller.currentPagePath(), QUrl{u"qrc:/qt/qml/Library/pages/profilePage/ProfilePage.qml"_s});
+
+  controller.setCurrentPage(Page::SettingsPage);
   QCOMPARE(controller.currentPagePath(), QUrl{u"qrc:/qt/qml/Library/pages/settingsPage/SettingsPage.qml"_s});
 
   controller.setCurrentPage(Page::SearchPage);
@@ -143,6 +147,17 @@ void NavigationControllerTest::addBookPage_isReplacedByTheBookItOpens() {
   controller.goBack();
 
   QCOMPARE(controller.currentPage(), Page::SearchPage);
+}
+
+void NavigationControllerTest::settingsPage_stacksOnTopOfTheProfile() {
+  NavigationController controller{nullptr};
+  controller.setCurrentPage(Page::ProfilePage);
+
+  controller.setCurrentPage(Page::SettingsPage);
+
+  QCOMPARE(controller.currentPage(), Page::SettingsPage);
+  controller.goBack();
+  QCOMPARE(controller.currentPage(), Page::ProfilePage);
 }
 
 void NavigationControllerTest::statisticsPage_stacksOnTopOfTheBookItDescribes() {

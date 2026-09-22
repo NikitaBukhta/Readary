@@ -8,8 +8,8 @@ RowLayout {
 
     property int minValue: 0
     property int maxValue: 0
-    property string minPlaceholder: qsTr("Any")
-    property string maxPlaceholder: qsTr("Any")
+    property alias minPlaceholder: minBox.placeholder
+    property alias maxPlaceholder: maxBox.placeholder
 
     signal minEdited(int value)
     signal maxEdited(int value)
@@ -54,7 +54,7 @@ RowLayout {
     NumberBox {
         id: minBox
         text: root.minValue > 0 ? String(root.minValue) : ""
-        placeholder: root.minPlaceholder
+        placeholder: qsTr("Any")
         onEdited: value => root.minEdited(value)
     }
 
@@ -69,7 +69,7 @@ RowLayout {
     NumberBox {
         id: maxBox
         text: root.maxValue > 0 ? String(root.maxValue) : ""
-        placeholder: root.maxPlaceholder
+        placeholder: qsTr("Any")
         onEdited: value => root.maxEdited(value)
     }
 }

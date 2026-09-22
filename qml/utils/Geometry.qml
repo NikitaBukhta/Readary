@@ -40,6 +40,7 @@ QtObject {
 
         readonly property int avatarSm: 36
         readonly property int avatarMd: 48
+        readonly property int avatarLg: 64
 
         readonly property int searchHeight: 52
         readonly property int goalRing: 64

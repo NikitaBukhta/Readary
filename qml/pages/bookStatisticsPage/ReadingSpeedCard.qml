@@ -5,12 +5,10 @@ import Library
 PaddedCard {
     id: root
 
-    property string title: ""
+    property alias title: header.title
     property real minimum: 0
     property real average: 0
     property real maximum: 0
-    // False when no session was ever timed. Without it a measured 0 p/h — see
-    // BookStatisticsDTO::timedSessionCount — would render as "no data".
     property bool hasSpeed: false
 
     function _format(pagesPerHour: real): string {
@@ -25,7 +23,6 @@ PaddedCard {
         SectionHeader {
             id: header
             Layout.fillWidth: true
-            title: root.title
             titleSize: Styles.fontSize.title
         }
 

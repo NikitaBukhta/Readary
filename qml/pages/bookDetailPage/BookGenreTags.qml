@@ -5,14 +5,14 @@ import Library
 Flow {
     id: root
 
-    property var tags: []
+    property alias tags: tagsRepeater.model
 
     visible: root.tags.length > 0
     spacing: Geometry.spacing.sm
 
     Repeater {
         id: tagsRepeater
-        model: root.tags
+        model: []
 
         delegate: TagPill {
             id: tag

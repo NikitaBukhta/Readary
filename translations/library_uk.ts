@@ -103,7 +103,7 @@
 <context>
     <name>AppSearchField</name>
     <message>
-        <location filename="../qml/components/input/AppSearchField.qml" line="9"/>
+        <location filename="../qml/components/input/AppSearchField.qml" line="68"/>
         <source>Search...</source>
         <translation>Пошук...</translation>
     </message>
@@ -244,7 +244,7 @@
 <context>
     <name>BookDetailHeader</name>
     <message numerus="yes">
-        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="133"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="130"/>
         <source>%n page(s)</source>
         <translation>
             <numerusform>%n сторінка</numerusform>
@@ -253,7 +253,7 @@
         </translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="158"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="155"/>
         <source>%1/%2</source>
         <translation>%1/%2</translation>
     </message>
@@ -400,22 +400,22 @@
         <translation>Почати читання</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="100"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="90"/>
         <source>Description</source>
         <translation>Опис</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="130"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="119"/>
         <source>Want to read</source>
         <translation>Хочу прочитати</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="139"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="128"/>
         <source>Want to buy</source>
         <translation>Хочу купити</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="149"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailSummary.qml" line="137"/>
         <source>Statistics</source>
         <translation>Статистика</translation>
     </message>
@@ -684,12 +684,12 @@
 <context>
     <name>CharactersListHeader</name>
     <message>
-        <location filename="../qml/pages/bookDetailPage/CharactersListHeader.qml" line="8"/>
+        <location filename="../qml/pages/bookDetailPage/CharactersListHeader.qml" line="28"/>
         <source>Characters</source>
         <translation>Персонажі</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/CharactersListHeader.qml" line="9"/>
+        <location filename="../qml/pages/bookDetailPage/CharactersListHeader.qml" line="36"/>
         <source>+ Add</source>
         <translation>+ Додати</translation>
     </message>
@@ -697,14 +697,14 @@
 <context>
     <name>ConfirmDialog</name>
     <message>
-        <location filename="../qml/components/overlays/ConfirmDialog.qml" line="11"/>
-        <source>Confirm</source>
-        <translation>Підтвердити</translation>
-    </message>
-    <message>
-        <location filename="../qml/components/overlays/ConfirmDialog.qml" line="12"/>
+        <location filename="../qml/components/overlays/ConfirmDialog.qml" line="66"/>
         <source>Cancel</source>
         <translation>Скасувати</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/overlays/ConfirmDialog.qml" line="76"/>
+        <source>Confirm</source>
+        <translation>Підтвердити</translation>
     </message>
 </context>
 <context>
@@ -728,7 +728,7 @@
 <context>
     <name>CurrentlyReadingSection</name>
     <message>
-        <location filename="../qml/pages/mainPage/CurrentlyReadingSection.qml" line="11"/>
+        <location filename="../qml/pages/mainPage/CurrentlyReadingSection.qml" line="22"/>
         <source>Currently reading</source>
         <translation>Зараз читаю</translation>
     </message>
@@ -857,24 +857,34 @@
 <context>
     <name>Format</name>
     <message>
-        <location filename="../qml/utils/Format.qml" line="17"/>
+        <location filename="../qml/utils/Format.qml" line="14"/>
         <source>%1h %2m</source>
         <translation>%1 год %2 хв</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="19"/>
+        <location filename="../qml/utils/Format.qml" line="16"/>
         <source>%1h</source>
         <translation>%1 год</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="21"/>
+        <location filename="../qml/utils/Format.qml" line="18"/>
         <source>%1m</source>
         <translation>%1 хв</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="23"/>
+        <location filename="../qml/utils/Format.qml" line="20"/>
         <source>%1s</source>
         <translation>%1 с</translation>
+    </message>
+    <message>
+        <location filename="../qml/utils/Format.qml" line="31"/>
+        <source>%1K</source>
+        <translation>%1 тис.</translation>
+    </message>
+    <message>
+        <location filename="../qml/utils/Format.qml" line="32"/>
+        <source>%1M</source>
+        <translation>%1 млн</translation>
     </message>
 </context>
 <context>
@@ -908,12 +918,12 @@
         <translation>Проза</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="85"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="84"/>
         <source>Other</source>
         <translation>Інше</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="96"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="95"/>
         <source>Genre name</source>
         <translation>Назва жанру</translation>
     </message>
@@ -996,6 +1006,18 @@
     <name>LanguageModelTest</name>
 </context>
 <context>
+    <name>LibraryStatisticsCalculator</name>
+</context>
+<context>
+    <name>LibraryStatisticsCalculatorTest</name>
+</context>
+<context>
+    <name>LibraryStatisticsDTO</name>
+</context>
+<context>
+    <name>LibraryStatisticsObject</name>
+</context>
+<context>
     <name>LoadingSpinner</name>
 </context>
 <context>
@@ -1009,17 +1031,17 @@
         <translation>Пошук книг...</translation>
     </message>
     <message>
-        <location filename="../qml/pages/mainPage/MainPage.qml" line="62"/>
+        <location filename="../qml/pages/mainPage/MainPage.qml" line="63"/>
         <source>Monthly goal</source>
         <translation>Ціль на місяць</translation>
     </message>
     <message>
-        <location filename="../qml/pages/mainPage/MainPage.qml" line="63"/>
+        <location filename="../qml/pages/mainPage/MainPage.qml" line="64"/>
         <source>books</source>
         <translation>книг</translation>
     </message>
     <message>
-        <location filename="../qml/pages/mainPage/MainPage.qml" line="71"/>
+        <location filename="../qml/pages/mainPage/MainPage.qml" line="72"/>
         <source>Currently reading</source>
         <translation>Зараз читаю</translation>
     </message>
@@ -1067,12 +1089,12 @@
 <context>
     <name>PdfPicker</name>
     <message>
-        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="68"/>
+        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="67"/>
         <source>Attach a PDF</source>
         <translation>Прикріпити PDF</translation>
     </message>
     <message numerus="yes">
-        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="77"/>
+        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="76"/>
         <source>%n page(s)</source>
         <translation>
             <numerusform>%n сторінка</numerusform>
@@ -1081,12 +1103,12 @@
         </translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="101"/>
+        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="100"/>
         <source>Choose a PDF</source>
         <translation>Виберіть PDF</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="102"/>
+        <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="101"/>
         <source>PDF documents (*.pdf)</source>
         <translation>Документи PDF (*.pdf)</translation>
     </message>
@@ -1099,6 +1121,95 @@
 </context>
 <context>
     <name>PrimaryButton</name>
+</context>
+<context>
+    <name>ProfileController</name>
+</context>
+<context>
+    <name>ProfileControllerTest</name>
+</context>
+<context>
+    <name>ProfileHeaderCard</name>
+</context>
+<context>
+    <name>ProfileMenuRow</name>
+</context>
+<context>
+    <name>ProfilePage</name>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="18"/>
+        <source>Reading statistics</source>
+        <translation>Статистика читання</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="23"/>
+        <source>Settings</source>
+        <translation>Налаштування</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="28"/>
+        <source>Sync</source>
+        <translation>Синхронізація</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="33"/>
+        <source>Privacy</source>
+        <translation>Приватність</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="38"/>
+        <source>Offline mode</source>
+        <translation>Офлайн-режим</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="52"/>
+        <source>Bibliophile</source>
+        <translation>Бібліофіл</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="54"/>
+        <source>Bookworm</source>
+        <translation>Книголюб</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="56"/>
+        <source>Reader</source>
+        <translation>Читач</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="58"/>
+        <source>New reader</source>
+        <translation>Новий читач</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="79"/>
+        <source>Profile</source>
+        <translation>Профіль</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="114"/>
+        <source>%n book(s) read</source>
+        <translation>
+            <numerusform>%n книга прочитана</numerusform>
+            <numerusform>%n книги прочитано</numerusform>
+            <numerusform>%n книг прочитано</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="128"/>
+        <source>Read</source>
+        <translation>Прочитано</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="139"/>
+        <source>Reading</source>
+        <translation>Читання</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/profilePage/ProfilePage.qml" line="148"/>
+        <source>Pages</source>
+        <translation>Сторінок</translation>
+    </message>
 </context>
 <context>
     <name>ProgressBar</name>
@@ -1115,8 +1226,8 @@
 <context>
     <name>RangeField</name>
     <message>
-        <location filename="../qml/components/input/RangeField.qml" line="11"/>
-        <location filename="../qml/components/input/RangeField.qml" line="12"/>
+        <location filename="../qml/components/input/RangeField.qml" line="57"/>
+        <location filename="../qml/components/input/RangeField.qml" line="72"/>
         <source>Any</source>
         <translation>Будь-яке</translation>
     </message>
@@ -1137,7 +1248,7 @@
         <translation>Ваша оцінка</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/RatingsCard.qml" line="40"/>
+        <location filename="../qml/pages/bookDetailPage/RatingsCard.qml" line="39"/>
         <source>Global rating</source>
         <translation>Загальний рейтинг</translation>
     </message>
@@ -1145,7 +1256,7 @@
 <context>
     <name>ReadingBookCard</name>
     <message>
-        <location filename="../qml/pages/mainPage/ReadingBookCard.qml" line="104"/>
+        <location filename="../qml/pages/mainPage/ReadingBookCard.qml" line="103"/>
         <source>%1/%2</source>
         <translation>%1/%2</translation>
     </message>
@@ -1156,7 +1267,7 @@
 <context>
     <name>ReadingHistoryListHeader</name>
     <message>
-        <location filename="../qml/pages/bookDetailPage/ReadingHistoryListHeader.qml" line="7"/>
+        <location filename="../qml/pages/bookDetailPage/ReadingHistoryListHeader.qml" line="19"/>
         <source>Reading history</source>
         <translation>Історія читання</translation>
     </message>
@@ -1170,12 +1281,12 @@
 <context>
     <name>ReadingHistoryRow</name>
     <message>
-        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="96"/>
+        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="94"/>
         <source>p. %1 → %2</source>
         <translation>стор. %1 → %2</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="105"/>
+        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="103"/>
         <source>· +%1</source>
         <translation>· +%1</translation>
     </message>
@@ -1191,11 +1302,6 @@
 </context>
 <context>
     <name>ReadingProgressCard</name>
-    <message>
-        <location filename="../qml/pages/bookDetailPage/ReadingProgressCard.qml" line="10"/>
-        <source>Continue reading</source>
-        <translation>Продовжити читання</translation>
-    </message>
     <message>
         <location filename="../qml/pages/bookDetailPage/ReadingProgressCard.qml" line="43"/>
         <source>Progress</source>
@@ -1215,14 +1321,14 @@
             <numerusform>%1 з %n сторінок</numerusform>
         </translation>
     </message>
+    <message>
+        <location filename="../qml/pages/bookDetailPage/ReadingProgressCard.qml" line="81"/>
+        <source>Continue reading</source>
+        <translation>Продовжити читання</translation>
+    </message>
 </context>
 <context>
     <name>ReadingProgressTimer</name>
-    <message>
-        <location filename="../qml/pages/bookDetailPage/ReadingProgressTimer.qml" line="14"/>
-        <source>E-book does not open automatically. The timer tracks reading duration.</source>
-        <translation>Електронна книга не відкривається автоматично. Таймер рахує час читання.</translation>
-    </message>
     <message>
         <location filename="../qml/pages/bookDetailPage/ReadingProgressTimer.qml" line="52"/>
         <source>Cannot save page lower than current (%1)</source>
@@ -1232,6 +1338,11 @@
         <location filename="../qml/pages/bookDetailPage/ReadingProgressTimer.qml" line="132"/>
         <source>Reading session</source>
         <translation>Сеанс читання</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookDetailPage/ReadingProgressTimer.qml" line="172"/>
+        <source>E-book does not open automatically. The timer tracks reading duration.</source>
+        <translation>Електронна книга не відкривається автоматично. Таймер рахує час читання.</translation>
     </message>
     <message>
         <location filename="../qml/pages/bookDetailPage/ReadingProgressTimer.qml" line="181"/>
@@ -1274,17 +1385,17 @@
 <context>
     <name>ReadingSpeedCard</name>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="41"/>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="40"/>
         <source>Min. p/h</source>
         <translation>Мін. стор./год</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="49"/>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="48"/>
         <source>Avg.</source>
         <translation>Сер.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="57"/>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="56"/>
         <source>Max.</source>
         <translation>Макс.</translation>
     </message>
@@ -1350,12 +1461,12 @@
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../qml/pages/settingsPage/SettingsPage.qml" line="28"/>
+        <location filename="../qml/pages/settingsPage/SettingsPage.qml" line="41"/>
         <source>Settings</source>
         <translation>Налаштування</translation>
     </message>
     <message>
-        <location filename="../qml/pages/settingsPage/SettingsPage.qml" line="42"/>
+        <location filename="../qml/pages/settingsPage/SettingsPage.qml" line="55"/>
         <source>Language</source>
         <translation>Мова</translation>
     </message>
@@ -1425,7 +1536,7 @@
 <context>
     <name>WeeklyPagesChart</name>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/WeeklyPagesChart.qml" line="110"/>
+        <location filename="../qml/pages/bookStatisticsPage/WeeklyPagesChart.qml" line="109"/>
         <source>Nothing read this week</source>
         <translation>Цього тижня нічого не прочитано</translation>
     </message>
@@ -1481,6 +1592,9 @@
 </context>
 <context>
     <name>readary::controllers::NavigationController</name>
+</context>
+<context>
+    <name>readary::controllers::ProfileController</name>
 </context>
 <context>
     <name>readary::controllers::SettingsController</name>
@@ -1547,6 +1661,9 @@
 </context>
 <context>
     <name>readary::services::EmojiResolver</name>
+</context>
+<context>
+    <name>readary::services::LibraryStatisticsCalculator</name>
 </context>
 <context>
     <name>readary::services::PdfMetadataReader</name>

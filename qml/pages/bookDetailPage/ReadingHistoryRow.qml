@@ -2,9 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import Library
 
-// One journal entry on a vertical timeline. The rail spans the full row height
-// so consecutive rows form one continuous line — the hosting list must not add
-// spacing between them.
 Item {
     id: root
 
@@ -13,10 +10,9 @@ Item {
     property int pagesTo: 0
     property int pagesRead: 0
     property int durationSeconds: 0
-    // No dangling ends: the first row hides the segment above its dot, the last
-    // row the one below.
-    property bool railAbove: true
-    property bool railBelow: true
+
+    property alias railAbove: railTop.visible
+    property alias railBelow: railBottom.visible
 
     signal deleteRequested
 
@@ -38,7 +34,6 @@ Item {
             anchors.bottom: dot.top
             width: Geometry.size.timelineRail
             color: Theme.primarySoft
-            visible: root.railAbove
         }
 
         Rectangle {
@@ -60,7 +55,6 @@ Item {
             anchors.bottom: parent.bottom
             width: Geometry.size.timelineRail
             color: Theme.primarySoft
-            visible: root.railBelow
         }
     }
 

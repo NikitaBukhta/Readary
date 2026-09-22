@@ -6,8 +6,8 @@ Item {
 
     property bool running: true
     property int diameter: Geometry.size.spinner
-    property color arcColor: Theme.primary
-    property color trackColor: Theme.ringTrack
+    property alias arcColor: ring.progressColor
+    property alias trackColor: ring.trackColor
 
     readonly property real _arcSweep: 0.25
 
@@ -20,8 +20,6 @@ Item {
         anchors.fill: parent
         progress: root._arcSweep
         strokeWidth: Geometry.size.spinnerStroke
-        trackColor: root.trackColor
-        progressColor: root.arcColor
         transformOrigin: Item.Center
 
         RotationAnimator on rotation {

@@ -5,11 +5,11 @@ import Library
 Item {
     id: root
 
-    property string title: ""
-    property string trailingText: ""
-    property color trailingColor: Theme.primary
+    property alias title: titleLabel.text
+    property alias trailingText: trailingLabel.text
+    property alias trailingColor: trailingLabel.color
     // Page sections use titleMedium; a header inside a card sits one step down.
-    property int titleSize: Styles.fontSize.titleMedium
+    property alias titleSize: titleLabel.font.pixelSize
 
     implicitHeight: titleLabel.implicitHeight
     implicitWidth: layout.implicitWidth
@@ -22,9 +22,8 @@ Item {
         Text {
             id: titleLabel
             Layout.fillWidth: true
-            text: root.title
             color: Theme.textPrimary
-            font.pixelSize: root.titleSize
+            font.pixelSize: Styles.fontSize.titleMedium
             font.weight: Styles.fontWeight.bold
             elide: Text.ElideRight
         }
@@ -32,8 +31,7 @@ Item {
         Text {
             id: trailingLabel
             visible: root.trailingText.length > 0
-            text: root.trailingText
-            color: root.trailingColor
+            color: Theme.primary
             font.pixelSize: Styles.fontSize.body
             font.weight: Styles.fontWeight.semibold
         }

@@ -4,7 +4,7 @@ import Library
 Rectangle {
     id: root
 
-    property string label: ""
+    property alias label: labelText.text
     property bool selected: false
 
     signal clicked
@@ -26,7 +26,6 @@ Rectangle {
     Text {
         id: labelText
         anchors.centerIn: parent
-        text: root.label
         color: root.selected ? Theme.primary : Theme.textSecondary
         font.pixelSize: Styles.fontSize.bodySmall
         font.weight: root.selected ? Styles.fontWeight.semibold : Styles.fontWeight.regular

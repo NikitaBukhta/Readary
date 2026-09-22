@@ -3,13 +3,10 @@ import QtQuick
 import QtQuick.Layouts
 import Library
 
-// Preset genres plus a free-text slot behind "Other". Chip labels are translated
-// for display while the stored id stays English: rows in the `genres` table are
-// language-independent keys shared with imported books.
 ColumnLayout {
     id: root
 
-    property string label: ""
+    property alias label: caption.text
 
     readonly property var value: {
         const typed = otherField.value.trim();
@@ -59,7 +56,6 @@ ColumnLayout {
     FieldLabel {
         id: caption
         Layout.fillWidth: true
-        text: root.label
     }
 
     Flow {

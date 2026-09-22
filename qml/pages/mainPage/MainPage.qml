@@ -6,11 +6,11 @@ import Library
 Page {
     id: root
 
-    property string appTitle: "DariszBooks"
-    property string userName: ""
+    property alias appTitle: welcome.appTitle
+    property alias userName: welcome.userName
 
-    property int goalCurrent: 1
-    property int goalTotal: 5
+    property alias goalCurrent: goalCard.current
+    property alias goalTotal: goalCard.total
 
     readonly property int _sidePadding: Geometry.spacing.xxl
 
@@ -37,12 +37,12 @@ Page {
                 spacing: Geometry.spacing.xl
 
                 WelcomeHeader {
+                    id: welcome
                     Layout.fillWidth: true
                     Layout.leftMargin: root._sidePadding
                     Layout.rightMargin: root._sidePadding
                     Layout.topMargin: root._sidePadding
-                    appTitle: root.appTitle
-                    userName: root.userName
+                    appTitle: "DariszBooks"
                 }
 
                 AppSearchField {
@@ -56,13 +56,14 @@ Page {
                 }
 
                 GoalCard {
+                    id: goalCard
                     Layout.fillWidth: true
                     Layout.leftMargin: root._sidePadding
                     Layout.rightMargin: root._sidePadding
                     label: qsTr("Monthly goal")
                     unit: qsTr("books")
-                    current: root.goalCurrent
-                    total: root.goalTotal
+                    current: 1
+                    total: 5
                 }
 
                 CurrentlyReadingSection {

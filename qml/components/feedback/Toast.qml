@@ -5,13 +5,13 @@ import Library
 SurfaceCard {
     id: root
 
-    property string message: ""
-    property int duration: 3000
+    property alias message: messageText.text
+    property alias duration: hideTimer.interval
 
     property bool _showing: false
 
     function show(text) {
-        message = text;
+        root.message = text;
         _showing = true;
         hideTimer.restart();
     }
@@ -36,7 +36,7 @@ SurfaceCard {
 
     Timer {
         id: hideTimer
-        interval: root.duration
+        interval: 3000
         onTriggered: root._showing = false
     }
 
@@ -73,7 +73,6 @@ SurfaceCard {
             id: messageText
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            text: root.message
             color: Theme.textPrimary
             font.pixelSize: Styles.fontSize.body
             wrapMode: Text.WordWrap

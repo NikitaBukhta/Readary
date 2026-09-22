@@ -29,6 +29,7 @@ public:
 
   QList<CharacterDTO> getCharacters(qint64 bookIsbn) const;
   QList<ReadingSessionDTO> getReadingSessions(qint64 bookIsbn) const;
+  QList<ReadingSessionDTO> getAllReadingSessions() const;
 
   bool updatePagesRead(qint64 bookIsbn, int pagesRead);
   qint64 insertReadingSession(qint64 bookIsbn, int pagesFrom, int pagesTo, int durationSeconds);

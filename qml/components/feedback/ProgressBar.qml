@@ -5,8 +5,8 @@ Item {
     id: root
 
     property real progress: 0            // 0..1
-    property color trackColor: Qt.rgba(1, 1, 1, 0.55)
-    property color progressColor: Theme.primary
+    property alias trackColor: track.color
+    property alias progressColor: fill.color
 
     implicitHeight: Styles.progressBar.sm
 
@@ -14,7 +14,7 @@ Item {
         id: track
         anchors.fill: parent
         radius: height / 2
-        color: root.trackColor
+        color: Qt.rgba(1, 1, 1, 0.55)
     }
 
     Rectangle {
@@ -22,7 +22,7 @@ Item {
         width: Math.max(0, Math.min(1, root.progress)) * parent.width
         height: parent.height
         radius: height / 2
-        color: root.progressColor
+        color: Theme.primary
 
         Behavior on width {
             NumberAnimation {

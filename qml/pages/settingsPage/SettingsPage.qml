@@ -21,6 +21,19 @@ Page {
             Layout.topMargin: root._sidePadding
             spacing: Geometry.spacing.md
 
+            TouchTarget {
+                id: backTarget
+                Layout.alignment: Qt.AlignVCenter
+                onClicked: NavigationController.goBack()
+
+                IconGlyph {
+                    id: backIcon
+                    glyph: "←"
+                    color: Theme.primary
+                    size: Geometry.size.iconLg
+                }
+            }
+
             Text {
                 id: titleText
                 Layout.fillWidth: true

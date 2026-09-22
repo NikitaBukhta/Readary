@@ -5,19 +5,19 @@ import Library
 ColumnLayout {
     id: root
 
-    property string title: ""
-    property string author: ""
-    property int year: 0
-    property string publisher: ""
-    property int totalPages: 0
-    property int pagesRead: 0
-    property int userRating: 0
-    property real globalRating: 0
-    property string description: ""
-    property url coverSource
+    property alias title: header.title
+    property alias author: header.author
+    property alias year: header.year
+    property alias publisher: header.publisher
+    property alias totalPages: header.totalPages
+    property alias pagesRead: progressCard.pagesRead
+    property alias userRating: ratings.userRating
+    property alias globalRating: ratings.globalRating
+    property alias description: descriptionBody.text
+    property alias coverSource: header.coverSource
     property int status: 0
-    property bool inWishList: false
-    property bool hasMenu: false
+    property alias inWishList: wantToBuyAction.active
+    property alias hasMenu: header.hasMenu
     property int sidePadding: 0
 
     signal backRequested
@@ -54,14 +54,7 @@ ColumnLayout {
         Layout.leftMargin: root.sidePadding
         Layout.rightMargin: root.sidePadding
         Layout.topMargin: root.sidePadding
-        title: root.title
-        author: root.author
-        year: root.year
-        publisher: root.publisher
-        totalPages: root.totalPages
         rating: root.userRating
-        coverSource: root.coverSource
-        hasMenu: root.hasMenu
         onBackClicked: root.backRequested()
         onMenuClicked: root.menuRequested()
     }
@@ -71,7 +64,6 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.leftMargin: root.sidePadding
         Layout.rightMargin: root.sidePadding
-        pagesRead: root.pagesRead
         pagesTotal: root.totalPages
         actionLabel: root._actionLabel
         onStartReadingRequested: root.startReadingRequested()
@@ -82,8 +74,6 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.leftMargin: root.sidePadding
         Layout.rightMargin: root.sidePadding
-        userRating: root.userRating
-        globalRating: root.globalRating
     }
 
     ColumnLayout {
@@ -106,7 +96,6 @@ ColumnLayout {
         Text {
             id: descriptionBody
             Layout.fillWidth: true
-            text: root.description
             color: Theme.textSecondary
             font.pixelSize: Styles.fontSize.body
             wrapMode: Text.WordWrap
@@ -138,7 +127,6 @@ ColumnLayout {
             Layout.fillWidth: true
             label: qsTr("Want to buy")
             iconGlyph: "🛒"
-            active: root.inWishList
             onClicked: root.wantToBuyRequested()
         }
 

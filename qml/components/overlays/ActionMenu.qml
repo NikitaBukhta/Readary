@@ -7,7 +7,7 @@ import Library
 Popup {
     id: root
 
-    property var actions: []
+    property alias actions: repeater.model
 
     signal triggered(string actionId)
 
@@ -31,7 +31,7 @@ Popup {
 
         Repeater {
             id: repeater
-            model: root.actions
+            model: []
 
             delegate: ColumnLayout {
                 id: row

@@ -2,6 +2,7 @@
 #include "controllers/BookFilterController.hpp"
 #include "controllers/BookStatisticsController.hpp"
 #include "controllers/NavigationController.hpp"
+#include "controllers/ProfileController.hpp"
 #include "controllers/SettingsController.hpp"
 #include "models/books/list/BookListModel.hpp"
 #include "support/TempLibrary.hpp"
@@ -21,6 +22,7 @@ using readary::controllers::BookController;
 using readary::controllers::BookFilterController;
 using readary::controllers::BookStatisticsController;
 using readary::controllers::NavigationController;
+using readary::controllers::ProfileController;
 using readary::controllers::SettingsController;
 using readary::models::BookListModel;
 using readary::tests::makeBook;
@@ -95,6 +97,8 @@ private slots:
   void bookFilterController_staysOwnedByCpp();
   void bookStatisticsController_createReturnsTheRegisteredInstance();
   void bookStatisticsController_staysOwnedByCpp();
+  void profileController_createReturnsTheRegisteredInstance();
+  void profileController_staysOwnedByCpp();
 
   void controllers_exposeTheirModelsToQml();
   void bookController_exposesItsQmlInvokables();
@@ -190,6 +194,18 @@ void QmlSingletonWiringTest::bookStatisticsController_staysOwnedByCpp() {
   BookStatisticsController::setInstance(nullptr);
 }
 
+void QmlSingletonWiringTest::profileController_createReturnsTheRegisteredInstance() {
+  ProfileController controller{_library.books(), nullptr};
+  verifyCreateReturnsTheRegisteredInstance(&controller);
+  ProfileController::setInstance(nullptr);
+}
+
+void QmlSingletonWiringTest::profileController_staysOwnedByCpp() {
+  ProfileController controller{_library.books(), nullptr};
+  verifyCppKeepsOwnership(&controller);
+  ProfileController::setInstance(nullptr);
+}
+
 void QmlSingletonWiringTest::controllers_exposeTheirModelsToQml() {
   // QML never touches a model directly — it reads one off a controller
   // property. Renaming a property silently breaks every binding on it.
@@ -212,6 +228,14 @@ void QmlSingletonWiringTest::controllers_exposeTheirModelsToQml() {
   QVERIFY(!hasQmlProperty(statistics, "bookIsbn"));
   QVERIFY(hasQmlProperty(statistics, "hasData"));
   QVERIFY(findMethod(statistics, "refresh").isValid());
+
+  const QMetaObject &profile = ProfileController::staticMetaObject;
+  QVERIFY(hasQmlProperty(profile, "statistics"));
+  QVERIFY(hasQmlProperty(profile, "readerLevel"));
+  QVERIFY(hasQmlProperty(profile, "hasData"));
+  QVERIFY(findMethod(profile, "refresh").isValid());
+  // ProfilePage names the levels by enumerator, so they have to reach QML.
+  QVERIFY(profile.indexOfEnumerator("ReaderLevel") >= 0);
 
   const QMetaObject &filter = BookFilterController::staticMetaObject;
   QVERIFY(hasQmlProperty(filter, "availableGenres"));

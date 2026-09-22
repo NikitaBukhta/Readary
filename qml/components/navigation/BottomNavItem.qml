@@ -5,9 +5,9 @@ import Library
 Item {
     id: root
 
-    property string label: ""
-    property string iconGlyph: ""
-    property url iconSource
+    property alias label: labelText.text
+    property alias iconGlyph: icon.glyph
+    property alias iconSource: icon.source
     property bool active: false
 
     signal clicked
@@ -27,16 +27,15 @@ Item {
         spacing: 2
 
         IconGlyph {
+            id: icon
             Layout.alignment: Qt.AlignHCenter
-            glyph: root.iconGlyph
-            source: root.iconSource
             color: root._contentColor
             size: Geometry.size.bottomNavIcon
         }
 
         Text {
+            id: labelText
             Layout.alignment: Qt.AlignHCenter
-            text: root.label
             color: root._contentColor
             font.pixelSize: Styles.fontSize.caption
             font.weight: root.active ? Styles.fontWeight.semibold : Styles.fontWeight.medium

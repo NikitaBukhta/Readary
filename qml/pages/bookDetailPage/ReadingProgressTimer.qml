@@ -11,7 +11,7 @@ PaddedCard {
     property int seconds: 0
     property int currentPage: 0
     property int pagesTotal: 0
-    property string description: qsTr("E-book does not open automatically. The timer tracks reading duration.")
+    property alias description: descriptionText.text
 
     readonly property bool active: phase !== ReadingPhase.Stopped
 
@@ -169,7 +169,7 @@ PaddedCard {
             id: descriptionText
             Layout.fillWidth: true
             visible: root.description.length > 0
-            text: root.description
+            text: qsTr("E-book does not open automatically. The timer tracks reading duration.")
             color: Theme.textSecondary
             font.pixelSize: Styles.fontSize.bodySmall
             wrapMode: Text.WordWrap

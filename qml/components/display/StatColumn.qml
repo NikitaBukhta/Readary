@@ -7,22 +7,21 @@ import Library
 ColumnLayout {
     id: root
 
-    property string value: ""
-    property string label: ""
-    property color valueColor: Theme.textPrimary
-    property color labelColor: Theme.textMuted
-    property int alignment: Text.AlignHCenter
+    property alias value: valueText.text
+    property alias label: labelText.text
+    property alias valueColor: valueText.color
+    property alias labelColor: labelText.color
+    property alias alignment: valueText.horizontalAlignment
 
     spacing: Geometry.spacing.xxs
 
     Text {
         id: valueText
         Layout.fillWidth: true
-        text: root.value
-        color: root.valueColor
+        color: Theme.textPrimary
         font.pixelSize: Styles.fontSize.titleMedium
         font.weight: Styles.fontWeight.bold
-        horizontalAlignment: root.alignment
+        horizontalAlignment: Text.AlignHCenter
         // Shrinking beats eliding a number: three of these across a 360px
         // window leave about 64px each, which "1h 30m" overruns.
         fontSizeMode: Text.HorizontalFit
@@ -33,8 +32,7 @@ ColumnLayout {
     Text {
         id: labelText
         Layout.fillWidth: true
-        text: root.label
-        color: root.labelColor
+        color: Theme.textMuted
         font.pixelSize: Styles.fontSize.small
         horizontalAlignment: root.alignment
         elide: Text.ElideRight

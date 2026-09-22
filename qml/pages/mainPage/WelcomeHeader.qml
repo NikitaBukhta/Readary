@@ -5,7 +5,7 @@ import Library
 ColumnLayout {
     id: root
 
-    property string appTitle: ""
+    property alias appTitle: titleText.text
     property string userName: ""
 
     spacing: Geometry.spacing.xs
@@ -38,8 +38,8 @@ ColumnLayout {
     }
 
     Text {
+        id: titleText
         Layout.fillWidth: true
-        text: root.appTitle
         color: Theme.textPrimary
         font.pixelSize: Styles.fontSize.titleLarge
         font.weight: Styles.fontWeight.bold
