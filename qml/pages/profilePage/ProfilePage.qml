@@ -16,7 +16,7 @@ Page {
         {
             glyph: "📊",
             label: qsTr("Reading statistics"),
-            page: 0
+            page: NavigationController.ReadingStatisticsPage
         },
         {
             glyph: "⚙️",

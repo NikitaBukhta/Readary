@@ -3,12 +3,12 @@
 #include "controllers/BookStatisticsController.hpp"
 #include "controllers/NavigationController.hpp"
 #include "controllers/ProfileController.hpp"
+#include "controllers/ReadingStatisticsController.hpp"
 #include "controllers/SettingsController.hpp"
 #include "models/books/list/BookListModel.hpp"
 #include "support/TempLibrary.hpp"
 
 #include <QMetaMethod>
-#include <QMetaProperty>
 #include <QQmlEngine>
 #include <QSettings>
 #include <QStandardPaths>
@@ -23,6 +23,7 @@ using readary::controllers::BookFilterController;
 using readary::controllers::BookStatisticsController;
 using readary::controllers::NavigationController;
 using readary::controllers::ProfileController;
+using readary::controllers::ReadingStatisticsController;
 using readary::controllers::SettingsController;
 using readary::models::BookListModel;
 using readary::tests::makeBook;
@@ -99,6 +100,8 @@ private slots:
   void bookStatisticsController_staysOwnedByCpp();
   void profileController_createReturnsTheRegisteredInstance();
   void profileController_staysOwnedByCpp();
+  void readingStatisticsController_createReturnsTheRegisteredInstance();
+  void readingStatisticsController_staysOwnedByCpp();
 
   void controllers_exposeTheirModelsToQml();
   void bookController_exposesItsQmlInvokables();
@@ -206,6 +209,18 @@ void QmlSingletonWiringTest::profileController_staysOwnedByCpp() {
   ProfileController::setInstance(nullptr);
 }
 
+void QmlSingletonWiringTest::readingStatisticsController_createReturnsTheRegisteredInstance() {
+  ReadingStatisticsController controller{_library.books(), nullptr};
+  verifyCreateReturnsTheRegisteredInstance(&controller);
+  ReadingStatisticsController::setInstance(nullptr);
+}
+
+void QmlSingletonWiringTest::readingStatisticsController_staysOwnedByCpp() {
+  ReadingStatisticsController controller{_library.books(), nullptr};
+  verifyCppKeepsOwnership(&controller);
+  ReadingStatisticsController::setInstance(nullptr);
+}
+
 void QmlSingletonWiringTest::controllers_exposeTheirModelsToQml() {
   // QML never touches a model directly — it reads one off a controller
   // property. Renaming a property silently breaks every binding on it.
@@ -236,6 +251,11 @@ void QmlSingletonWiringTest::controllers_exposeTheirModelsToQml() {
   QVERIFY(findMethod(profile, "refresh").isValid());
   // ProfilePage names the levels by enumerator, so they have to reach QML.
   QVERIFY(profile.indexOfEnumerator("ReaderLevel") >= 0);
+
+  const QMetaObject &reading = ReadingStatisticsController::staticMetaObject;
+  QVERIFY(hasQmlProperty(reading, "statistics"));
+  QVERIFY(hasQmlProperty(reading, "hasData"));
+  QVERIFY(findMethod(reading, "refresh").isValid());
 
   const QMetaObject &filter = BookFilterController::staticMetaObject;
   QVERIFY(hasQmlProperty(filter, "availableGenres"));

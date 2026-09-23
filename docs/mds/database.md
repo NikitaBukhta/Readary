@@ -129,13 +129,13 @@ book with its author/publisher/type names already resolved.
 | `getGenres(bookId) const` | `QStringList` of genre names for one book |
 | `getCharacters(bookId) const` | `QList<CharacterDTO>` (`id`, `name`, `role`) for one book; consumed by `BookCharactersModel` |
 | `getReadingSessions(bookId) const` | `QList<ReadingSessionDTO>` of *closed* sessions (`ended_at IS NOT NULL`) for one book, newest first; consumed by `ReadingHistoryModel` |
-| `getAllReadingSessions() const` | The same *closed* rows for the whole library, newest first; consumed by `ProfileController` — the profile page counts the journal as a whole, and one query beats one per book |
+| `getAllReadingSessions() const` | The same *closed* rows for the whole library, newest first; consumed by `ProfileController` and `ReadingStatisticsController` — both count the journal as a whole, and one query beats one per book |
 | `updatePagesRead(bookId, pagesRead)` | Targeted `UPDATE books SET pagesRead = ?`; called by `BookController::updateReadingProgress` after a session ends |
 | `deleteReadingSession(sessionId)` | Deletes one journal row; `books.pagesRead` is deliberately untouched. Idempotent — an id that matches nothing reports success, since only a failed statement is a failure |
 | `insertReadingSession(bookId, pagesFrom, pagesTo, durationSeconds)` | Inserts one row in `reading_sessions` with `started_at = now − duration` |
 
 `ReadingSessionDTO` (`services/ReadingSessionDTO.hpp`) carries the raw row
-(`id`, `startedAt`, `endedAt`, `pagesFrom`, `pagesTo`) and derives
+(`id`, `bookIsbn`, `startedAt`, `endedAt`, `pagesFrom`, `pagesTo`) and derives
 `pagesRead()` / `durationSeconds()` on read — the journal stores no totals, so
 there is nothing to keep in sync. Timestamps come back as TEXT and are parsed
 with `Qt::ISODate`, then normalized to local time for display.

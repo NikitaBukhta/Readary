@@ -49,6 +49,10 @@ python bootstrap.py compile --skip-analyze
 python bootstrap.py analyze              # standalone clang-tidy pass
 ```
 
+Add `--skip-vcpkg` to `bootstrap` or `compile` to configure without the vcpkg
+dependency check, using the installed deps as they are — see
+[build-and-resources.md](docs/mds/build-and-resources.md#skipping-the-vcpkg-dependency-check).
+
 See [docs/mds/build-and-resources.md](docs/mds/build-and-resources.md#static-analysis)
 for what's enabled and the project's clang-tidy quirks.
 

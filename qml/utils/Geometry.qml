@@ -89,6 +89,7 @@ QtObject {
         readonly property int barPlotHeight: 120
         readonly property int barMinHeight: 3
         readonly property int linePlotHeight: 190
+        readonly property int curvePlotHeight: 110
         // Both gutters carry a rotated/centred axis caption beside the tick
         // labels, so they are wider than the ticks alone would need.
         readonly property int axisGutterLeft: 48

@@ -10,6 +10,7 @@
 #include "controllers/GlobalBookSearchController.hpp"
 #include "controllers/NavigationController.hpp"
 #include "controllers/ProfileController.hpp"
+#include "controllers/ReadingStatisticsController.hpp"
 #include "controllers/SettingsController.hpp"
 #include "core/app/AppEnvironment.hpp"
 #include "core/db/DatabaseManager.hpp"
@@ -117,6 +118,13 @@ void AppInitializer::initModels() {
   connect(_bookController, &controllers::BookController::readingJournalChanged, _profileController,
           &controllers::ProfileController::refresh);
 
+  // Reading statistics init
+  _readingStatisticsController = new controllers::ReadingStatisticsController{_bookTable, this};
+  connect(_bookListModel, &models::BookListModel::modelReset, _readingStatisticsController,
+          &controllers::ReadingStatisticsController::refresh);
+  connect(_bookController, &controllers::BookController::readingJournalChanged, _readingStatisticsController,
+          &controllers::ReadingStatisticsController::refresh);
+
   // Settings init
   _settingsController = new controllers::SettingsController{this};
   _settingsController->languageModel()->applyCurrent();
@@ -137,6 +145,7 @@ void AppInitializer::registerQmlTypes() {
   controllers::BookFilterController::setInstance(_filterController);
   controllers::BookStatisticsController::setInstance(_statisticsController);
   controllers::ProfileController::setInstance(_profileController);
+  controllers::ReadingStatisticsController::setInstance(_readingStatisticsController);
 
   QObject::connect(
       _engine.get(), &QQmlApplicationEngine::objectCreationFailed, &_app, []() { QCoreApplication::exit(-1); },

@@ -15,6 +15,7 @@ python bootstrap.py bootstrap          # one-time: install deps (CMake, vcpkg, Q
 python bootstrap.py translate          # generate translations/library_<lang>.{ts,qm}
 python bootstrap.py compile            # configure + build (Debug, WITH static-analysis gate)
 python bootstrap.py compile --skip-analyze   # fast iteration — skip clang-tidy + /analyze
+python bootstrap.py compile --skip-vcpkg     # configure without the vcpkg dependency check (bootstrap too)
 python bootstrap.py run                # launch the app
 python bootstrap.py analyze            # standalone clang-tidy pass, no compile
 python bootstrap.py test               # build + run all autotests
@@ -57,7 +58,7 @@ QML (Library module)  →  Controllers (singletons)  →  Models  →  Services 
                                                          ↘ qmltypes (Q_GADGET DTO wrappers at the controller↔QML boundary)
 ```
 
-- **Controllers** (`src/controllers/`) are QML singletons and the only QML-visible entry points: `BookController` (book form/list state, characters, reading timer), `NavigationController` (stack router), `SettingsController` (owns `LanguageModel` + `FontModel`), `BookDiscoveryController` (online search/import), `BookStatisticsController` (per-book reading statistics). Models are exposed as read-only properties on controllers.
+- **Controllers** (`src/controllers/`) are QML singletons and the only QML-visible entry points: `BookController` (book form/list state, characters, reading timer), `NavigationController` (stack router), `SettingsController` (owns `LanguageModel` + `FontModel`), `BookDiscoveryController` (online search/import), `BookStatisticsController` (per-book reading statistics), `ReadingStatisticsController` (whole-library reading statistics). Models are exposed as read-only properties on controllers.
 - **Singleton wiring pattern**: C++ instance is constructed by `AppInitializer`, registered via `setInstance()`; the QML `create()` factory returns that instance with `CppOwnership`. (Note: Qt prefers a default ctor over `create()` — keep singleton classes free of default-arg ctors.)
 - **`AppInitializer`** (`src/core/app/`) is the composition root: `initDatabase()` → `initModels()` → `registerQmlTypes()`. All QObjects are parented to it. **Connect-placement rule**: intra-domain connects live inside the owning controller; cross-domain connects live in `AppInitializer` (so controllers don't include each other).
 - **Book list data flow**: one `BookListModel` (DB source) → four `BookSortFilterProxyModel` (one per `ListKind`, configured by a filter Strategy) → `BookSearchProxyModel` (free-text + relevance ranking) → QML. The active category's proxy is swapped in as the search proxy's source.

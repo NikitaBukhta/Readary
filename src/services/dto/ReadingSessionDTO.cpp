@@ -38,6 +38,7 @@ int ReadingSessionDTO::durationSeconds() const {
 ReadingSessionDTO ReadingSessionDTO::fromMap(const QVariantMap &data) {
   ReadingSessionDTO dto;
   dto.id = data.value(u"id"_s).toLongLong();
+  dto.bookIsbn = data.value(u"book_isbn"_s).toLongLong();
   dto.startedAt = toDateTime(data.value(u"started_at"_s));
   dto.endedAt = toDateTime(data.value(u"ended_at"_s));
   dto.pagesFrom = data.value(u"pages_from"_s).toInt();

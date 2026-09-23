@@ -15,6 +15,8 @@ with `QQmlEngine::CppOwnership`.
   one book the detail page has open.
 - `ProfileController` — the same idea one level up: what the library as a
   whole adds up to, for the profile page.
+- `ReadingStatisticsController` — the statistics page's charts summed over
+  the whole library, for the reading-statistics page.
 - `BookFilterController` — the filter criteria shared by the library lists and
   the online search; see [filtering.md](filtering.md).
 - `GlobalBookSearchController` — the online catalog search; see
@@ -362,6 +364,63 @@ only place the timer records anything.
 | [src/services/dto/LibraryStatisticsDTO.hpp](../../src/services/dto/LibraryStatisticsDTO.hpp) | The plain, moc-free result struct |
 | [src/qmltypes/LibraryStatisticsObject.hpp](../../src/qmltypes/LibraryStatisticsObject.hpp) | Q_GADGET wrapper at the QML boundary |
 
+## `ReadingStatisticsController`
+
+Backs [`ReadingStatisticsPage`](../../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml).
+`BookStatisticsController`'s page, for every book at once — plus the two
+things that only make sense across the shelf: books finished per month, and where
+each book in progress stands. Recomputed from `books` and `reading_sessions`
+on read; nothing is stored.
+
+Wired in `AppInitializer` exactly like `ProfileController`: re-run on
+`BookListModel::modelReset` and on `BookController::readingJournalChanged`,
+and the page calls `refresh()` on open.
+
+### QML-visible API
+
+| Member | Kind | Purpose |
+|--------|------|---------|
+| `statistics` | property (RO, `readary::qmltypes::ReadingStatisticsObject` Q_GADGET) | the whole set in one value (below) |
+| `hasData` | property (RO, `bool`) | any session, finished book or book in progress at all |
+| `refresh()` | `Q_INVOKABLE` | recomputes from the library as it stands now, and stays silent when the figures come back unchanged |
+
+`statistics` fields, as QML sees them:
+
+| Field | Meaning |
+|-------|---------|
+| `booksFinished` | `status = Finished`, whether or not the timer was ever used |
+| `sessionCount` / `timedSessionCount` / `totalSeconds` | as on `BookStatisticsController`, all books |
+| `averagePagesPerHour` / `minPagesPerHour` / `maxPagesPerHour` | as on `BookStatisticsController`, over every timed session of every book |
+| `weeklyPages` | seven ints, Monday..Sunday of the current week, all books together |
+| `monthlyBooks` | `[{year, month, books}]`, six entries, oldest first, ending with the current month; `month` is 1..12 |
+| `booksInProgress` | `[{isbn, name, pagesRead, totalPages}]`, at most five, most recently read first; never-timed books follow by name |
+
+The journal half is not re-derived: the calculator runs
+`BookStatisticsCalculator` over the whole journal and copies its speeds and
+weekly buckets, so the "which sessions carry a speed" rule above holds here
+unchanged.
+
+### When a book counts as finished in a month
+
+No finish date is stored. `db/init.sql` defines it as the end of the book's
+last session (`MAX(ended_at) … AND status = 3`), and that is what the monthly
+series buckets on — which is why `getAllReadingSessions` carries each row's
+`book_isbn`. A book marked finished by hand and never timed has no such date:
+it counts in `booksFinished` but lands in no month. The alternative — a
+`finished_at` column — needs a schema change with no migration runner behind
+it, for a figure the journal already answers for every book that was read
+with the timer.
+
+### File map
+
+| File | Purpose |
+|------|---------|
+| [src/controllers/ReadingStatisticsController.hpp](../../src/controllers/ReadingStatisticsController.hpp) | Properties, singleton wiring |
+| [src/controllers/ReadingStatisticsController.cpp](../../src/controllers/ReadingStatisticsController.cpp) | Library read + recompute |
+| [src/services/statistics/ReadingStatisticsCalculator.hpp](../../src/services/statistics/ReadingStatisticsCalculator.hpp) | The pure computation, testable without a database |
+| [src/services/dto/ReadingStatisticsDTO.hpp](../../src/services/dto/ReadingStatisticsDTO.hpp) | The plain, moc-free result structs |
+| [src/qmltypes/ReadingStatisticsObject.hpp](../../src/qmltypes/ReadingStatisticsObject.hpp) | Q_GADGET wrapper at the QML boundary |
+
 ## `NavigationController`
 
 Tiny stack-based router. Holds a `QStack<Page>`; pushing a page that
@@ -391,6 +450,7 @@ SettingsPage     = 7   level 2   qrc:/qt/qml/pages/settingsPage/SettingsPage.qml
 AddBookPage        = 8   level 3   qrc:/qt/qml/pages/addBookPage/AddBookPage.qml
 BookDetailPage     = 9   level 3   qrc:/qt/qml/pages/bookDetailPage/BookDetailPage.qml
 BookStatisticsPage = 10  level 4   qrc:/qt/qml/pages/bookStatisticsPage/BookStatisticsPage.qml
+ReadingStatisticsPage = 11  level 2   qrc:/qt/qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml
 ```
 
 The two remaining placeholder pages (Goals/Challenges) are exposed so
@@ -399,6 +459,9 @@ maps to `MainPage`'s URL — they'll get real implementations later.
 `SettingsPage` is level 2 under `ProfilePage`: it is reached from the profile
 page's section list, so its back arrow has to land there rather than unwind to
 the library. It is not a bottom-nav destination of its own.
+`ReadingStatisticsPage` sits beside it at level 2 for the same reason; a book
+opened from its in-progress card stacks on top at level 3, so that book's back
+arrow returns to the statistics.
 
 `AddBookPage` deliberately shares level 3 with `BookDetailPage`: a successful
 add ends in `BookController::openBook`, and a same-level push replaces the

@@ -39,6 +39,7 @@ private slots:
 void ReadingSessionDTOTest::fromMap_readsEveryColumn() {
   const ReadingSessionDTO session = ReadingSessionDTO::fromMap({
       {u"id"_s, 12LL},
+      {u"book_isbn"_s, 9780201616224LL},
       {u"started_at"_s, u"2026-03-05T18:30:00Z"_s},
       {u"ended_at"_s, u"2026-03-05T20:00:00Z"_s},
       {u"pages_from"_s, 90},
@@ -46,6 +47,7 @@ void ReadingSessionDTOTest::fromMap_readsEveryColumn() {
   });
 
   QCOMPARE(session.id, 12LL);
+  QCOMPARE(session.bookIsbn, 9780201616224LL);
   QCOMPARE(session.pagesFrom, 90);
   QCOMPARE(session.pagesTo, 180);
   QVERIFY(session.startedAt.isValid());

@@ -513,6 +513,15 @@ void BookTableTest::getAllReadingSessions_spanEveryBook() {
     seconds += session.durationSeconds();
   }
   QCOMPARE(seconds, 2700);
+
+  // Each row says whose it is — the reading-statistics page dates a finished
+  // book by its own last session.
+  int ofOther = 0;
+  for (const auto &session : sessions) {
+    QVERIFY(session.bookIsbn == kIsbn || session.bookIsbn == kOtherIsbn);
+    ofOther += session.bookIsbn == kOtherIsbn ? 1 : 0;
+  }
+  QCOMPARE(ofOther, 1);
 }
 
 void BookTableTest::getAllReadingSessions_skipOpenEntries() {

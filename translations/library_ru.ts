@@ -244,7 +244,7 @@
 <context>
     <name>BookDetailHeader</name>
     <message numerus="yes">
-        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="130"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="127"/>
         <source>%n page(s)</source>
         <translation>
             <numerusform>%n страница</numerusform>
@@ -253,7 +253,7 @@
         </translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="155"/>
+        <location filename="../qml/pages/bookDetailPage/BookDetailHeader.qml" line="152"/>
         <source>%1/%2</source>
         <translation>%1/%2</translation>
     </message>
@@ -570,6 +570,19 @@
     <name>BookTableTest</name>
 </context>
 <context>
+    <name>BooksInProgressCard</name>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/BooksInProgressCard.qml" line="66"/>
+        <source>%1 / %2</source>
+        <translation>%1 / %2</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/BooksInProgressCard.qml" line="66"/>
+        <source>Page %1</source>
+        <translation>Страница %1</translation>
+    </message>
+</context>
+<context>
     <name>BottomNavBar</name>
     <message>
         <location filename="../qml/components/navigation/BottomNavBar.qml" line="13"/>
@@ -877,12 +890,12 @@
         <translation>%1 с</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="31"/>
+        <location filename="../qml/utils/Format.qml" line="28"/>
         <source>%1K</source>
         <translation>%1 тыс.</translation>
     </message>
     <message>
-        <location filename="../qml/utils/Format.qml" line="32"/>
+        <location filename="../qml/utils/Format.qml" line="29"/>
         <source>%1M</source>
         <translation>%1 млн</translation>
     </message>
@@ -893,37 +906,37 @@
 <context>
     <name>GenrePicker</name>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="22"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="19"/>
         <source>Fantasy</source>
         <translation>Фэнтези</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="26"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="23"/>
         <source>Detective</source>
         <translation>Детектив</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="30"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="27"/>
         <source>Romance</source>
         <translation>Романтика</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="34"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="31"/>
         <source>Sci-Fi</source>
         <translation>Фантастика</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="38"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="35"/>
         <source>Prose</source>
         <translation>Проза</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="84"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="81"/>
         <source>Other</source>
         <translation>Другое</translation>
     </message>
     <message>
-        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="95"/>
+        <location filename="../qml/pages/addBookPage/GenrePicker.qml" line="92"/>
         <source>Genre name</source>
         <translation>Название жанра</translation>
     </message>
@@ -1048,6 +1061,9 @@
 </context>
 <context>
     <name>MinimalPdf</name>
+</context>
+<context>
+    <name>MonthlyBooksChart</name>
 </context>
 <context>
     <name>NavigationController</name>
@@ -1281,12 +1297,12 @@
 <context>
     <name>ReadingHistoryRow</name>
     <message>
-        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="94"/>
+        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="90"/>
         <source>p. %1 → %2</source>
         <translation>стр. %1 → %2</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="103"/>
+        <location filename="../qml/pages/bookDetailPage/ReadingHistoryRow.qml" line="99"/>
         <source>· +%1</source>
         <translation>· +%1</translation>
     </message>
@@ -1385,19 +1401,90 @@
 <context>
     <name>ReadingSpeedCard</name>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="40"/>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="38"/>
         <source>Min. p/h</source>
         <translation>Мин. стр./ч</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="48"/>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="46"/>
         <source>Avg.</source>
         <translation>Средн.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="56"/>
+        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="54"/>
         <source>Max.</source>
         <translation>Макс.</translation>
+    </message>
+</context>
+<context>
+    <name>ReadingStatisticsCalculator</name>
+</context>
+<context>
+    <name>ReadingStatisticsCalculatorTest</name>
+</context>
+<context>
+    <name>ReadingStatisticsController</name>
+</context>
+<context>
+    <name>ReadingStatisticsControllerTest</name>
+</context>
+<context>
+    <name>ReadingStatisticsDTO</name>
+</context>
+<context>
+    <name>ReadingStatisticsObject</name>
+</context>
+<context>
+    <name>ReadingStatisticsPage</name>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="49"/>
+        <source>Reading statistics</source>
+        <translation>Статистика чтения</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="90"/>
+        <source>Books</source>
+        <translation>Книг</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="98"/>
+        <source>Reading</source>
+        <translation>Чтение</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="107"/>
+        <source>Pages/h</source>
+        <translation>Стр./ч</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="128"/>
+        <source>Nothing read yet. Start a book and time your reading sessions — your statistics will appear here.</source>
+        <translation>Пока ничего не прочитано. Начните книгу и засекайте время чтения — здесь появится ваша статистика.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="147"/>
+        <source>Pages this week</source>
+        <translation>Страниц за неделю</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="154"/>
+        <source>Books by month</source>
+        <translation>Книг по месяцам</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="155"/>
+        <source>No books finished in the last six months</source>
+        <translation>За последние полгода не дочитано ни одной книги</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="162"/>
+        <source>Reading speed</source>
+        <translation>Скорость чтения</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="176"/>
+        <source>Progress by book</source>
+        <translation>Прогресс по книгам</translation>
     </message>
 </context>
 <context>
@@ -1597,6 +1684,9 @@
     <name>readary::controllers::ProfileController</name>
 </context>
 <context>
+    <name>readary::controllers::ReadingStatisticsController</name>
+</context>
+<context>
     <name>readary::controllers::SettingsController</name>
 </context>
 <context>
@@ -1679,6 +1769,9 @@
 </context>
 <context>
     <name>readary::services::ReadingSessionCache</name>
+</context>
+<context>
+    <name>readary::services::ReadingStatisticsCalculator</name>
 </context>
 <context>
     <name>readary::services::SearchCache</name>

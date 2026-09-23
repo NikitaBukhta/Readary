@@ -29,6 +29,8 @@ private slots:
 
   void addBookPage_isReplacedByTheBookItOpens();
   void settingsPage_stacksOnTopOfTheProfile();
+  void readingStatisticsPage_stacksOnTopOfTheProfile();
+  void readingStatisticsPage_opensABookAndComesBack();
   void statisticsPage_stacksOnTopOfTheBookItDescribes();
   void statisticsPage_leavesTheWholeStackBehindIt();
 
@@ -67,6 +69,10 @@ void NavigationControllerTest::currentPagePath_namesTheQmlFile() {
   controller.setCurrentPage(Page::BookStatisticsPage);
   QCOMPARE(controller.currentPagePath(),
            QUrl{u"qrc:/qt/qml/Library/pages/bookStatisticsPage/BookStatisticsPage.qml"_s});
+
+  controller.setCurrentPage(Page::ReadingStatisticsPage);
+  QCOMPARE(controller.currentPagePath(),
+           QUrl{u"qrc:/qt/qml/Library/pages/readingStatisticsPage/ReadingStatisticsPage.qml"_s});
 }
 
 void NavigationControllerTest::goalsAndChallenges_shareTheMainPage() {
@@ -158,6 +164,30 @@ void NavigationControllerTest::settingsPage_stacksOnTopOfTheProfile() {
   QCOMPARE(controller.currentPage(), Page::SettingsPage);
   controller.goBack();
   QCOMPARE(controller.currentPage(), Page::ProfilePage);
+}
+
+void NavigationControllerTest::readingStatisticsPage_stacksOnTopOfTheProfile() {
+  NavigationController controller{nullptr};
+  controller.setCurrentPage(Page::ProfilePage);
+
+  controller.setCurrentPage(Page::ReadingStatisticsPage);
+
+  QCOMPARE(controller.currentPage(), Page::ReadingStatisticsPage);
+  controller.goBack();
+  QCOMPARE(controller.currentPage(), Page::ProfilePage);
+}
+
+void NavigationControllerTest::readingStatisticsPage_opensABookAndComesBack() {
+  // A row of the in-progress card opens that book; its back arrow has to land
+  // on the statistics again, not on the profile.
+  NavigationController controller{nullptr};
+  controller.setCurrentPage(Page::ProfilePage);
+  controller.setCurrentPage(Page::ReadingStatisticsPage);
+  controller.setCurrentPage(Page::BookDetailPage);
+
+  controller.goBack();
+
+  QCOMPARE(controller.currentPage(), Page::ReadingStatisticsPage);
 }
 
 void NavigationControllerTest::statisticsPage_stacksOnTopOfTheBookItDescribes() {

@@ -188,9 +188,30 @@ if present) and a `bootstrap.py` wrapper:
 ```
 python bootstrap.py compile                    # configure + build (debug, with static analysis)
 python bootstrap.py compile --skip-analyze     # faster, no analyzers
+python bootstrap.py compile --skip-vcpkg       # reconfigure without the vcpkg dependency check
 python bootstrap.py analyze                    # standalone clang-tidy pass, no compile
 python bootstrap.py translate                  # (re)generate translations/library_<lang>.{ts,qm}
 ```
+
+### Skipping the vcpkg dependency check
+
+The vcpkg toolchain runs `vcpkg install` against `vcpkg.json` on **every**
+CMake configure — `bootstrap`, the reconfigure `compile` does when
+`--skip-analyze` flips, and the one CMake starts by itself mid-build when a
+glob or `vcpkg.json` changes. `--skip-vcpkg` (on `bootstrap` and `compile`,
+desktop only) configures with `VCPKG_MANIFEST_INSTALL=OFF`, so CMake uses the
+install tree in `deps_dir` exactly as it is. Useful offline, or when the check
+would start a from-source rebuild you do not want right now.
+
+- It is a per-run flag, not a mode. `VCPKG_MANIFEST_INSTALL` lives in the
+  CMake cache, so the wrapper states it on every configure it runs, and a
+  plain `compile` after a skipped one reconfigures to put it back to `ON`
+  (see `CompileCommand._sync_cache_settings`). Left at `OFF`, a dependency
+  added to `vcpkg.json` would silently never install.
+- `bootstrap --skip-vcpkg` refuses to run when `deps_dir` holds no `qtbase` —
+  there is nothing to fall back on, and the configure would otherwise die
+  inside `find_package(Qt6)` without naming the flag. It also skips the
+  qmlformat-port repair, which only a real install can complete.
 
 `translate` is a separate stage — it scans `tr()`/`qsTr()` calls in
 sources, auto-translates new strings via `deep-translator` (Google

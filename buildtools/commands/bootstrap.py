@@ -5,6 +5,7 @@ from pathlib import Path
 
 from buildtools.commands.base import Command
 from buildtools.config import ProjectConfig
+from buildtools.errors import BuildError
 from buildtools.providers.android_sdk import AndroidSdkProvider
 from buildtools.providers.aqt import AqtProvider
 from buildtools.providers.clang_format import ClangFormatProvider
@@ -127,7 +128,11 @@ class BootstrapCommand(Command):
         path_key = next((k for k in env if k.upper() == "PATH"), "PATH")
         env[path_key] = f"{host_dll_dir}{os.pathsep}{env.get(path_key, '')}"
 
-        self._repair_qmlformat_port()
+        if self.config.skip_vcpkg:
+            self._require_installed_deps()
+        else:
+            # Only a real install can restore the port this unregisters.
+            self._repair_qmlformat_port()
 
         wrapper_script = (self.config.project_dir / "buildtools"
                           / "clang_tidy_wrapper.py")
@@ -140,6 +145,9 @@ class BootstrapCommand(Command):
             f"-DCLANG_TIDY_WRAPPER_PYTHON={self.config.venv_python}",
             f"-DCLANG_TIDY_WRAPPER_SCRIPT={wrapper_script}",
             "-DENABLE_ANALYZE=ON",
+            # Passed both ways: the value is cached, so an earlier OFF would
+            # otherwise outlive the run that asked for it.
+            f"-DVCPKG_MANIFEST_INSTALL={'OFF' if self.config.skip_vcpkg else 'ON'}",
             f"-DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root="
             f"{_fwd(self.config.vcpkg_buildtrees_dir)}",
         ]
@@ -162,6 +170,23 @@ class BootstrapCommand(Command):
         print(f"  Virtual env  : {self.config.venv_dir}")
         flag = " --release" if self.config.release else ""
         print(f"Run `python bootstrap.py compile{flag}` to build the project.")
+
+    def _require_installed_deps(self) -> None:
+        """Fail early when --skip-vcpkg has no install tree to fall back on.
+
+        Without this the configure dies deep inside find_package(Qt6), which
+        says nothing about the flag that caused it.
+        """
+        if self.vcpkg.is_port_installed("qtbase"):
+            print("\n=== vcpkg dependency check skipped (--skip-vcpkg) ===")
+            print(f"  Using the install tree in {self.config.deps_dir} as is")
+            return
+        raise BuildError(
+            f"--skip-vcpkg needs the dependencies installed already, but "
+            f"{self.config.deps_dir} has no qtbase for "
+            f"{self.config.vcpkg_triplet}. Run `python bootstrap.py bootstrap` "
+            "once without --skip-vcpkg first."
+        )
 
     def _repair_qmlformat_port(self) -> None:
         """Unregister a Qt port whose host tools have gone missing from disk.

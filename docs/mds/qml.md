@@ -26,6 +26,10 @@ qml/
       ProfilePage.qml              Reader level + three whole-library stat tiles + the section list, bound to ProfileController
       ProfileHeaderCard.qml        Avatar + reader level + "N books read"
       ProfileMenuRow.qml           One section row; dimmed and inert when its page does not exist yet
+    readingStatisticsPage/
+      ReadingStatisticsPage.qml    Whole-library statistics, bound to ReadingStatisticsController.statistics; reached from ProfilePage, so it carries a back arrow
+      MonthlyBooksChart.qml        Canvas area curve of books finished per month, last six months
+      BooksInProgressCard.qml      Progress bar per book in progress; a tap opens that book
     settingsPage/
       SettingsPage.qml             Language picker (and future user-preference rows) — bound to SettingsController.languageModel; reached from ProfilePage, so it carries a back arrow
     addBookPage/
@@ -528,6 +532,41 @@ raw number. Tokens that already existed are reused rather than restated —
 `Geometry.radius.xs` for the bar corners, `Geometry.size.borderWidth` for the
 grid stroke.
 
+### `ReadingStatisticsPage.qml`
+
+`BookStatisticsPage` one level up: the same charts over the whole library.
+Reached from the "Reading statistics" row of `ProfilePage`; level 2, beside
+`SettingsPage`, so its back arrow lands on the profile. It reads only
+`ReadingStatisticsController.statistics`
+(see [controllers.md](controllers.md#readingstatisticscontroller)) and calls
+`refresh()` on open for the same reason the per-book page does — the weekly
+and monthly buckets are relative to today.
+
+It reuses `StatTile`, `WeeklyPagesChart` and `ReadingSpeedCard` from
+`bookStatisticsPage/` unchanged (QML folders are cosmetic). Layout, top →
+bottom:
+
+1. Three `StatTile`s — books finished, reading time, average pages per hour.
+2. One muted card when `hasData` is false, otherwise the four cards below.
+3. `WeeklyPagesChart` — every book's pages, per weekday of the current week.
+4. `MonthlyBooksChart` — books finished per month over the last six. Each
+   month owns an equal column and its point sits at the column's centre, so
+   the curve stays in line with the month labels the way the weekly bars do.
+   Segments are cubics whose two control points share the x halfway between
+   the months, which eases through every point and never overshoots — a month
+   with nothing finished stays on the baseline. Like `BookProgressChart`, the
+   `Canvas` paints no text; the counts above the points are `Text` items.
+   Month names come from `Qt.locale().standaloneMonthName()`, which counts
+   from 0 while the DTO's months count from 1.
+5. `ReadingSpeedCard` — slowest / average / fastest session, all books.
+6. `BooksInProgressCard` — where the per-book page draws one book's progress
+   curve, the library-wide question is where each open book stands: one row
+   per book in progress, name + `pagesRead / totalPages` + a `ProgressBar`.
+   A book of unknown length shows its page and an empty bar. A tap emits
+   `bookClicked(isbn)` and the page calls `BookController.openBook`, which
+   stacks the detail page on top — its back arrow returns here. Hidden when no
+   book is in progress.
+
 ### `ReadingProgressTimer.qml`
 
 Stopwatch over the current reading session. State machine driven by the
@@ -645,6 +684,7 @@ than untyped `QtObject`).
 | [qml/pages/mainPage/MainPage.qml](../../qml/pages/mainPage/MainPage.qml) | Home page |
 | [qml/pages/categoryListPage/CategoryListPage.qml](../../qml/pages/categoryListPage/CategoryListPage.qml) | Per-category list |
 | [qml/pages/profilePage/ProfilePage.qml](../../qml/pages/profilePage/ProfilePage.qml) | Whole-library figures bound to `ProfileController`, plus the section list |
+| [qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml](../../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml) | Whole-library statistics bound to `ReadingStatisticsController` |
 | [qml/pages/settingsPage/SettingsPage.qml](../../qml/pages/settingsPage/SettingsPage.qml) | Language picker bound to `SettingsController.languageModel` |
 | [qml/pages/bookDetailPage/BookDetailPage.qml](../../qml/pages/bookDetailPage/BookDetailPage.qml) | Book detail page |
 | [qml/pages/bookDetailPage/ReadingProgressTimer.qml](../../qml/pages/bookDetailPage/ReadingProgressTimer.qml) | Stopwatch + end-session form, persists via `BookController` |

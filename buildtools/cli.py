@@ -166,6 +166,11 @@ class CLI:
             help="Pass CMake cache variable (e.g. -DBUILD_TESTS=OFF)",
         )
         p_bootstrap.add_argument(
+            "--skip-vcpkg", action="store_true",
+            help="Skip the vcpkg dependency check/install on configure "
+                 "(uses the already-installed deps as they are)",
+        )
+        p_bootstrap.add_argument(
             "--all", dest="all_configs", action="store_true",
             help="Run for every configuration: Debug/Release/MinSizeRel on "
                  "desktop, plus each Android ABI per build type. "
@@ -184,6 +189,11 @@ class CLI:
         p_compile.add_argument(
             "--skip-analyze", action="store_true",
             help="Skip clang-tidy + MSVC /analyze gate (faster, less safe)",
+        )
+        p_compile.add_argument(
+            "--skip-vcpkg", action="store_true",
+            help="Skip the vcpkg dependency check if CMake reconfigures "
+                 "(uses the already-installed deps as they are)",
         )
         p_compile.add_argument(
             "--all", dest="all_configs", action="store_true",
@@ -311,6 +321,8 @@ class CLI:
             kwargs["cmake_defs"] = cmake_defs
         if getattr(args, "skip_analyze", False):
             kwargs["skip_analyze"] = True
+        if getattr(args, "skip_vcpkg", False):
+            kwargs["skip_vcpkg"] = True
         if getattr(args, "clean_cache_deep", False):
             kwargs["clean_cache_deep"] = True
         test_filter = getattr(args, "test_filter", None)

@@ -310,7 +310,7 @@ QList<ReadingSessionDTO> BookTable::getReadingSessions(qint64 bookIsbn) const {
 
   // A row with ended_at IS NULL is still in flight — owned by the timer cache
   // until the user saves it.
-  query.select({u"id"_s, u"started_at"_s, u"ended_at"_s, u"pages_from"_s, u"pages_to"_s})
+  query.select({u"id"_s, u"book_isbn"_s, u"started_at"_s, u"ended_at"_s, u"pages_from"_s, u"pages_to"_s})
       .from(u"reading_sessions"_s)
       .where(u"book_isbn = ? AND ended_at IS NOT NULL"_s)
       .orderBy(u"started_at"_s, u"DESC"_s)
@@ -330,7 +330,7 @@ QList<ReadingSessionDTO> BookTable::getAllReadingSessions() const {
 
   // Same "finished sessions only" rule as the per-book read: a row still in
   // flight belongs to the timer cache, not to the journal.
-  query.select({u"id"_s, u"started_at"_s, u"ended_at"_s, u"pages_from"_s, u"pages_to"_s})
+  query.select({u"id"_s, u"book_isbn"_s, u"started_at"_s, u"ended_at"_s, u"pages_from"_s, u"pages_to"_s})
       .from(u"reading_sessions"_s)
       .where(u"ended_at IS NOT NULL"_s)
       .orderBy(u"started_at"_s, u"DESC"_s)

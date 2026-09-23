@@ -63,12 +63,14 @@ class CompileCommand(Command):
         cmake_dir = str(Path(cmake_path).parent)
         env["PATH"] = f"{cmake_dir}{os.pathsep}{env.get('PATH', '')}"
 
-        self._sync_analyze_setting(cmake_path, env)
+        self._sync_cache_settings(cmake_path, env)
 
         analyze_label = "OFF — gate skipped" if self.config.skip_analyze \
             else "ON — clang-tidy + MSVC /analyze"
         print(f"\n=== Building ({self.config.build_type}) ===")
         print(f"  Static analysis: {analyze_label}")
+        if self.config.skip_vcpkg:
+            print("  vcpkg deps check: skipped (VCPKG_MANIFEST_INSTALL=OFF)")
         self.shell.run([
             cmake_path,
             "--build", "--preset", self.config.cmake_preset,
@@ -167,24 +169,36 @@ class CompileCommand(Command):
 
     # ---- shared (desktop only) -------------------------------------------
 
-    def _sync_analyze_setting(self, cmake_path: Path,
-                              env: dict[str, str] | None) -> None:
-        """Reconfigure CMake if ENABLE_ANALYZE differs from desired value."""
-        desired = "OFF" if self.config.skip_analyze else "ON"
-        current = self._read_cache_var("ENABLE_ANALYZE")
-        if current == desired:
+    def _sync_cache_settings(self, cmake_path: Path,
+                             env: dict[str, str] | None) -> None:
+        """Reconfigure CMake if a flag-driven cache variable is out of step.
+
+        VCPKG_MANIFEST_INSTALL matters beyond this call: CMake also
+        reconfigures by itself mid-build (a glob or vcpkg.json changed), and
+        that reconfigure reads the cached value. So a run without --skip-vcpkg
+        puts it back to ON instead of leaving an earlier OFF in place, where a
+        dependency added to vcpkg.json would silently never install.
+        """
+        desired_analyze = "OFF" if self.config.skip_analyze else "ON"
+        desired_manifest = "OFF" if self.config.skip_vcpkg else "ON"
+        # Absent from the cache means the toolchain default, which is ON.
+        current_manifest = self._read_cache_var("VCPKG_MANIFEST_INSTALL") or "ON"
+        if (self._read_cache_var("ENABLE_ANALYZE") == desired_analyze
+                and current_manifest == desired_manifest):
             return
 
-        print(f"\n=== Reconfiguring (ENABLE_ANALYZE={desired}) ===")
+        print(f"\n=== Reconfiguring (ENABLE_ANALYZE={desired_analyze}, "
+              f"VCPKG_MANIFEST_INSTALL={desired_manifest}) ===")
         cmake_cmd: list[str | Path] = [
             cmake_path,
             "--preset", self.config.cmake_preset,
             "-S", self.config.project_dir,
-            f"-DENABLE_ANALYZE={desired}",
+            f"-DENABLE_ANALYZE={desired_analyze}",
+            f"-DVCPKG_MANIFEST_INSTALL={desired_manifest}",
             f"-DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root="
             f"{self.config.vcpkg_buildtrees_dir.as_posix()}",
         ]
-        if desired == "ON":
+        if desired_analyze == "ON":
             # Re-resolve in case venv was wiped since bootstrap.
             ct_path = self.clang_tidy.ensure()
             wrapper_script = (self.config.project_dir / "buildtools"

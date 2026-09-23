@@ -127,6 +127,9 @@ class ProjectConfig:
     jobs: int = field(default_factory=lambda: os.cpu_count() or 1)
     cmake_defs: list[str] = field(default_factory=list)
     skip_analyze: bool = False
+    # `--skip-vcpkg`: configure with VCPKG_MANIFEST_INSTALL=OFF, so CMake uses
+    # the install tree as it stands instead of re-checking vcpkg.json against it.
+    skip_vcpkg: bool = False
     # `clean-cache --deep`: also drop the vcpkg binary cache (forces a full
     # from-source rebuild next bootstrap). Off = keep it for fast re-bootstraps.
     clean_cache_deep: bool = False

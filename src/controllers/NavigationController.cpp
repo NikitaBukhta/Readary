@@ -52,6 +52,9 @@ NavigationController::PageInfo NavigationController::pageInfo(Page page) {
   // there rather than unwind to the list.
   case Page::BookStatisticsPage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/bookStatisticsPage/BookStatisticsPage.qml"_s}, .level = 4};
+  // Level 2, beside Settings: opened from the profile page's section list.
+  case Page::ReadingStatisticsPage:
+    return {.url = QUrl{u"qrc:/qt/qml/Library/pages/readingStatisticsPage/ReadingStatisticsPage.qml"_s}, .level = 2};
   case Page::GoalsPage:
   case Page::ChallengesPage:
     return {.url = QUrl{u"qrc:/qt/qml/Library/pages/mainPage/MainPage.qml"_s}, .level = 1};

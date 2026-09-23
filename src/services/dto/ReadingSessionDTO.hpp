@@ -10,6 +10,7 @@ namespace readary::services {
 // Pages read and duration are derived on read; the journal stores no totals.
 struct ReadingSessionDTO {
   qint64 id = 0;
+  qint64 bookIsbn = 0;
   QDateTime startedAt;
   QDateTime endedAt;
   int pagesFrom = 0;

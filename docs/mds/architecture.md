@@ -114,7 +114,8 @@ src/
     app/       AppEnvironment (paths, file logger), AppInitializer (composition root)
     db/        DatabaseManager, SqlQueryBuilder
   services/
-    dto/       BookDTO, CharacterDTO, ReadingSessionDTO, BookStatisticsDTO, LibraryStatisticsDTO
+    dto/       BookDTO, CharacterDTO, ReadingSessionDTO, BookStatisticsDTO, LibraryStatisticsDTO,
+               ReadingStatisticsDTO
                + the BookStatus / ReadingPhase enums
     storage/   BookTable (CRUD over BookDTO), BookFileStore (per-book files on disk)
     caching/   SearchCache, ReadingProgressCache, ReadingSessionCache
@@ -122,8 +123,10 @@ src/
     filtering/ BookFilterCriteria (the multi-criteria value object)
     emoji/     EmojiResolver (emoji char → vendored Twemoji SVG)
     statistics/ BookStatisticsCalculator (reading journal → per-book figures),
-                LibraryStatisticsCalculator (shelf + journal → whole-library figures)
-  qmltypes/    BookDTOObject, BookStatisticsObject, LibraryStatisticsObject (Q_GADGET
+                LibraryStatisticsCalculator (shelf + journal → whole-library figures),
+                ReadingStatisticsCalculator (shelf + journal → whole-library charts)
+  qmltypes/    BookDTOObject, BookStatisticsObject, LibraryStatisticsObject,
+               ReadingStatisticsObject (Q_GADGET
                wrappers over the DTOs, exposed by the matching controller to QML)
   models/
     books/
@@ -134,7 +137,7 @@ src/
     settings/  LanguageModel, FontModel
   controllers/ BookController, BookFilterController, BookStatisticsController,
                GlobalBookSearchController, NavigationController, ProfileController,
-               SettingsController
+               ReadingStatisticsController, SettingsController
   api/
     bookSearch/ IBookSearchAPI + OpenLibrary / Google Books clients + composite
     translate/  ITranslator + GoogleTranslator, LanguageDetector, LanguageConverter

@@ -1,12 +1,9 @@
 #ifndef READARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP
 #define READARY_CONTROLLERS_NAVIGATIONCONTROLLER_HPP
 
-#include <QJSEngine>
-#include <QObject>
 #include <QQmlEngine>
 #include <QStack>
 #include <QUrl>
-#include <QtQml/qqmlregistration.h>
 
 #include <cstdint>
 
@@ -32,6 +29,7 @@ public:
     AddBookPage,
     BookDetailPage,
     BookStatisticsPage,
+    ReadingStatisticsPage,
   };
   Q_ENUM(Page)
 
