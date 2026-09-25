@@ -51,6 +51,7 @@ class BookStatisticsCalculatorTest : public QObject {
 private slots:
   void totals_sumPagesAndDurationAcrossSessions();
   void emptyJournal_yieldsZeroTotals();
+  void journalFigures_matchTheFullComputation();
 
   void speed_data();
   void speed();
@@ -212,6 +213,19 @@ void BookStatisticsCalculatorTest::progress_holdsThePositionWhenASessionLoggedNo
   QCOMPARE(stats.progressPoints.size(), 2);
   QCOMPARE(stats.progressPoints.at(0).page, 120);
   QCOMPARE(stats.progressPoints.at(1).page, 120);
+}
+
+void BookStatisticsCalculatorTest::journalFigures_matchTheFullComputation() {
+  const BookStatisticsDTO stats = BookStatisticsCalculator::compute(threeSessions(), weekReference());
+  const auto figures = BookStatisticsCalculator::journalFigures(threeSessions());
+
+  QCOMPARE(figures.sessionCount, stats.sessionCount);
+  QCOMPARE(figures.timedSessionCount, stats.timedSessionCount);
+  QCOMPARE(figures.pagesRead, stats.pagesRead);
+  QCOMPARE(figures.totalSeconds, stats.totalSeconds);
+  QCOMPARE(figures.averagePagesPerHour, stats.averagePagesPerHour);
+  QCOMPARE(figures.minPagesPerHour, stats.minPagesPerHour);
+  QCOMPARE(figures.maxPagesPerHour, stats.maxPagesPerHour);
 }
 
 QTEST_GUILESS_MAIN(BookStatisticsCalculatorTest)

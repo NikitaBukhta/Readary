@@ -7,10 +7,12 @@ PaddedCard {
     id: root
 
     property alias title: header.title
-    // [{isbn, name, pagesRead, totalPages}], most recently read first.
+    property alias emptyText: emptyText.text
     property var books: []
 
     signal bookClicked(var isbn)
+
+    readonly property var _books: root.books ?? []
 
     ColumnLayout {
         id: layout
@@ -23,17 +25,23 @@ PaddedCard {
             titleSize: Styles.fontSize.title
         }
 
+        Text {
+            id: emptyText
+            Layout.fillWidth: true
+            visible: root._books.length === 0
+            color: Theme.textMuted
+            font.pixelSize: Styles.fontSize.body
+            wrapMode: Text.WordWrap
+        }
+
         Repeater {
             id: bookRepeater
-            model: root.books ?? []
+            model: root._books
 
-            // A plain Item with its own MouseArea rather than TouchTarget: the
-            // row spans the card, and TouchTarget sizes itself from its content.
             delegate: Item {
                 id: bookRow
 
                 required property var modelData
-                // An unknown length has nothing to fill a bar against.
                 readonly property bool _hasLength: bookRow.modelData.totalPages > 0
 
                 Layout.fillWidth: true
@@ -62,8 +70,17 @@ PaddedCard {
                         }
 
                         Text {
-                            id: bookPages
-                            text: bookRow._hasLength ? qsTr("%1 / %2").arg(bookRow.modelData.pagesRead).arg(bookRow.modelData.totalPages) : qsTr("Page %1").arg(bookRow.modelData.pagesRead)
+                            id: gained
+                            visible: bookRow.modelData.pagesInPeriod > 0
+                            text: qsTr("+%1").arg(bookRow.modelData.pagesInPeriod)
+                            color: Theme.primary
+                            font.pixelSize: Styles.fontSize.small
+                            font.weight: Styles.fontWeight.semibold
+                        }
+
+                        Text {
+                            id: position
+                            text: bookRow._hasLength ? qsTr("%1 / %2").arg(bookRow.modelData.toPage).arg(bookRow.modelData.totalPages) : qsTr("Page %1").arg(bookRow.modelData.toPage)
                             color: Theme.textSecondary
                             font.pixelSize: Styles.fontSize.small
                         }
@@ -73,7 +90,8 @@ PaddedCard {
                         id: bookProgress
                         Layout.fillWidth: true
                         Layout.preferredHeight: Styles.progressBar.md
-                        progress: bookRow._hasLength ? bookRow.modelData.pagesRead / bookRow.modelData.totalPages : 0
+                        progress: bookRow._hasLength ? bookRow.modelData.toPage / bookRow.modelData.totalPages : 0
+                        startProgress: bookRow._hasLength && bookRow.modelData.pagesInPeriod > 0 ? bookRow.modelData.fromPage / bookRow.modelData.totalPages : 0
                         trackColor: Theme.primarySoft
                         progressColor: Theme.primary
                     }

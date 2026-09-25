@@ -18,6 +18,9 @@ struct ReadingSessionDTO {
 
   int pagesRead() const;
   int durationSeconds() const;
+  bool hasEndPage() const;
+  int endPage() const;
+  bool startedBefore(const ReadingSessionDTO &other) const;
 
   static ReadingSessionDTO fromMap(const QVariantMap &data);
 };

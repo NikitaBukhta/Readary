@@ -502,62 +502,67 @@
 <context>
     <name>BookStatisticsPage</name>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="49"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="48"/>
         <source>Statistics</source>
         <translation>Statistics</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="90"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="89"/>
         <source>Pages</source>
         <translation>Pages</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="98"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="97"/>
         <source>Reading</source>
         <translation>Reading</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="107"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="106"/>
         <source>Pages/h</source>
         <translation>Pages/h</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="130"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="129"/>
         <source>No reading sessions yet. Start the timer on the book page and your statistics will appear here.</source>
         <translation>No reading sessions yet. Start the timer on the book page and your statistics will appear here.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="149"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="148"/>
         <source>Pages this week</source>
         <translation>Pages this week</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="156"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="149"/>
+        <source>Nothing read this week</source>
+        <translation>Nothing read this week</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="157"/>
         <source>Reading speed</source>
         <translation>Reading speed</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="166"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="167"/>
         <source>Progress through the book</source>
         <translation>Progress through the book</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="167"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="168"/>
         <source>The page you had reached when each session ended</source>
         <translation>The page you had reached when each session ended</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="168"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="169"/>
         <source>Page</source>
         <translation>Page</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="169"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="170"/>
         <source>Session</source>
         <translation>Session</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="170"/>
+        <location filename="../qml/pages/bookStatisticsPage/BookStatisticsPage.qml" line="171"/>
         <source>Page %1</source>
         <translation>Page %1</translation>
     </message>
@@ -569,14 +574,22 @@
     <name>BookTableTest</name>
 </context>
 <context>
-    <name>BooksInProgressCard</name>
+    <name>BooksCurveChart</name>
+</context>
+<context>
+    <name>BooksReadCard</name>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/BooksInProgressCard.qml" line="66"/>
+        <location filename="../qml/pages/readingStatisticsPage/BooksReadCard.qml" line="75"/>
+        <source>+%1</source>
+        <translation>+%1</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/BooksReadCard.qml" line="83"/>
         <source>%1 / %2</source>
         <translation>%1 / %2</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/BooksInProgressCard.qml" line="66"/>
+        <location filename="../qml/pages/readingStatisticsPage/BooksReadCard.qml" line="83"/>
         <source>Page %1</source>
         <translation>Page %1</translation>
     </message>
@@ -705,6 +718,9 @@
     </message>
 </context>
 <context>
+    <name>ChartCaptions</name>
+</context>
+<context>
     <name>ConfirmDialog</name>
     <message>
         <location filename="../qml/components/overlays/ConfirmDialog.qml" line="66"/>
@@ -751,6 +767,24 @@
 </context>
 <context>
     <name>DatabaseManagerTest</name>
+</context>
+<context>
+    <name>DateRangeSheet</name>
+    <message>
+        <location filename="../qml/components/overlays/DateRangeSheet.qml" line="41"/>
+        <source>Tap the first and the last day</source>
+        <translation>Tap the first and the last day</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/overlays/DateRangeSheet.qml" line="215"/>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <location filename="../qml/components/overlays/DateRangeSheet.qml" line="222"/>
+        <source>Apply</source>
+        <translation>Apply</translation>
+    </message>
 </context>
 <context>
     <name>EmojiResolver</name>
@@ -895,6 +929,11 @@
         <source>%1M</source>
         <translation>%1M</translation>
     </message>
+    <message>
+        <location filename="../qml/utils/Format.qml" line="54"/>
+        <source>%1 – %2</source>
+        <translation>%1 – %2</translation>
+    </message>
 </context>
 <context>
     <name>GadgetAccess</name>
@@ -997,6 +1036,9 @@
     <name>IsbnValidatorTest</name>
 </context>
 <context>
+    <name>JournalFiguresDTO</name>
+</context>
+<context>
     <name>LanguageConverter</name>
 </context>
 <context>
@@ -1059,9 +1101,6 @@
     <name>MinimalPdf</name>
 </context>
 <context>
-    <name>MonthlyBooksChart</name>
-</context>
-<context>
     <name>NavigationController</name>
 </context>
 <context>
@@ -1088,6 +1127,9 @@
         <source>Show more</source>
         <translation>Show more</translation>
     </message>
+</context>
+<context>
+    <name>PagesBarChart</name>
 </context>
 <context>
     <name>PdfDocumentInfo</name>
@@ -1122,6 +1164,39 @@
         <location filename="../qml/pages/addBookPage/PdfPicker.qml" line="101"/>
         <source>PDF documents (*.pdf)</source>
         <translation>PDF documents (*.pdf)</translation>
+    </message>
+</context>
+<context>
+    <name>PeriodSelector</name>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/PeriodSelector.qml" line="18"/>
+        <source>Day</source>
+        <translation>Day</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/PeriodSelector.qml" line="22"/>
+        <source>Week</source>
+        <translation>Week</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/PeriodSelector.qml" line="26"/>
+        <source>Month</source>
+        <translation>Month</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/PeriodSelector.qml" line="30"/>
+        <source>Year</source>
+        <translation>Year</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/PeriodSelector.qml" line="34"/>
+        <source>All time</source>
+        <translation>All time</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/PeriodSelector.qml" line="38"/>
+        <source>Custom</source>
+        <translation>Custom</translation>
     </message>
 </context>
 <context>
@@ -1394,17 +1469,17 @@
 <context>
     <name>ReadingSpeedCard</name>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="38"/>
+        <location filename="../qml/components/display/ReadingSpeedCard.qml" line="38"/>
         <source>Min. p/h</source>
         <translation>Min. p/h</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="46"/>
+        <location filename="../qml/components/display/ReadingSpeedCard.qml" line="46"/>
         <source>Avg.</source>
         <translation>Avg.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/bookStatisticsPage/ReadingSpeedCard.qml" line="54"/>
+        <location filename="../qml/components/display/ReadingSpeedCard.qml" line="54"/>
         <source>Max.</source>
         <translation>Max.</translation>
     </message>
@@ -1430,54 +1505,69 @@
 <context>
     <name>ReadingStatisticsPage</name>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="49"/>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="84"/>
         <source>Reading statistics</source>
         <translation>Reading statistics</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="90"/>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="133"/>
         <source>Books</source>
         <translation>Books</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="98"/>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="141"/>
         <source>Reading</source>
         <translation>Reading</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="107"/>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="150"/>
         <source>Pages/h</source>
         <translation>Pages/h</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="128"/>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="167"/>
         <source>Nothing read yet. Start a book and time your reading sessions — your statistics will appear here.</source>
         <translation>Nothing read yet. Start a book and time your reading sessions — your statistics will appear here.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="147"/>
-        <source>Pages this week</source>
-        <translation>Pages this week</translation>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="186"/>
+        <source>Pages read</source>
+        <translation>Pages read</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="154"/>
-        <source>Books by month</source>
-        <translation>Books by month</translation>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="187"/>
+        <source>Nothing read in this period</source>
+        <translation>Nothing read in this period</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="155"/>
-        <source>No books finished in the last six months</source>
-        <translation>No books finished in the last six months</translation>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="196"/>
+        <source>Books finished</source>
+        <translation>Books finished</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="162"/>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="197"/>
+        <source>No books finished in this period</source>
+        <translation>No books finished in this period</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="205"/>
         <source>Reading speed</source>
         <translation>Reading speed</translation>
     </message>
     <message>
-        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="176"/>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="215"/>
         <source>Progress by book</source>
         <translation>Progress by book</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="216"/>
+        <source>No books read in this period</source>
+        <translation>No books read in this period</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml" line="227"/>
+        <source>Custom period</source>
+        <translation>Custom period</translation>
     </message>
 </context>
 <context>
@@ -1566,6 +1656,18 @@
     <name>StatTile</name>
 </context>
 <context>
+    <name>StatisticsPeriods</name>
+</context>
+<context>
+    <name>StatisticsPeriodsTest</name>
+</context>
+<context>
+    <name>StatisticsRange</name>
+</context>
+<context>
+    <name>StatisticsRangeTest</name>
+</context>
+<context>
     <name>StubBookModel</name>
 </context>
 <context>
@@ -1611,14 +1713,6 @@
 </context>
 <context>
     <name>TouchTarget</name>
-</context>
-<context>
-    <name>WeeklyPagesChart</name>
-    <message>
-        <location filename="../qml/pages/bookStatisticsPage/WeeklyPagesChart.qml" line="109"/>
-        <source>Nothing read this week</source>
-        <translation>Nothing read this week</translation>
-    </message>
 </context>
 <context>
     <name>WelcomeHeader</name>
@@ -1767,6 +1861,9 @@
 </context>
 <context>
     <name>readary::services::SearchCache</name>
+</context>
+<context>
+    <name>readary::services::StatisticsPeriods</name>
 </context>
 <context>
     <name>readary::services::readary::models::readary::controllers::readary::core::AppInitializer</name>

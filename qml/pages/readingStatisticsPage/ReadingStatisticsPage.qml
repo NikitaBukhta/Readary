@@ -10,11 +10,46 @@ Page {
     readonly property int _sidePadding: Geometry.spacing.xxl
     readonly property var _stats: ReadingStatisticsController.statistics
 
-    // The page lives behind Main.qml's Loader, so it is rebuilt on every open
-    // while the controller's figures are not. The weekly and monthly buckets
-    // are relative to today, so a set computed last week would otherwise still
-    // be on screen. The controller stays quiet when nothing actually changed.
+    readonly property var _buckets: root._stats.buckets
+    readonly property var _captions: root._bucketCaptions()
+
     Component.onCompleted: ReadingStatisticsController.refresh()
+
+    function _rangeText(): string {
+        if (ReadingStatisticsController.period === ReadingStatisticsController.AllTime || root._stats.rangeStart.length === 0)
+            return "";
+        return Format.dateRange(root._stats.rangeStart, root._stats.rangeEnd);
+    }
+
+    function _bucketCaptions(): var {
+        const buckets = root._buckets ?? [];
+        const count = buckets.length;
+        const spansYears = count > 0 && buckets[0].year !== buckets[count - 1].year;
+        const monthFormat = count > 6 ? Locale.NarrowFormat : Locale.ShortFormat;
+        return buckets.map(bucket => {
+            switch (root._stats.granularity) {
+            case ReadingStatisticsController.ByHour:
+                return String(bucket.hour);
+            case ReadingStatisticsController.ByDay:
+                if (count <= 7)
+                    return Qt.locale().dayName(new Date(bucket.year, bucket.month - 1, bucket.day).getDay(), Locale.ShortFormat);
+                return String(bucket.day);
+            case ReadingStatisticsController.ByMonth:
+                if (spansYears && bucket.month === 1)
+                    return String(bucket.year);
+                return Qt.locale().standaloneMonthName(bucket.month - 1, monthFormat);
+            default:
+                return String(bucket.year);
+            }
+        });
+    }
+
+    function _openCustomRange(): void {
+        const preselect = ReadingStatisticsController.period !== ReadingStatisticsController.AllTime;
+        rangeSheet.startIso = preselect ? root._stats.rangeStart : "";
+        rangeSheet.endIso = preselect ? root._stats.rangeEnd : "";
+        rangeSheet.open();
+    }
 
     ColumnLayout {
         id: page
@@ -69,13 +104,21 @@ Page {
                 policy: ScrollBar.AlwaysOff
             }
 
-            // Inset once here rather than per card — every child spans the
-            // same column.
             ColumnLayout {
                 id: content
                 x: root._sidePadding
                 width: scroll.width - (2 * root._sidePadding)
                 spacing: Geometry.spacing.lg
+
+                PeriodSelector {
+                    id: periodSelector
+                    Layout.fillWidth: true
+                    visible: ReadingStatisticsController.hasData
+                    period: ReadingStatisticsController.period
+                    rangeText: root._rangeText()
+                    onPeriodPicked: picked => ReadingStatisticsController.period = picked
+                    onCustomRequested: root._openCustomRange()
+                }
 
                 RowLayout {
                     id: tiles
@@ -108,16 +151,12 @@ Page {
                     }
                 }
 
-                // One empty state for the whole page, as on the per-book one.
                 PaddedCard {
                     id: emptyState
                     Layout.fillWidth: true
                     Layout.bottomMargin: Geometry.spacing.xxl
                     visible: !ReadingStatisticsController.hasData
 
-                    // A Layout rather than the Text itself: PaddedCard sizes
-                    // from its first child, and a wrapping Text reports the
-                    // whole unwrapped sentence as its implicit width.
                     ColumnLayout {
                         id: emptyStateLayout
                         anchors.fill: parent
@@ -141,19 +180,23 @@ Page {
                     spacing: Geometry.spacing.lg
                     visible: ReadingStatisticsController.hasData
 
-                    WeeklyPagesChart {
-                        id: weeklyChart
+                    PagesBarChart {
+                        id: pagesChart
                         Layout.fillWidth: true
-                        title: qsTr("Pages this week")
-                        values: root._stats.weeklyPages
+                        title: qsTr("Pages read")
+                        emptyText: qsTr("Nothing read in this period")
+                        values: root._buckets.map(bucket => bucket.pages)
+                        labels: root._captions
                     }
 
-                    MonthlyBooksChart {
-                        id: monthlyChart
+                    BooksCurveChart {
+                        id: booksChart
                         Layout.fillWidth: true
-                        title: qsTr("Books by month")
-                        emptyText: qsTr("No books finished in the last six months")
-                        months: root._stats.monthlyBooks
+                        visible: root._stats.granularity !== ReadingStatisticsController.ByHour
+                        title: qsTr("Books finished")
+                        emptyText: qsTr("No books finished in this period")
+                        values: root._buckets.map(bucket => bucket.books)
+                        labels: root._captions
                     }
 
                     ReadingSpeedCard {
@@ -166,19 +209,22 @@ Page {
                         hasSpeed: root._stats.timedSessionCount > 0
                     }
 
-                    // The per-book page plots one book's curve; across the
-                    // library the useful question is where each open book
-                    // stands, so this card lists them instead.
-                    BooksInProgressCard {
-                        id: progressCard
+                    BooksReadCard {
+                        id: booksReadCard
                         Layout.fillWidth: true
-                        visible: root._stats.booksInProgress.length > 0
                         title: qsTr("Progress by book")
-                        books: root._stats.booksInProgress
+                        emptyText: qsTr("No books read in this period")
+                        books: root._stats.booksRead
                         onBookClicked: isbn => BookController.openBook(isbn)
                     }
                 }
             }
         }
+    }
+
+    DateRangeSheet {
+        id: rangeSheet
+        title: qsTr("Custom period")
+        onApplied: (fromIso, toIso) => ReadingStatisticsController.setCustomRange(fromIso, toIso)
     }
 }

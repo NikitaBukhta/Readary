@@ -256,6 +256,10 @@ void QmlSingletonWiringTest::controllers_exposeTheirModelsToQml() {
   QVERIFY(hasQmlProperty(reading, "statistics"));
   QVERIFY(hasQmlProperty(reading, "hasData"));
   QVERIFY(findMethod(reading, "refresh").isValid());
+  QVERIFY(hasQmlProperty(reading, "period"));
+  QVERIFY(findMethod(reading, "setCustomRange").isValid());
+  QVERIFY(reading.indexOfEnumerator("Period") >= 0);
+  QVERIFY(reading.indexOfEnumerator("Granularity") >= 0);
 
   const QMetaObject &filter = BookFilterController::staticMetaObject;
   QVERIFY(hasQmlProperty(filter, "availableGenres"));

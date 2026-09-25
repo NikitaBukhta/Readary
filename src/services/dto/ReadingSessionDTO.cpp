@@ -35,6 +35,14 @@ int ReadingSessionDTO::durationSeconds() const {
   return static_cast<int>(std::max<qint64>(0, startedAt.secsTo(endedAt)));
 }
 
+bool ReadingSessionDTO::hasEndPage() const { return pagesTo >= pagesFrom; }
+
+int ReadingSessionDTO::endPage() const { return hasEndPage() ? pagesTo : pagesFrom; }
+
+bool ReadingSessionDTO::startedBefore(const ReadingSessionDTO &other) const {
+  return startedAt == other.startedAt ? id < other.id : startedAt < other.startedAt;
+}
+
 ReadingSessionDTO ReadingSessionDTO::fromMap(const QVariantMap &data) {
   ReadingSessionDTO dto;
   dto.id = data.value(u"id"_s).toLongLong();

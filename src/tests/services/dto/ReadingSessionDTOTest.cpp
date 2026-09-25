@@ -34,6 +34,9 @@ private slots:
   void durationSeconds_isTheStampDistance();
   void durationSeconds_withoutBothStamps_isZero();
   void durationSeconds_neverGoesNegative();
+  void endPage_isPagesTo();
+  void endPage_withoutAnEndPage_holdsAtTheStart();
+  void startedBefore_ordersByStartThenId();
 };
 
 void ReadingSessionDTOTest::fromMap_readsEveryColumn() {
@@ -154,6 +157,38 @@ void ReadingSessionDTOTest::durationSeconds_neverGoesNegative() {
   session.endedAt = utc(2026, 3, 5, 18, 30);
 
   QCOMPARE(session.durationSeconds(), 0);
+}
+
+void ReadingSessionDTOTest::endPage_isPagesTo() {
+  ReadingSessionDTO session;
+  session.pagesFrom = 90;
+  session.pagesTo = 180;
+
+  QVERIFY(session.hasEndPage());
+  QCOMPARE(session.endPage(), 180);
+}
+
+void ReadingSessionDTOTest::endPage_withoutAnEndPage_holdsAtTheStart() {
+  const ReadingSessionDTO session = ReadingSessionDTO::fromMap({{u"pages_from"_s, 90}, {u"pages_to"_s, QVariant{}}});
+
+  QVERIFY(!session.hasEndPage());
+  QCOMPARE(session.endPage(), 90);
+}
+
+void ReadingSessionDTOTest::startedBefore_ordersByStartThenId() {
+  ReadingSessionDTO early;
+  early.id = 7;
+  early.startedAt = utc(2026, 3, 5, 18, 30);
+  ReadingSessionDTO late = early;
+  late.startedAt = utc(2026, 3, 5, 20, 0);
+  ReadingSessionDTO sameStamp = early;
+  sameStamp.id = 8;
+
+  QVERIFY(early.startedBefore(late));
+  QVERIFY(!late.startedBefore(early));
+  QVERIFY(early.startedBefore(sameStamp));
+  QVERIFY(!sameStamp.startedBefore(early));
+  QVERIFY(!early.startedBefore(early));
 }
 
 QTEST_GUILESS_MAIN(ReadingSessionDTOTest)

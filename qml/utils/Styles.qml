@@ -35,6 +35,7 @@ QtObject {
     component OpacitySpec: QtObject {
         readonly property real pressed: 0.7
         readonly property real disabled: 0.4
+        readonly property real subdued: 0.35
     }
 
     component DurationSpec: QtObject {

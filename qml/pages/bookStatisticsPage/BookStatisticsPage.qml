@@ -9,11 +9,10 @@ Page {
 
     readonly property int _sidePadding: Geometry.spacing.xxl
     readonly property var _stats: BookStatisticsController.statistics
+    readonly property var _weekdays: Array.from({
+        length: 7
+    }, (_, i) => Qt.locale().dayName((i + 1) % 7, Locale.ShortFormat))
 
-    // The page lives behind Main.qml's Loader, so it is rebuilt on every open
-    // while the controller's figures are not. The weekly buckets are relative
-    // to today, so a set computed last week would otherwise still be on
-    // screen. The controller stays quiet when nothing actually changed.
     Component.onCompleted: BookStatisticsController.refresh()
 
     ColumnLayout {
@@ -143,11 +142,13 @@ Page {
                     spacing: Geometry.spacing.lg
                     visible: BookStatisticsController.hasData
 
-                    WeeklyPagesChart {
+                    PagesBarChart {
                         id: weeklyChart
                         Layout.fillWidth: true
                         title: qsTr("Pages this week")
+                        emptyText: qsTr("Nothing read this week")
                         values: root._stats.weeklyPages
+                        labels: root._weekdays
                     }
 
                     ReadingSpeedCard {

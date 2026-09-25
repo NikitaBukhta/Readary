@@ -16,7 +16,7 @@ with `QQmlEngine::CppOwnership`.
 - `ProfileController` — the same idea one level up: what the library as a
   whole adds up to, for the profile page.
 - `ReadingStatisticsController` — the statistics page's charts summed over
-  the whole library, for the reading-statistics page.
+  the whole library for a chosen period, for the reading-statistics page.
 - `BookFilterController` — the filter criteria shared by the library lists and
   the online search; see [filtering.md](filtering.md).
 - `GlobalBookSearchController` — the online catalog search; see
@@ -261,7 +261,7 @@ the book, `readingJournalChanged` recomputes it.
 | `totalSeconds` | summed session durations |
 | `averagePagesPerHour` | pages over time across the **timed** sessions — the duration-weighted mean of their speeds, not a plain mean |
 | `minPagesPerHour` / `maxPagesPerHour` | slowest and fastest single session |
-| `weeklyPages` | seven ints, Monday..Sunday of the **current** week; always seven, so the chart keeps a column per weekday even for a book last read months ago |
+| `weeklyPages` | seven ints, Monday..Sunday of the **current** week — the buckets of `StatisticsPeriods::week()`, the same week the reading-statistics page uses; always seven, so the chart keeps a column per weekday even for a book last read months ago |
 | `progressPoints` | `[{session, page}]`, oldest session first — the page reached when each session ended |
 
 ### Which sessions carry a speed
@@ -367,56 +367,141 @@ only place the timer records anything.
 ## `ReadingStatisticsController`
 
 Backs [`ReadingStatisticsPage`](../../qml/pages/readingStatisticsPage/ReadingStatisticsPage.qml).
-`BookStatisticsController`'s page, for every book at once — plus the two
-things that only make sense across the shelf: books finished per month, and where
-each book in progress stands. Recomputed from `books` and `reading_sessions`
-on read; nothing is stored.
+`BookStatisticsController`'s page, for every book at once and for one
+**period** the reader picks — plus the two things that only make sense across
+the shelf: books finished over time, and where each book in progress stands.
+Computed from `books` and `reading_sessions`; nothing is stored.
 
-Wired in `AppInitializer` exactly like `ProfileController`: re-run on
-`BookListModel::modelReset` and on `BookController::readingJournalChanged`,
-and the page calls `refresh()` on open.
+`refresh()` is the only call that reads the database: it loads the shelf and
+the whole journal once and keeps them. Switching the period, or applying a
+custom range, recomputes from that copy — a chip tap never goes back to
+SQLite. `AppInitializer` wires `refresh()` exactly like `ProfileController`'s:
+to `BookListModel::modelReset` and `BookController::readingJournalChanged`, so
+the copy is replaced whenever the library changes, and the page calls it on
+open. The period lives in the singleton, so it survives leaving and reopening
+the page (not a relaunch).
+
+"Today" comes from a `Clock` (`std::function<QDate()>`) passed to the
+constructor. `AppInitializer` uses the two-argument overload, which defaults it
+to `QDate::currentDate`; tests pass a fixed date, so a suite run just after
+midnight or at a month end sees the same periods as any other.
 
 ### QML-visible API
 
 | Member | Kind | Purpose |
 |--------|------|---------|
-| `statistics` | property (RO, `readary::qmltypes::ReadingStatisticsObject` Q_GADGET) | the whole set in one value (below) |
-| `hasData` | property (RO, `bool`) | any session, finished book or book in progress at all |
+| `statistics` | property (RO, `readary::qmltypes::ReadingStatisticsObject` Q_GADGET) | the whole set for the chosen period (below) |
+| `hasData` | property (RO, `bool`) | whether the **library** has anything to show — a session, a finished or an in-progress book. Deliberately not about the period: an empty day keeps the chips and charts on screen instead of the first-run message |
+| `period` | property (R/W, `Period`) | the chosen period; `AllTime` at start. Values outside the enum are ignored |
+| `setCustomRange(from, to)` | `Q_INVOKABLE` → `bool` | switches to `Custom` over `from`..`to`, ISO `"yyyy-MM-dd"` text, either order. `false` and no change when either end does not parse |
 | `refresh()` | `Q_INVOKABLE` | recomputes from the library as it stands now, and stays silent when the figures come back unchanged |
+| `Period` | `Q_ENUM` | `Day`, `Week`, `Month`, `Year`, `AllTime`, `Custom` |
+| `Granularity` | `Q_ENUM` | `ByHour`, `ByDay`, `ByMonth`, `ByYear` — how `buckets` split the range. The `By` keeps its names from shadowing `Period`'s: QML reads both unscoped |
+
+`Period` exists only here: services never see it. The controller maps each
+value to a [`StatisticsPeriods`](../../src/services/statistics/StatisticsPeriods.hpp)
+factory in one `switch` without a `default`, so a new period that is not
+handled is a compiler warning — and the analysis gate turns that into a failed
+build. `Granularity` mirrors
+[`services::StatisticsGranularity`](../../src/services/dto/StatisticsRange.hpp),
+which the range itself carries; a `static_assert` against its `Count`
+sentinel fails the build if a granularity is added in services and not here.
+
+Neither is a Q_GADGET in services the way `BookStatus` is: an uppercase gadget
+is an invalid QML value-type name (Qt warns at registration) and qmllint
+reports every use of it as unqualified access, while an enum on a singleton
+resolves cleanly, as `ProfileController.ReaderLevel` does.
 
 `statistics` fields, as QML sees them:
 
 | Field | Meaning |
 |-------|---------|
-| `booksFinished` | `status = Finished`, whether or not the timer was ever used |
-| `sessionCount` / `timedSessionCount` / `totalSeconds` | as on `BookStatisticsController`, all books |
-| `averagePagesPerHour` / `minPagesPerHour` / `maxPagesPerHour` | as on `BookStatisticsController`, over every timed session of every book |
-| `weeklyPages` | seven ints, Monday..Sunday of the current week, all books together |
-| `monthlyBooks` | `[{year, month, books}]`, six entries, oldest first, ending with the current month; `month` is 1..12 |
-| `booksInProgress` | `[{isbn, name, pagesRead, totalPages}]`, at most five, most recently read first; never-timed books follow by name |
+| `rangeStart` / `rangeEnd` | the dates the period covers, inclusive, ISO text. Not `QDate`: it reaches JavaScript as a `Date` at UTC midnight, the previous day west of Greenwich |
+| `granularity` | a `Granularity` value |
+| `booksFinished` | finished inside the range (below); all time also counts the undated ones |
+| `sessionCount` / `timedSessionCount` / `pagesRead` / `totalSeconds` | as on `BookStatisticsController`, over the sessions that **started** inside the range |
+| `averagePagesPerHour` / `minPagesPerHour` / `maxPagesPerHour` | as on `BookStatisticsController`, over the timed sessions inside the range |
+| `buckets` | `[{year, month, day, hour, pages, books}]`, one per hour/day/month/year of the range, oldest first. Dates as parts for the same reason as above; `month` is 1..12, `hour` only means anything by the hour |
+| `booksRead` | `[{isbn, name, fromPage, toPage, pagesInPeriod, totalPages}]`, the books read in the range (below), at most five, most recently read first |
 
-The journal half is not re-derived: the calculator runs
-`BookStatisticsCalculator` over the whole journal and copies its speeds and
-weekly buckets, so the "which sessions carry a speed" rule above holds here
-unchanged.
+### What each period covers
 
-### When a book counts as finished in a month
+[`StatisticsPeriods`](../../src/services/statistics/StatisticsPeriods.hpp) has one
+factory per period, turning today's date into a
+[`StatisticsRange`](../../src/services/dto/StatisticsRange.hpp) — dates and a
+granularity:
 
-No finish date is stored. `db/init.sql` defines it as the end of the book's
-last session (`MAX(ended_at) … AND status = 3`), and that is what the monthly
-series buckets on — which is why `getAllReadingSessions` carries each row's
-`book_isbn`. A book marked finished by hand and never timed has no such date:
-it counts in `booksFinished` but lands in no month. The alternative — a
-`finished_at` column — needs a schema change with no migration runner behind
-it, for a figure the journal already answers for every book that was read
-with the timer.
+| Period | Range | Buckets |
+|--------|-------|---------|
+| `Day` | today | 24 hours |
+| `Week` | Monday..Sunday of this week | days |
+| `Month` | this calendar month | days |
+| `Year` | this calendar year | months |
+| `AllTime` | first session's month (at least `kMinAllTimeMonths` = 6 back) .. end of this month; everything counts regardless | months, years past `kMaxMonthBuckets` |
+| `Custom` | the picked ends, put in order | hours for one day, then the finest of days / months / years that fits `kMaxDayBuckets` (62) / `kMaxMonthBuckets` (24) |
+
+Calendar periods, not rolling ones: "this week" includes the days still ahead,
+which is what the per-book page's week always did. All time's dates only frame
+its chart — the half-year floor keeps a new library from being one lonely
+point — so every session and every finished book counts in it, dated or not.
+
+`StatisticsRange` is plain data plus its bucket geometry: `bucketCount()`,
+`bucketOf(moment)` — which bucket a moment falls in — and `bucketStart(index)`
+— the first day of a bucket. The last two are each other's inverse and live
+side by side, so the calculator never does month arithmetic of its own.
+
+A session belongs to the bucket it **started** in, the rule the per-book week
+already uses. The journal half is not re-derived: the calculator runs
+`BookStatisticsCalculator::journalFigures` over the sessions inside the range —
+the totals and speeds alone, without the per-book weekly buckets and progress
+curve — so the "which sessions carry a speed" rule above holds here unchanged.
+Both statistics DTOs inherit those fields from `JournalFiguresDTO`, so each
+calculator takes them over in one initialisation rather than field by field.
+
+### Progress by book
+
+`booksRead` is read off the journal the same way everything else on the page
+is: the books with at least one session that **started** inside the range.
+For each, `fromPage` is where the range's first session started, `toPage`
+where its last one ended — and `pagesInPeriod` the journal sum in between,
+re-reads included, so it can exceed `toPage - fromPage` exactly as the Pages
+figures can. The session order and the "no end page" rule are
+`ReadingSessionDTO::startedBefore` and `endPage()`, the same two the per-book
+progress curve uses: chronological by start, row id breaking a tie, and a
+session with `pages_to` NULL holding at its `pages_from`.
+
+`toPage` is what the period reached, not `books.pagesRead`: last week's row
+for a book shows where last week left it, even if it has moved on since.
+Finished books appear like any other — reading one to the end is progress.
+
+All time additionally lists the books in progress that were never timed, at
+their stored position with nothing gained, after the timed ones: all time is
+"everything on the go", and such a book is. A bounded period cannot claim
+them, having no date to put them on.
+
+### When a book counts as finished
+
+No finish date is stored, so a finished book is dated by the **start** of its
+last session — which is why `getAllReadingSessions` carries each row's
+`book_isbn`. `db/init.sql` suggests `MAX(ended_at)`; the start is used instead
+because every other figure on the page goes by start, and mixing the two
+splits a session across midnight: one read Sunday 23:40–00:20 would put its
+pages in last week and the finished book in this one. The last session is
+looked up over the whole journal, not the range: a book finished this week may
+have been started long before it. A book marked finished by hand and never
+timed has no such date, so it counts only in all time and lands in no bucket.
+The alternative — a `finished_at` column — needs a schema change with no
+migration runner behind it, for a figure the journal already answers for every
+book that was read with the timer.
 
 ### File map
 
 | File | Purpose |
 |------|---------|
-| [src/controllers/ReadingStatisticsController.hpp](../../src/controllers/ReadingStatisticsController.hpp) | Properties, singleton wiring |
-| [src/controllers/ReadingStatisticsController.cpp](../../src/controllers/ReadingStatisticsController.cpp) | Library read + recompute |
+| [src/controllers/ReadingStatisticsController.hpp](../../src/controllers/ReadingStatisticsController.hpp) | Properties, `Period`/`Granularity` enums, singleton wiring |
+| [src/controllers/ReadingStatisticsController.cpp](../../src/controllers/ReadingStatisticsController.cpp) | Period state, cached library, period → range, recompute |
+| [src/services/statistics/StatisticsPeriods.hpp](../../src/services/statistics/StatisticsPeriods.hpp) | One range factory per period |
+| [src/services/dto/StatisticsRange.hpp](../../src/services/dto/StatisticsRange.hpp) | Dates + granularity, and the bucket geometry both ways |
 | [src/services/statistics/ReadingStatisticsCalculator.hpp](../../src/services/statistics/ReadingStatisticsCalculator.hpp) | The pure computation, testable without a database |
 | [src/services/dto/ReadingStatisticsDTO.hpp](../../src/services/dto/ReadingStatisticsDTO.hpp) | The plain, moc-free result structs |
 | [src/qmltypes/ReadingStatisticsObject.hpp](../../src/qmltypes/ReadingStatisticsObject.hpp) | Q_GADGET wrapper at the QML boundary |

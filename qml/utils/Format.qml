@@ -37,6 +37,23 @@ QtObject {
     // `bootstrap.py translate` machine translates what it scans and turns
     // "d MMM, HH:mm" into tokens Qt no longer recognises. The locale localizes
     // the month name anyway.
+    function isoDate(year, month, day) {
+        const pad = value => (value < 10 ? "0" : "") + value;
+        return year + "-" + pad(month) + "-" + pad(day);
+    }
+
+    function dateOfIso(iso) {
+        const parts = iso.split("-");
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    }
+
+    function dateRange(fromIso, toIso) {
+        const format = iso => Format.dateOfIso(iso).toLocaleDateString(Qt.locale(), Locale.ShortFormat);
+        if (toIso.length === 0 || fromIso === toIso)
+            return format(fromIso);
+        return qsTr("%1 – %2").arg(format(fromIso)).arg(format(toIso));
+    }
+
     function stamp(date) {
         if (!date || isNaN(date.getTime()))
             return "";

@@ -3,6 +3,7 @@
 
 #include "services/dto/ReadingStatisticsDTO.hpp"
 
+#include <QString>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
@@ -15,19 +16,19 @@ struct ReadingStatisticsObject : public services::ReadingStatisticsDTO {
   Q_GADGET
   QML_VALUE_TYPE(readingStatisticsObject)
 
+  Q_PROPERTY(QString rangeStart READ rangeStart)
+  Q_PROPERTY(QString rangeEnd READ rangeEnd)
+  Q_PROPERTY(int granularity READ granularity)
   Q_PROPERTY(int booksFinished MEMBER booksFinished)
   Q_PROPERTY(int sessionCount MEMBER sessionCount)
   Q_PROPERTY(int timedSessionCount MEMBER timedSessionCount)
+  Q_PROPERTY(int pagesRead MEMBER pagesRead)
   Q_PROPERTY(int totalSeconds MEMBER totalSeconds)
   Q_PROPERTY(double averagePagesPerHour MEMBER averagePagesPerHour)
   Q_PROPERTY(double minPagesPerHour MEMBER minPagesPerHour)
   Q_PROPERTY(double maxPagesPerHour MEMBER maxPagesPerHour)
-  Q_PROPERTY(QList<int> weeklyPages MEMBER weeklyPages)
-  // The two struct lists cross as arrays of plain objects, for the same reason
-  // BookStatisticsObject::progressPoints does: registering them would drag moc
-  // into the service DTO.
-  Q_PROPERTY(QVariantList monthlyBooks READ monthlyBooksAsVariantList)
-  Q_PROPERTY(QVariantList booksInProgress READ booksInProgressAsVariantList)
+  Q_PROPERTY(QVariantList buckets READ bucketsAsVariantList)
+  Q_PROPERTY(QVariantList booksRead READ booksReadAsVariantList)
 
 public:
   ReadingStatisticsObject() = default;
@@ -35,24 +36,33 @@ public:
   explicit ReadingStatisticsObject(services::ReadingStatisticsDTO &&base) noexcept
       : services::ReadingStatisticsDTO{std::move(base)} {}
 
-  QVariantList monthlyBooksAsVariantList() const {
-    QVariantList months;
-    months.reserve(monthlyBooks.size());
-    for (const services::MonthlyBooksDTO &month : monthlyBooks) {
-      months.append(QVariantMap{{QStringLiteral("year"), month.year},
-                                {QStringLiteral("month"), month.month},
-                                {QStringLiteral("books"), month.books}});
+  QString rangeStart() const { return range.from.toString(Qt::ISODate); }
+  QString rangeEnd() const { return range.to.toString(Qt::ISODate); }
+  int granularity() const { return static_cast<int>(range.granularity); }
+
+  QVariantList bucketsAsVariantList() const {
+    QVariantList rows;
+    rows.reserve(buckets.size());
+    for (const services::PeriodBucketDTO &bucket : buckets) {
+      rows.append(QVariantMap{{QStringLiteral("year"), bucket.date.year()},
+                              {QStringLiteral("month"), bucket.date.month()},
+                              {QStringLiteral("day"), bucket.date.day()},
+                              {QStringLiteral("hour"), bucket.hour},
+                              {QStringLiteral("pages"), bucket.pages},
+                              {QStringLiteral("books"), bucket.books}});
     }
-    return months;
+    return rows;
   }
 
-  QVariantList booksInProgressAsVariantList() const {
+  QVariantList booksReadAsVariantList() const {
     QVariantList rows;
-    rows.reserve(booksInProgress.size());
-    for (const services::BookProgressDTO &book : booksInProgress) {
+    rows.reserve(booksRead.size());
+    for (const services::BookProgressDTO &book : booksRead) {
       rows.append(QVariantMap{{QStringLiteral("isbn"), book.isbn},
                               {QStringLiteral("name"), book.name},
-                              {QStringLiteral("pagesRead"), book.pagesRead},
+                              {QStringLiteral("fromPage"), book.fromPage},
+                              {QStringLiteral("toPage"), book.toPage},
+                              {QStringLiteral("pagesInPeriod"), book.pagesInPeriod},
                               {QStringLiteral("totalPages"), book.totalPages}});
     }
     return rows;

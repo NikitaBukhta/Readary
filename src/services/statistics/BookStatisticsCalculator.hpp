@@ -2,6 +2,7 @@
 #define READARY_SERVICES_BOOKSTATISTICSCALCULATOR_HPP
 
 #include "services/dto/BookStatisticsDTO.hpp"
+#include "services/dto/JournalFiguresDTO.hpp"
 #include "services/dto/ReadingSessionDTO.hpp"
 
 #include <QDate>
@@ -11,11 +12,8 @@ namespace readary::services {
 
 class BookStatisticsCalculator {
 public:
-  // `sessions` may arrive in any order — BookTable hands them back newest
-  // first, the progress curve needs them oldest first. `weekReference` picks
-  // the Monday..Sunday week the weekly buckets cover; callers pass
-  // QDate::currentDate(), tests pass a fixed date.
   static BookStatisticsDTO compute(const QList<ReadingSessionDTO> &sessions, QDate weekReference);
+  static JournalFiguresDTO journalFigures(const QList<ReadingSessionDTO> &sessions);
 };
 
 } // namespace readary::services

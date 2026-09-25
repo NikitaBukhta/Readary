@@ -103,6 +103,7 @@ QtObject {
         readonly property var gridDash: [2, 3]
         readonly property int gridRows: 4
         readonly property int maxAxisLabels: 5
+        readonly property int maxBarLabels: 12
     }
 
     readonly property WindowSpec window: WindowSpec {}

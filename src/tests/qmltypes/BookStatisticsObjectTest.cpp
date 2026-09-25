@@ -36,7 +36,7 @@ class BookStatisticsObjectTest : public QObject {
   Q_OBJECT
 
 private slots:
-  void defaultConstructed_isAnEmptyButSevenDayWeek();
+  void defaultConstructed_isEmpty();
   void constructedFromADto_copiesEveryField();
   void scalars_readThroughTheMetaObject_data();
   void scalars_readThroughTheMetaObject();
@@ -45,11 +45,11 @@ private slots:
   void unknownProperty_isNotFound();
 };
 
-void BookStatisticsObjectTest::defaultConstructed_isAnEmptyButSevenDayWeek() {
+void BookStatisticsObjectTest::defaultConstructed_isEmpty() {
   const BookStatisticsObject stats;
 
   QCOMPARE(stats.sessionCount, 0);
-  QCOMPARE(stats.weeklyPages.size(), BookStatisticsDTO::kDaysInWeek);
+  QVERIFY(stats.weeklyPages.isEmpty());
   QVERIFY(stats.progressPoints.isEmpty());
 }
 

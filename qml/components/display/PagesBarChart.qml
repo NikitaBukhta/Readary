@@ -7,24 +7,21 @@ PaddedCard {
     id: root
 
     property alias title: header.title
-    // One bucket per weekday, Monday first — the order BookStatisticsController
-    // hands over. The chart renders however many it is given.
+    property alias emptyText: emptyPlot.text
     property var values: []
+    property var labels: []
 
     readonly property var _bars: root.values ?? []
+    readonly property int _count: root._bars.length
 
     readonly property int _peak: {
         let peak = 0;
-        for (let i = 0; i < root._bars.length; ++i)
+        for (let i = 0; i < root._count; ++i)
             peak = Math.max(peak, root._bars[i]);
         return peak;
     }
 
-    // Every bar carries its page count above it, so the plot keeps a label's
-    // worth of headroom: scaling against the full height would push the
-    // tallest day's number off the top of the card. Measured rather than
-    // guessed, because the app font is a user setting.
-    readonly property real _barAvailableHeight: Math.max(0, plotArea.height - valueMetrics.height - Geometry.spacing.xxs)
+    readonly property real _barAvailableHeight: captions.dense ? plotArea.height : Math.max(0, plotArea.height - valueMetrics.height - Geometry.spacing.xxs)
 
     function _barHeight(pages: int): real {
         if (pages <= 0 || root._peak <= 0)
@@ -58,7 +55,7 @@ PaddedCard {
             RowLayout {
                 id: bars
                 anchors.fill: parent
-                spacing: Geometry.spacing.sm
+                spacing: captions.dense ? Geometry.spacing.xxs : Geometry.spacing.sm
                 visible: root._peak > 0
 
                 Repeater {
@@ -72,6 +69,7 @@ PaddedCard {
 
                         Layout.fillWidth: true
                         Layout.fillHeight: true
+                        Layout.preferredWidth: 0
 
                         Rectangle {
                             id: bar
@@ -79,9 +77,7 @@ PaddedCard {
                             anchors.right: parent.right
                             anchors.bottom: parent.bottom
                             height: root._barHeight(barSlot.modelData)
-                            // Clamped, or a one-page day against a big week
-                            // renders as a squashed lens instead of a bar.
-                            radius: Math.min(Geometry.radius.xs, height / 2)
+                            radius: Math.min(Geometry.radius.xs, height / 2, width / 2)
                             color: Theme.primary
                         }
 
@@ -90,9 +86,7 @@ PaddedCard {
                             anchors.horizontalCenter: bar.horizontalCenter
                             anchors.bottom: bar.top
                             anchors.bottomMargin: Geometry.spacing.xxs
-                            // A day with nothing read has no bar, so a bare 0
-                            // would float on the axis with nothing under it.
-                            visible: barSlot.modelData > 0
+                            visible: !captions.dense && barSlot.modelData > 0
                             text: barSlot.modelData
                             color: Theme.textSecondary
                             font.pixelSize: Styles.fontSize.caption
@@ -104,44 +98,23 @@ PaddedCard {
 
             Text {
                 id: emptyPlot
-                anchors.centerIn: parent
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
                 visible: root._peak <= 0
-                text: qsTr("Nothing read this week")
                 color: Theme.textMuted
                 font.pixelSize: Styles.fontSize.body
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
             }
         }
 
-        RowLayout {
-            id: dayLabels
+        ChartCaptions {
+            id: captions
             Layout.fillWidth: true
-            spacing: Geometry.spacing.sm
-
-            Repeater {
-                id: dayRepeater
-                // The count, not the values: these labels depend only on the
-                // locale, so they must not be rebuilt when the bars change.
-                model: root._bars.length
-
-                delegate: Text {
-                    id: dayLabel
-
-                    required property int index
-
-                    Layout.fillWidth: true
-                    // Zero, so fillWidth splits the row evenly instead of
-                    // adding surplus on top of each label's own width — the
-                    // labels have to stay in column with the bars above, and
-                    // day abbreviations differ in length per locale.
-                    Layout.preferredWidth: 0
-                    // The buckets start on Monday; Locale.dayName counts from Sunday.
-                    text: Qt.locale().dayName((dayLabel.index + 1) % root._bars.length, Locale.ShortFormat)
-                    color: Theme.textSecondary
-                    font.pixelSize: Styles.fontSize.caption
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                }
-            }
+            spacing: bars.spacing
+            count: root._count
+            labels: root.labels
         }
     }
 }

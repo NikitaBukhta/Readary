@@ -115,7 +115,7 @@ src/
     db/        DatabaseManager, SqlQueryBuilder
   services/
     dto/       BookDTO, CharacterDTO, ReadingSessionDTO, BookStatisticsDTO, LibraryStatisticsDTO,
-               ReadingStatisticsDTO
+               ReadingStatisticsDTO, JournalFiguresDTO, StatisticsRange
                + the BookStatus / ReadingPhase enums
     storage/   BookTable (CRUD over BookDTO), BookFileStore (per-book files on disk)
     caching/   SearchCache, ReadingProgressCache, ReadingSessionCache
@@ -124,7 +124,8 @@ src/
     emoji/     EmojiResolver (emoji char → vendored Twemoji SVG)
     statistics/ BookStatisticsCalculator (reading journal → per-book figures),
                 LibraryStatisticsCalculator (shelf + journal → whole-library figures),
-                ReadingStatisticsCalculator (shelf + journal → whole-library charts)
+                ReadingStatisticsCalculator (shelf + journal → whole-library charts for a period),
+                StatisticsPeriods (period → StatisticsRange)
   qmltypes/    BookDTOObject, BookStatisticsObject, LibraryStatisticsObject,
                ReadingStatisticsObject (Q_GADGET
                wrappers over the DTOs, exposed by the matching controller to QML)

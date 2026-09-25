@@ -9,8 +9,6 @@ PaddedCard {
     property alias value: figure.value
     property alias label: figure.label
     property alias valueColor: figure.valueColor
-    // The statistics page tints its icons to the accent so the three tiles read
-    // as one row; the profile page leaves the emoji in their own colours.
     property alias iconTinted: icon.tinted
 
     contentPadding: Geometry.spacing.lg

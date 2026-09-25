@@ -114,41 +114,6 @@ Page {
                     subtitle: qsTr("%n book(s) read", "", root._stats.booksFinished)
                 }
 
-                RowLayout {
-                    id: tiles
-                    Layout.fillWidth: true
-                    spacing: Geometry.spacing.md
-
-                    StatTile {
-                        id: finishedTile
-                        Layout.fillWidth: true
-                        iconTinted: false
-                        iconGlyph: "📖"
-                        value: root._stats.booksFinished.toString()
-                        label: qsTr("Read")
-                    }
-
-                    StatTile {
-                        id: timeTile
-                        Layout.fillWidth: true
-                        iconTinted: false
-                        iconGlyph: "⏱️"
-                        // The timer is the only source of this figure, so a
-                        // library read without it honestly has none.
-                        value: root._stats.totalSeconds > 0 ? Format.duration(root._stats.totalSeconds) : Format.blank
-                        label: qsTr("Reading")
-                    }
-
-                    StatTile {
-                        id: pagesTile
-                        Layout.fillWidth: true
-                        iconTinted: false
-                        iconGlyph: "📄"
-                        value: Format.compact(root._stats.pagesRead)
-                        label: qsTr("Pages")
-                    }
-                }
-
                 ColumnLayout {
                     id: sections
                     Layout.fillWidth: true

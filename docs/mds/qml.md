@@ -23,13 +23,13 @@ qml/
     categoryListPage/
       CategoryListPage.qml         Vertical list per category, with search
     profilePage/
-      ProfilePage.qml              Reader level + three whole-library stat tiles + the section list, bound to ProfileController
+      ProfilePage.qml              Reader level + the section list, bound to ProfileController
       ProfileHeaderCard.qml        Avatar + reader level + "N books read"
       ProfileMenuRow.qml           One section row; dimmed and inert when its page does not exist yet
     readingStatisticsPage/
       ReadingStatisticsPage.qml    Whole-library statistics, bound to ReadingStatisticsController.statistics; reached from ProfilePage, so it carries a back arrow
-      MonthlyBooksChart.qml        Canvas area curve of books finished per month, last six months
-      BooksInProgressCard.qml      Progress bar per book in progress; a tap opens that book
+      PeriodSelector.qml           Current-period chip opening an ActionMenu of Day / Week / Month / Year / All time / Custom + the dates it covers
+      BooksReadCard.qml            Books read in the period: pages gained + a two-tone bar; a tap opens that book
     settingsPage/
       SettingsPage.qml             Language picker (and future user-preference rows) — bound to SettingsController.languageModel; reached from ProfilePage, so it carries a back arrow
     addBookPage/
@@ -55,9 +55,6 @@ qml/
       BookGenreTags.qml            Flow of TagPill for genres, sits below the characters ListView
     bookStatisticsPage/
       BookStatisticsPage.qml       Per-book statistics, bound to BookStatisticsController.statistics
-      StatTile.qml                 IconGlyph over a StatColumn, three across the top; `iconTinted` (default true) tints the emoji to the accent — the profile page turns it off
-      WeeklyPagesChart.qml         Mon..Sun bar chart of pages read this week
-      ReadingSpeedCard.qml         Slowest / average / fastest pages per hour
       BookProgressChart.qml        Canvas line chart of the page reached per session
   components/                      Reusable widgets, grouped by role
     base/                          The chassis everything else is built on
@@ -85,8 +82,13 @@ qml/
       StatColumn.qml               A figure over its caption; the statistics cards stack three across
       TagPill.qml                  Pill-shaped genre/tag label
       FilterChip.qml               Selectable chip for one filter value
+      StatTile.qml                 IconGlyph over a StatColumn, three across the top of a statistics page; `iconTinted` (default true) tints the emoji to the accent
+      ReadingSpeedCard.qml         Slowest / average / fastest pages per hour
+      PagesBarChart.qml            Bar chart of pages per bucket, one caption per bar
+      BooksCurveChart.qml          Canvas area curve of a count per bucket, one caption per point
+      ChartCaptions.qml            The caption row under both charts; thins itself past Geometry.chart.maxBarLabels and reports `dense`
     feedback/
-      ProgressBar.qml              Linear bar (track + fill); height defaults to Styles.progressBar.sm
+      ProgressBar.qml              Linear bar (track + fill); height defaults to Styles.progressBar.sm; optional `startProgress` draws the part already behind subdued
       ProgressRing.qml             Canvas-based circular progress
       LoadingSpinner.qml           Indeterminate spinner shown while an online search is in flight
       Toast.qml                    Transient message banner anchored under the window top
@@ -101,6 +103,7 @@ qml/
     overlays/
       ConfirmDialog.qml            Yes/no confirmation over a dimmed backdrop
       FilterSheet.qml              Bottom sheet of filter criteria, bound to BookFilterController
+      DateRangeSheet.qml           Month calendar for picking a from..to range; ISO text in and out
       ActionMenu.qml               Dropdown of actions behind a "⋮" button; items are plain objects supplied by the caller
   theme/
     Theme.qml                      Singleton: forwards palette colors + global tokens (starColor, starColorEmpty)
@@ -470,19 +473,23 @@ Layout (top → bottom, inside a page-level `Flickable`):
    than a zero.
 2. Either one muted card or the three below it, on
    `BookStatisticsController.hasData` — three separate "no data" lines read
-   worse than one. `WeeklyPagesChart` keeps its own empty line for the case
-   that still happens *with* data: a book not read this week.
-3. `WeeklyPagesChart` — one bar per bucket, `Layout.fillWidth` so they share
+   worse than one. `PagesBarChart` keeps its own empty line (`emptyText`) for
+   the case that still happens *with* data: a book not read this week.
+3. `PagesBarChart` — one bar per bucket, `Layout.fillWidth` so they share
    the card evenly. Heights scale against the week's own peak, not the book's
    total: the shape of the week is what the card is for. Every day that was
    read carries its page count just above its bar, which is why the plot
    reserves a label's worth of headroom — measured off a `TextMetrics`, not a
    constant, so it follows the app font. A day with nothing read has no bar,
    so it gets no number either. The chart renders however many buckets it is
-   handed and takes the week length from `values.length`; the DTO owns the
-   "always seven" guarantee. Weekday labels come from
-   `Qt.locale().dayName()`, which counts from Sunday while the buckets start
-   on Monday — hence the `(index + 1) % length`.
+   handed and takes the week length from `values.length`; the calculator owns
+   the "always seven" guarantee, by bucketing over `StatisticsPeriods::week()`. The page hands in `labels` too — the locale's
+   weekday names from `Qt.locale().dayName()`, which counts from Sunday while
+   the buckets start on Monday, hence the `(i + 1) % 7`. The caption row is
+   `ChartCaptions`: past `Geometry.chart.maxBarLabels` buckets it reports
+   `dense`, the numbers over the bars go, the bar spacing narrows, and only
+   every n-th caption stays — spilling over its narrow column rather than
+   eliding to "…".
 4. `ReadingSpeedCard` — slowest / average / fastest pages per hour, three
    `StatColumn`s with the average picked out in `Theme.primary`. It takes
    `hasSpeed` rather than testing the numbers: a measured 0 p/h and "nothing
@@ -534,38 +541,83 @@ grid stroke.
 
 ### `ReadingStatisticsPage.qml`
 
-`BookStatisticsPage` one level up: the same charts over the whole library.
-Reached from the "Reading statistics" row of `ProfilePage`; level 2, beside
-`SettingsPage`, so its back arrow lands on the profile. It reads only
-`ReadingStatisticsController.statistics`
+`BookStatisticsPage` one level up: the same charts over the whole library, for
+a period the reader picks. Reached from the "Reading statistics" row of
+`ProfilePage`; level 2, beside `SettingsPage`, so its back arrow lands on the
+profile. It reads only `ReadingStatisticsController`
 (see [controllers.md](controllers.md#readingstatisticscontroller)) and calls
-`refresh()` on open for the same reason the per-book page does — the weekly
-and monthly buckets are relative to today.
+`refresh()` on open for the same reason the per-book page does — every period
+but Custom is relative to today.
 
-It reuses `StatTile`, `WeeklyPagesChart` and `ReadingSpeedCard` from
-`bookStatisticsPage/` unchanged (QML folders are cosmetic). Layout, top →
+It shares `StatTile`, `PagesBarChart` and `ReadingSpeedCard` with the
+per-book page; they, `BooksCurveChart` and `ChartCaptions` live in
+`components/display/` because more than one page uses them. Layout, top →
 bottom:
 
-1. Three `StatTile`s — books finished, reading time, average pages per hour.
-2. One muted card when `hasData` is false, otherwise the four cards below.
-3. `WeeklyPagesChart` — every book's pages, per weekday of the current week.
-4. `MonthlyBooksChart` — books finished per month over the last six. Each
-   month owns an equal column and its point sits at the column's centre, so
-   the curve stays in line with the month labels the way the weekly bars do.
-   Segments are cubics whose two control points share the x halfway between
-   the months, which eases through every point and never overshoots — a month
-   with nothing finished stays on the baseline. Like `BookProgressChart`, the
-   `Canvas` paints no text; the counts above the points are `Text` items.
-   Month names come from `Qt.locale().standaloneMonthName()`, which counts
-   from 0 while the DTO's months count from 1.
-5. `ReadingSpeedCard` — slowest / average / fastest session, all books.
-6. `BooksInProgressCard` — where the per-book page draws one book's progress
-   curve, the library-wide question is where each open book stands: one row
-   per book in progress, name + `pagesRead / totalPages` + a `ProgressBar`.
-   A book of unknown length shows its page and an empty bar. A tap emits
-   `bookClicked(isbn)` and the page calls `BookController.openBook`, which
-   stacks the detail page on top — its back arrow returns here. Hidden when no
-   book is in progress.
+1. `PeriodSelector` — one `FilterChip` naming the current period ("Month ▾")
+   with the dates it covers beside it. Tapping the chip opens an `ActionMenu`
+   of the six periods, the current one highlighted (`selected`). All time
+   shows no dates: its range only frames the chart, and naming it would
+   suggest the figures stop there. Picking a period writes
+   `ReadingStatisticsController.period`; Custom instead opens the
+   `DateRangeSheet` and switches only once a range is applied, so it stays
+   pickable while selected — that is how the dates are changed.
+2. Three `StatTile`s — books finished, reading time, average pages per hour,
+   all for the period.
+3. One muted card when `hasData` is false, otherwise the cards below. The
+   period chip hides with them: with an empty library there is nothing to filter.
+4. `PagesBarChart` — pages per bucket.
+5. `BooksCurveChart` — books finished per bucket, hidden by the hour: over a
+   single day it is a flat line with at most one bump. Each bucket owns an
+   equal column and its point sits at the column's centre, so the curve stays
+   in line with the captions the way the bars do. Segments are cubics whose
+   two control points share the x halfway between the buckets, which eases
+   through every point and never overshoots — a bucket with nothing finished
+   stays on the baseline. A single bucket is drawn as a dot. Like
+   `BookProgressChart`, the `Canvas` paints no text; the counts above the
+   points are `Text` items. It thins out past `maxBarLabels` like the bars.
+6. `ReadingSpeedCard` — slowest / average / fastest session in the period.
+7. `BooksReadCard` — the per-book page draws one book's progress curve;
+   across the library the question is which books the period moved and how
+   far. One row per book read in it (see
+   [controllers.md](controllers.md#progress-by-book)): the name, `+N` pages in
+   primary — hidden at zero, where a "+0" would read as a slump — and
+   `toPage / totalPages`. The `ProgressBar` gets `startProgress` at
+   `fromPage`, so the part already behind before the period is drawn at
+   `Styles.opacity.subdued` and what the period added in full colour; the
+   gained part reaches back one radius under the subdued one, so the two meet
+   with a rounded head rather than a seam. A row that gained nothing — a
+   never-timed book in all time — passes no `startProgress` and shows its
+   position as a plain bar, and `ProgressBar` hides its fill whenever there is
+   nothing past `startProgress` to draw. A book of unknown length shows its
+   page and an empty bar. A tap emits `bookClicked(isbn)` and the page calls
+   `BookController.openBook`, which stacks the detail page on top — its back
+   arrow returns here. An empty period keeps the card and says so, rather
+   than dropping it from the page.
+
+**Captions.** Both charts take one caption per bucket, built once by the page
+from the bucket parts and the controller's `Granularity`: the hour or the day
+of the month as a bare number, weekday names when a range is a week or less,
+month names by the month — the one-letter `Locale.NarrowFormat` past six of
+them, since a year of short names overruns the card, with January printing
+its year when the series crosses one — and the year by the year. Bucket dates
+arrive as parts and range ends as ISO text. The ISO helpers live in `Format`,
+shared with `DateRangeSheet`: `isoDate(y, m, d)`, `dateOfIso(iso)` — a
+local-midnight `Date`, since `new Date("2026-03-04")` would be read as UTC
+midnight — and `dateRange(fromIso, toIso)`, the one "d – d" caption both
+the page and the sheet print.
+
+**`DateRangeSheet`** (`components/overlays/`) is a `Popup` like
+`ConfirmDialog`, around a `MonthGrid` + `DayOfWeekRow` from
+`QtQuick.Controls`, both following the locale's first weekday. The first tap
+sets the start, the second the end (either order), a third starts over; a
+single tapped day applies as a one-day range. The selection is held as
+ISO `"yyyy-MM-dd"` text: it compares correctly as a plain string, carries no
+time of day, and is what the controller takes, so nothing is converted until
+display. The delegates read the grid's `day`/`month`/`year` roles rather than its `date`
+for the same time-zone reason. `MonthGrid` sizes its cells from its own
+height, so it is given six rows' worth explicitly — without that it collapses
+to nothing. The page preselects the range on screen, except for all time.
 
 ### `ReadingProgressTimer.qml`
 
@@ -628,7 +680,7 @@ its original id.
 | `FieldLabel` | A `Text` preset for form captions — the shared look of every label in `AddBookPage` |
 | `FormField` | `FieldLabel` + a filled, rounded input box. One-way by design: the host form reads `value` on submit rather than binding both ways, so there is no write-back loop. `setValue(text)` is the escape hatch for a field the form fills in for the user (a PDF's page count overwriting what was typed). `multiline` swaps the `TextField` for a scrollable `TextArea` and grows the box to `Geometry.size.formTextAreaHeight`; `numeric` installs an `IntValidator` plus `Qt.ImhDigitsOnly`. An empty `label` hides the caption row |
 | `DashedOutline` | Dashed rounded outline on a `Canvas` — `Rectangle.border` can only draw a solid line. `strokeColor` / `strokeWidth` / `radius` / `dashLength` / `dashGap`, each repainting on change the way `ProgressRing` does |
-| `ActionMenu` | Styled `Popup` holding a column of tappable rows, one per entry in `actions: [{ id, label, glyph, separatorBefore }]`; emits `triggered(actionId)` and closes itself. The caller builds the list from state, so an action that does not apply is **absent rather than disabled**; `separatorBefore` draws a divider to group the destructive ones off (the palettes have no danger colour to use instead) |
+| `ActionMenu` | Styled `Popup` holding a column of tappable rows, one per entry in `actions: [{ id, label, glyph, separatorBefore, selected }]`; emits `triggered(actionId)` and closes itself; `selected` highlights a row as the current choice. The caller builds the list from state, so an action that does not apply is **absent rather than disabled**; `separatorBefore` draws a divider to group the destructive ones off (the palettes have no danger colour to use instead) |
 | `CharacterRow` | `PressableSurface`; reserves `avatarSource: url` for future avatars (currently the IconGlyph 👥 placeholder shows when source is empty) |
 
 ## Theme and tokens

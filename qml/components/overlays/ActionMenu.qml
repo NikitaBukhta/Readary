@@ -37,6 +37,7 @@ Popup {
                 id: row
 
                 required property var modelData
+                readonly property bool _selected: row.modelData.selected ?? false
 
                 Layout.fillWidth: true
                 spacing: 0
@@ -58,7 +59,7 @@ Popup {
                     Layout.fillWidth: true
                     implicitHeight: Geometry.size.menuItemHeight
                     radius: Geometry.radius.sm
-                    restColor: Theme.surface
+                    restColor: row._selected ? Theme.primarySoft : Theme.surface
                     pressedColor: Theme.primarySoft
                     // Flat: the menu's own card already carries the elevation.
                     shadowOffset: 0
@@ -86,9 +87,9 @@ Popup {
                             id: labelText
                             Layout.fillWidth: true
                             text: row.modelData.label ?? ""
-                            color: Theme.textPrimary
+                            color: row._selected ? Theme.primary : Theme.textPrimary
                             font.pixelSize: Styles.fontSize.body
-                            font.weight: Styles.fontWeight.medium
+                            font.weight: row._selected ? Styles.fontWeight.semibold : Styles.fontWeight.medium
                             elide: Text.ElideRight
                         }
                     }

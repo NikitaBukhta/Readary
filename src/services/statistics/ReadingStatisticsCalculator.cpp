@@ -7,105 +7,187 @@
 #include <QHash>
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
+#include <iterator>
 #include <utility>
+#include <vector>
 
 namespace {
 
-constexpr int g_monthsPerYear = 12;
+using readary::services::BookDTO;
+using readary::services::BookProgressDTO;
+using readary::services::BookStatus;
+using readary::services::PeriodBucketDTO;
+using readary::services::ReadingSessionDTO;
+using readary::services::ReadingStatisticsDTO;
+using readary::services::StatisticsGranularity;
+using readary::services::StatisticsRange;
 
-int monthOrdinal(QDate date) { return (date.year() * g_monthsPerYear) + date.month() - 1; }
+std::vector<PeriodBucketDTO> emptyBuckets(const StatisticsRange &range) {
+  const int count = std::max(0, range.bucketCount());
+  std::vector<PeriodBucketDTO> buckets;
+  buckets.reserve(static_cast<std::size_t>(count));
+  for (int i = 0; i < count; ++i) {
+    buckets.push_back({.date = range.bucketStart(i), .hour = range.granularity == StatisticsGranularity::Hour ? i : 0});
+  }
+  return buckets;
+}
+
+PeriodBucketDTO *bucketAt(std::vector<PeriodBucketDTO> &buckets, int index) {
+  if (index < 0 || static_cast<std::size_t>(index) >= buckets.size()) {
+    return nullptr;
+  }
+  return &buckets.at(static_cast<std::size_t>(index));
+}
+
+QHash<qint64, ReadingSessionDTO> lastSessionByBook(const QList<ReadingSessionDTO> &sessions) {
+  QHash<qint64, ReadingSessionDTO> last;
+  for (const ReadingSessionDTO &session : sessions) {
+    const auto known = last.constFind(session.bookIsbn);
+    if (known == last.cend() || known->startedBefore(session)) {
+      last.insert(session.bookIsbn, session);
+    }
+  }
+  return last;
+}
+
+int countFinished(const QList<BookDTO> &books, const QHash<qint64, ReadingSessionDTO> &lastSession,
+                  const StatisticsRange &range, std::vector<PeriodBucketDTO> &buckets) {
+  int finished = 0;
+  for (const BookDTO &book : books) {
+    if (book.status != BookStatus::Finished) {
+      continue;
+    }
+    const auto last = lastSession.constFind(book.isbn);
+    if (last == lastSession.cend()) {
+      if (range.unbounded) {
+        ++finished;
+      }
+      continue;
+    }
+    const QDateTime &finishedAt = last->startedAt;
+    if (range.unbounded || range.contains(finishedAt.date())) {
+      ++finished;
+    }
+    if (PeriodBucketDTO *bucket = bucketAt(buckets, range.bucketOf(finishedAt))) {
+      ++bucket->books;
+    }
+  }
+  return finished;
+}
+
+struct Activity {
+  ReadingSessionDTO first;
+  ReadingSessionDTO last;
+  int pages = 0;
+};
+
+QHash<qint64, Activity> activityByBook(const QList<ReadingSessionDTO> &inRange) {
+  QHash<qint64, Activity> activity;
+  for (const ReadingSessionDTO &session : inRange) {
+    const auto known = activity.find(session.bookIsbn);
+    if (known == activity.end()) {
+      activity.insert(session.bookIsbn, {.first = session, .last = session, .pages = session.pagesRead()});
+      continue;
+    }
+    if (session.startedBefore(known->first)) {
+      known->first = session;
+    }
+    if (known->last.startedBefore(session)) {
+      known->last = session;
+    }
+    known->pages += session.pagesRead();
+  }
+  return activity;
+}
+
+struct ProgressRow {
+  BookProgressDTO progress;
+  QDateTime lastRead;
+};
+
+QList<BookProgressDTO> booksReadIn(const QList<BookDTO> &books, const QHash<qint64, Activity> &activity,
+                                   bool unbounded) {
+  QList<ProgressRow> rows;
+  for (const BookDTO &book : books) {
+    const auto read = activity.constFind(book.isbn);
+    if (read != activity.cend()) {
+      rows.append({.progress = {.isbn = book.isbn,
+                                .name = book.name,
+                                .fromPage = read->first.pagesFrom,
+                                .toPage = read->last.endPage(),
+                                .pagesInPeriod = read->pages,
+                                .totalPages = std::max(0, book.totalPages)},
+                   .lastRead = read->last.startedAt});
+    } else if (unbounded && book.status == BookStatus::InProgress) {
+      const int position = std::max(0, book.pagesRead);
+      rows.append({.progress = {.isbn = book.isbn,
+                                .name = book.name,
+                                .fromPage = position,
+                                .toPage = position,
+                                .totalPages = std::max(0, book.totalPages)},
+                   .lastRead = {}});
+    }
+  }
+
+  std::ranges::sort(rows, [](const ProgressRow &lhs, const ProgressRow &rhs) {
+    if (lhs.lastRead != rhs.lastRead) {
+      return lhs.lastRead.isValid() && (!rhs.lastRead.isValid() || lhs.lastRead > rhs.lastRead);
+    }
+    const int byName = lhs.progress.name.compare(rhs.progress.name, Qt::CaseInsensitive);
+    return byName != 0 ? byName < 0 : lhs.progress.isbn < rhs.progress.isbn;
+  });
+
+  QList<BookProgressDTO> shown;
+  shown.reserve(std::min(rows.size(), ReadingStatisticsDTO::kBooksShown));
+  for (ProgressRow &row : rows) {
+    if (shown.size() == ReadingStatisticsDTO::kBooksShown) {
+      break;
+    }
+    shown.append(std::move(row.progress));
+  }
+  return shown;
+}
 
 } // namespace
 
 namespace readary::services {
 
-ReadingStatisticsDTO ReadingStatisticsCalculator::compute(const QList<BookDTO> &books,
-                                                          const QList<ReadingSessionDTO> &sessions, QDate today) {
-  ReadingStatisticsDTO stats;
-
-  // The journal arithmetic is the per-book one run over every book at once:
-  // the week still buckets pages by day, and the speeds still come from the
-  // timed sessions alone, so min <= average <= max holds here too.
-  const BookStatisticsDTO journal = BookStatisticsCalculator::compute(sessions, today);
-  stats.sessionCount = journal.sessionCount;
-  stats.timedSessionCount = journal.timedSessionCount;
-  stats.totalSeconds = journal.totalSeconds;
-  stats.averagePagesPerHour = journal.averagePagesPerHour;
-  stats.minPagesPerHour = journal.minPagesPerHour;
-  stats.maxPagesPerHour = journal.maxPagesPerHour;
-  stats.weeklyPages = journal.weeklyPages;
-
-  QHash<qint64, QDateTime> lastRead;
+QDate ReadingStatisticsCalculator::earliestSession(const QList<ReadingSessionDTO> &sessions) {
+  QDate earliest;
   for (const ReadingSessionDTO &session : sessions) {
-    const auto known = lastRead.constFind(session.bookIsbn);
-    if (known == lastRead.cend() || session.endedAt > known.value()) {
-      lastRead.insert(session.bookIsbn, session.endedAt);
+    const QDate started = session.startedAt.date();
+    if (started.isValid() && (!earliest.isValid() || started < earliest)) {
+      earliest = started;
+    }
+  }
+  return earliest;
+}
+
+ReadingStatisticsDTO ReadingStatisticsCalculator::compute(const QList<BookDTO> &books,
+                                                          const QList<ReadingSessionDTO> &sessions,
+                                                          const StatisticsRange &range) {
+  QList<ReadingSessionDTO> inRange;
+  for (const ReadingSessionDTO &session : sessions) {
+    if (range.unbounded || range.contains(session.startedAt.date())) {
+      inRange.append(session);
     }
   }
 
-  // Collected in a std::array for a bounds-checked at(), as in
-  // BookStatisticsCalculator.
-  std::array<int, static_cast<std::size_t>(ReadingStatisticsDTO::kMonthsShown)> monthBuckets{};
-  const int firstMonth = today.isValid() ? monthOrdinal(today) - static_cast<int>(monthBuckets.size()) + 1 : 0;
+  ReadingStatisticsDTO stats{BookStatisticsCalculator::journalFigures(inRange)};
+  stats.range = range;
 
-  QList<BookDTO> inProgress;
-  for (const BookDTO &book : books) {
-    if (book.status == BookStatus::InProgress) {
-      inProgress.append(book);
-      continue;
-    }
-    if (book.status != BookStatus::Finished) {
-      continue;
-    }
-    ++stats.booksFinished;
-
-    // No finish date is stored: db/init.sql defines it as the end of the
-    // book's last session. A book marked finished by hand, never timed, has
-    // none — it counts towards booksFinished but lands in no month.
-    const QDateTime finishedAt = lastRead.value(book.isbn);
-    if (!today.isValid() || !finishedAt.isValid()) {
-      continue;
-    }
-    const int offset = monthOrdinal(finishedAt.date()) - firstMonth;
-    if (offset >= 0 && std::cmp_less(offset, monthBuckets.size())) {
-      ++monthBuckets.at(static_cast<std::size_t>(offset));
+  std::vector<PeriodBucketDTO> buckets = emptyBuckets(range);
+  for (const ReadingSessionDTO &session : inRange) {
+    if (PeriodBucketDTO *bucket = bucketAt(buckets, range.bucketOf(session.startedAt))) {
+      bucket->pages += session.pagesRead();
     }
   }
+  stats.booksFinished = countFinished(books, lastSessionByBook(sessions), range, buckets);
+  stats.buckets =
+      QList<PeriodBucketDTO>(std::make_move_iterator(buckets.begin()), std::make_move_iterator(buckets.end()));
 
-  if (today.isValid()) {
-    stats.monthlyBooks.reserve(ReadingStatisticsDTO::kMonthsShown);
-    for (std::size_t i = 0; i < monthBuckets.size(); ++i) {
-      const int ordinal = firstMonth + static_cast<int>(i);
-      stats.monthlyBooks.append(
-          {.year = ordinal / g_monthsPerYear, .month = (ordinal % g_monthsPerYear) + 1, .books = monthBuckets.at(i)});
-    }
-  }
-
-  // Most recently read first — that is the book the reader is actually on.
-  // Books never timed follow by name, and the key settles the rest so the
-  // order, and with it the controller's change check, is deterministic.
-  std::ranges::sort(inProgress, [&lastRead](const BookDTO &lhs, const BookDTO &rhs) {
-    const QDateTime lhsRead = lastRead.value(lhs.isbn);
-    const QDateTime rhsRead = lastRead.value(rhs.isbn);
-    if (lhsRead != rhsRead) {
-      return lhsRead.isValid() && (!rhsRead.isValid() || lhsRead > rhsRead);
-    }
-    const int byName = lhs.name.compare(rhs.name, Qt::CaseInsensitive);
-    return byName != 0 ? byName < 0 : lhs.isbn < rhs.isbn;
-  });
-
-  const qsizetype shown = std::min(inProgress.size(), ReadingStatisticsDTO::kBooksInProgressShown);
-  stats.booksInProgress.reserve(shown);
-  for (qsizetype i = 0; i < shown; ++i) {
-    const BookDTO &book = inProgress.at(i);
-    stats.booksInProgress.append({.isbn = book.isbn,
-                                  .name = book.name,
-                                  .pagesRead = std::max(0, book.pagesRead),
-                                  .totalPages = std::max(0, book.totalPages)});
-  }
-
+  stats.booksRead = booksReadIn(books, activityByBook(inRange), range.unbounded);
   return stats;
 }
 
